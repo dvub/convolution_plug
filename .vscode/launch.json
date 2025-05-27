@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cppvsdbg",
+            "request": "attach",
+            "name": "Debug the plugin inside a DAW",
+            "processId": "${command:pickProcess}",
+            "internalConsoleOptions": "openOnSessionStart",
+            "symbolOptions": {
+                "searchPaths": ["${workspaceFolder}/target/debug", "${workspaceFolder}/target/profiling"],
+                "searchMicrosoftSymbolServer": false
+            }
+        },
+    ]
+}
