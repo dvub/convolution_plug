@@ -1,9 +1,9 @@
 use fft_convolver::FFTConvolver;
 use nih_plug::{prelude::*, util::db_to_gain};
 
-use std::{f32::consts::PI, sync::Arc};
+use std::sync::Arc;
 
-const CONVOLVER_BLOCK_SIZE: usize = 64;
+const CONVOLVER_BLOCK_SIZE: usize = 256;
 
 // This is a shortened version of the gain example with most comments removed, check out
 // https://github.com/robbert-vdh/nih-plug/blob/master/plugins/examples/gain/src/lib.rs to get
@@ -124,10 +124,10 @@ impl Plugin for ConvolutionPlug {
         self.scratch = vec![0.0; max_buf_len as usize];
 
         let mut ir_samples = read_samples_from_file(
-            "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test3.wav",
+            "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\medium.wav",
         );
 
-        rms_normalize(&mut ir_samples, -22.0);
+        rms_normalize(&mut ir_samples, -48.0);
 
         self.impulse_response = ir_samples;
 
@@ -204,7 +204,7 @@ fn read_samples_from_file(path: &str) -> Vec<f32> {
 
 fn rms_normalize(input: &mut [f32], level: f32) {
     let n = input.len() as f32;
-    let r = 10.0f32.powf(level / 10.0);
+    let r = db_to_gain(level);
 
     let squared_sum = input.iter().map(|x| x * x).sum::<f32>();
 
@@ -217,6 +217,8 @@ fn rms_normalize(input: &mut [f32], level: f32) {
 #[cfg(test)]
 mod tests {
     use std::{f32::consts::PI, fs::remove_file};
+
+    use nih_plug::util::gain_to_db;
 
     use crate::rms_normalize;
 
@@ -265,12 +267,17 @@ mod tests {
         assert_eq!(samples, other);
     }
 
+    // TODO: make this stupid test pass
     #[test]
     fn test_normalize() {
-        let mut samples = read_samples_from_file("vsmall.wav");
+        let mut samples = read_samples_from_file("test_irs\\vsmall.wav");
 
-        rms_normalize(&mut samples, -18.0);
+        let desired_rms = -18.0f32;
+        rms_normalize(&mut samples, desired_rms);
 
-        println!("{:?}", samples);
+        let n = samples.len() as f32;
+        let new_rms = (samples.iter().map(|x| x.powi(2)).sum::<f32>() / n).sqrt();
+
+        assert_eq!(gain_to_db(new_rms), desired_rms);
     }
 }
