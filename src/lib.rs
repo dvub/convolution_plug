@@ -1,18 +1,9 @@
 use fft_convolver::FFTConvolver;
 use nih_plug::prelude::*;
-use std::fs::File;
-use std::path::Path;
-use std::sync::Arc;
-use symphonia::core::audio::SampleBuffer;
 
-use symphonia::core::codecs::{DecoderOptions, CODEC_TYPE_NULL};
-use symphonia::core::errors::Error;
-use symphonia::core::formats::FormatOptions;
-use symphonia::core::io::MediaSourceStream;
-use symphonia::core::meta::MetadataOptions;
-use symphonia::core::probe::Hint;
+use std::{f32::consts::PI, sync::Arc};
 
-const CONVOLVER_BLOCK_SIZE: usize = 1000;
+const CONVOLVER_BLOCK_SIZE: usize = 64;
 
 // This is a shortened version of the gain example with most comments removed, check out
 // https://github.com/robbert-vdh/nih-plug/blob/master/plugins/examples/gain/src/lib.rs to get
@@ -24,7 +15,7 @@ struct ConvolutionPlug {
     // TODO: not sure if this needs to be here
     impulse_response: Vec<f32>,
 
-    convolver: FFTConvolver<f32>,
+    convolvers: [FFTConvolver<f32>; 2],
 
     params: Arc<ConvolutionPlugParams>,
 }
@@ -43,7 +34,7 @@ impl Default for ConvolutionPlug {
     fn default() -> Self {
         Self {
             impulse_response: Vec::new(),
-            convolver: FFTConvolver::default(),
+            convolvers: [FFTConvolver::default(), FFTConvolver::default()],
 
             scratch: Vec::new(),
             params: Arc::new(ConvolutionPlugParams::default()),
@@ -128,14 +119,21 @@ impl Plugin for ConvolutionPlug {
         buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
+        // i have no idea if this will work
         let max_buf_len = buffer_config.max_buffer_size;
-        self.scratch = Vec::with_capacity(max_buf_len as usize);
+        self.scratch = vec![0.0; max_buf_len as usize];
 
-        self.impulse_response = get_samples();
+        let mut ir_samples =
+            read_samples_from_file("D:\\projects\\rust\\convolution_plug\\vsmall.wav");
+        peak_normalize(&mut ir_samples);
 
-        self.convolver
-            .init(CONVOLVER_BLOCK_SIZE, &self.impulse_response)
-            .unwrap();
+        self.impulse_response = ir_samples;
+
+        self.convolvers.iter_mut().for_each(|convolver| {
+            convolver
+                .init(CONVOLVER_BLOCK_SIZE, &self.impulse_response)
+                .unwrap();
+        });
 
         nih_log!("Initialized Convolution");
         // Resize buffers and perform other potentially expensive initialization operations here.
@@ -155,11 +153,11 @@ impl Plugin for ConvolutionPlug {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        for channel in buffer.as_slice() {
+        for (i, channel) in buffer.as_slice().iter_mut().enumerate() {
             let scratch = &mut self.scratch[..channel.len()];
-            scratch.copy_from_slice(channel);
+            scratch.clone_from_slice(channel);
 
-            self.convolver.process(scratch, channel).unwrap();
+            self.convolvers[i].process(scratch, channel).unwrap();
         }
 
         ProcessStatus::Normal
@@ -184,107 +182,60 @@ impl Vst3Plugin for ConvolutionPlug {
         &[Vst3SubCategory::Fx, Vst3SubCategory::Dynamics];
 }
 
-fn get_samples() -> Vec<f32> {
-    println!("hello");
-    let file = File::open(Path::new(
-        "D:\\projects\\rust\\convolution_plug\\vsmall.wav",
-    ))
-    .unwrap();
-
-    // why does it have to be boxed?
-    let mss = MediaSourceStream::new(Box::new(file), Default::default());
-
-    // Create a hint to help the format registry guess what format reader is appropriate. In this
-    // example we'll leave it empty.
-    let hint = Hint::new();
-
-    // Use the default options when reading and decoding.
-    let format_opts: FormatOptions = Default::default();
-    let metadata_opts: MetadataOptions = Default::default();
-    let decoder_opts: DecoderOptions = Default::default();
-
-    // Probe the media source stream for a format.
-    let probed = symphonia::default::get_probe()
-        .format(&hint, mss, &format_opts, &metadata_opts)
-        .unwrap();
-
-    // Get the format reader yielded by the probe operation.
-    let mut format = probed.format;
-
-    // Get the default track.
-    let track = format.default_track().unwrap();
-
-    // Create a decoder for the track.
-    let mut decoder = symphonia::default::get_codecs()
-        .make(&track.codec_params, &decoder_opts)
-        .unwrap();
-
-    // Store the track identifier, we'll use it to filter packets.
-    let track_id = track.id;
-
-    let mut sample_count = 0;
-    let mut sample_buf = None;
-
-    let mut out = Vec::new();
-    loop {
-        // https://github.com/pdeljanov/Symphonia/issues/62
-        // Get the next packet from the format reader.
-        let packet = match format.next_packet() {
-            Ok(packet_ok) => packet_ok,
-            Err(Error::IoError(_)) => {
-                println!("complete!");
-                break;
-            }
-            Err(packet_err) => panic!("{:?}", packet_err),
-        };
-
-        // If the packet does not belong to the selected track, skip it.
-        if packet.track_id() != track_id {
-            continue;
-        }
-
-        // Decode the packet into audio samples, ignoring any decode errors.
-        match decoder.decode(&packet) {
-            Ok(audio_buf) => {
-                // The decoded audio samples may now be accessed via the audio buffer if per-channel
-                // slices of samples in their native decoded format is desired. Use-cases where
-                // the samples need to be accessed in an interleaved order or converted into
-                // another sample format, or a byte buffer is required, are covered by copying the
-                // audio buffer into a sample buffer or raw sample buffer, respectively. In the
-                // example below, we will copy the audio buffer into a sample buffer in an
-                // interleaved order while also converting to a f32 sample format.
-
-                // If this is the *first* decoded packet, create a sample buffer matching the
-                // decoded audio buffer format.
-                if sample_buf.is_none() {
-                    // Get the audio buffer specification.
-                    let spec = *audio_buf.spec();
-
-                    // Get the capacity of the decoded buffer. Note: This is capacity, not length!
-                    let duration = audio_buf.capacity() as u64;
-
-                    // Create the f32 sample buffer.
-                    sample_buf = Some(SampleBuffer::<f32>::new(duration, spec));
-                }
-
-                // Copy the decoded audio buffer into the sample buffer in an interleaved format.
-                if let Some(buf) = &mut sample_buf {
-                    buf.copy_interleaved_ref(audio_buf);
-
-                    // The samples may now be access via the `samples()` function.
-                    sample_count += buf.samples().len();
-                    nih_log!("Decoded {} samples", sample_count);
-                    for s in buf.samples() {
-                        out.push(*s);
-                    }
-                }
-            }
-            Err(Error::DecodeError(_)) => (),
-            Err(_) => break,
-        }
-    }
-    out
-}
-
 nih_export_clap!(ConvolutionPlug);
 nih_export_vst3!(ConvolutionPlug);
+
+fn read_samples_from_file(path: &str) -> Vec<f32> {
+    let mut reader = hound::WavReader::open(path).unwrap();
+
+    let bit_depth = reader.spec().bits_per_sample as u32;
+
+    let max_amplitude = 2_i32.pow(bit_depth - 1) as f32;
+    reader
+        .samples::<i32>()
+        .map(|s| s.unwrap_or(0) as f32 / max_amplitude)
+        .collect()
+}
+
+fn write_file() -> Vec<f32> {
+    let spec = hound::WavSpec {
+        channels: 1,
+        sample_rate: 44100,
+        bits_per_sample: 16,
+        sample_format: hound::SampleFormat::Int,
+    };
+    let len = 100;
+    let mut writer = hound::WavWriter::create("sine.wav", spec).unwrap();
+    let mut samples = Vec::new();
+    for t in (0..len).map(|x| x as f32 / (len as f32)) {
+        let sample = (t * 440.0 * 2.0 * PI).sin();
+
+        samples.push(sample);
+        let amplitude = i16::MAX as f32;
+        writer.write_sample((sample * amplitude) as i16).unwrap();
+    }
+    writer.finalize().unwrap();
+    samples
+}
+// max * x = 0.5
+// x = 0.5 / max
+
+fn peak_normalize(input: &mut [f32]) {
+    let n = input.len() as f32;
+
+    let rms = (input.iter().map(|x| x.powi(2)).sum::<f32>() / n).sqrt();
+
+    println!("RMS of IR is: {}", rms);
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{read_samples_from_file, write_file};
+
+    #[test]
+    fn t() {
+        let samples = write_file();
+        let other = read_samples_from_file("sine.wav");
+        assert_eq!(samples, other)
+    }
+}

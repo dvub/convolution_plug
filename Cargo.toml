@@ -15,6 +15,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 fft-convolver = "0.2.0"
+hound = "3.5.1"
 # Remove the `assert_process_allocs` feature to allow allocations on the audio
 # thread in debug builds.
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = [
