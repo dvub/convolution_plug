@@ -160,6 +160,10 @@ impl Plugin for ConvolutionPlug {
             scratch.clone_from_slice(channel);
 
             self.convolvers[i].process(scratch, channel).unwrap();
+
+            for sample in channel.iter_mut() {
+                *sample *= self.params.gain.value();
+            }
         }
 
         ProcessStatus::Normal
