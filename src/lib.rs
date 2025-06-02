@@ -28,6 +28,9 @@ struct ConvolutionPlugParams {
     /// gain parameter is stored as linear gain while the values are displayed in decibels.
     #[id = "gain"]
     pub gain: FloatParam,
+
+    #[id = "drywet"]
+    pub dry_wet: FloatParam,
 }
 
 impl Default for ConvolutionPlug {
@@ -68,6 +71,10 @@ impl Default for ConvolutionPlugParams {
             // `.with_step_size(0.1)` function to get internal rounding.
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db()),
+
+            dry_wet: FloatParam::new("Dry/Wet", 0.5, FloatRange::Linear { min: 0.0, max: 1.0 })
+                .with_value_to_string(formatters::v2s_f32_percentage(2))
+                .with_unit("%"),
         }
     }
 }
@@ -161,8 +168,13 @@ impl Plugin for ConvolutionPlug {
 
             self.convolvers[i].process(scratch, channel).unwrap();
 
-            for sample in channel.iter_mut() {
-                *sample *= self.params.gain.value();
+            for (i, sample) in channel.iter_mut().enumerate() {
+                let dry_wet = self.params.dry_wet.value();
+                let dry = self.scratch[i];
+                let wet = *sample;
+
+                let mixed = dry * (1.0 - dry_wet) + wet * dry_wet;
+                *sample = mixed;
             }
         }
 
