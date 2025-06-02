@@ -1,23 +1,13 @@
-use convolution::Convolution;
-use fft_convolver::FFTConvolver;
+use convolution::{fft_convolver::FFTConvolver, Convolution};
 use nih_plug::{prelude::*, util::db_to_gain};
 
 use fundsp::{hacker32::*, numeric_array::generic_array::GenericArray};
 
 use std::sync::Arc;
 
-const CONVOLVER_BLOCK_SIZE: usize = 256;
-
 type StereoBuffer = BufferArray<U2>;
 
 struct ConvolutionPlug {
-    scratch: Vec<f32>,
-
-    // TODO: not sure if this needs to be here
-    impulse_response: Vec<f32>,
-
-    convolvers: [FFTConvolver<f32>; 2],
-
     params: Arc<ConvolutionPlugParams>,
 
     graph: Box<dyn AudioUnit>,
@@ -41,13 +31,10 @@ struct ConvolutionPlugParams {
 
 impl Default for ConvolutionPlug {
     fn default() -> Self {
-        let graph = (pass() | pass()) >> FunDspConvolver::new();
+        // TODO: how else can you make this as cheap as possible?
+        let graph = pass() | pass();
 
         Self {
-            impulse_response: Vec::new(),
-            convolvers: [FFTConvolver::default(), FFTConvolver::default()],
-
-            scratch: Vec::new(),
             params: Arc::new(ConvolutionPlugParams::default()),
 
             graph: Box::new(graph),
@@ -132,33 +119,30 @@ impl Plugin for ConvolutionPlug {
         self.params.clone()
     }
 
+    // DO EXPENSIVE STUFF HERE
     fn initialize(
         &mut self,
         _audio_io_layout: &AudioIOLayout,
-        buffer_config: &BufferConfig,
+        _buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
-        // i have no idea if this will work
-        let max_buf_len = buffer_config.max_buffer_size;
-        self.scratch = vec![0.0; max_buf_len as usize];
+        let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
 
-        let mut ir_samples =
-            read_samples_from_file("D:\\projects\\rust\\convolution_plug\\test_irs\\medium.wav");
-
+        let mut ir_samples = read_samples_from_file(path);
         rms_normalize(&mut ir_samples, -48.0);
 
-        self.impulse_response = ir_samples;
+        let wet = ConvolverNode::new(&ir_samples) | ConvolverNode::new(&ir_samples);
+        let dry = pass() | pass();
 
-        self.convolvers.iter_mut().for_each(|convolver| {
-            convolver
-                .init(CONVOLVER_BLOCK_SIZE, &self.impulse_response)
-                .unwrap();
-        });
+        let params_clone = self.params.clone();
+        let dw = params_clone.dry_wet.value();
+
+        let g = ((1.0 - dw) * dry) & (dw * wet);
+
+        self.graph = Box::new(g);
 
         nih_log!("Initialized Convolution");
-        // Resize buffers and perform other potentially expensive initialization operations here.
-        // The `reset()` function is always called right after this function. You can remove this
-        // function if you do not need it.
+
         true
     }
 
@@ -173,24 +157,6 @@ impl Plugin for ConvolutionPlug {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        /*
-        for (i, channel) in buffer.as_slice().iter_mut().enumerate() {
-            let scratch = &mut self.scratch[..channel.len()];
-            scratch.clone_from_slice(channel);
-
-            self.convolvers[i].process(scratch, channel).unwrap();
-
-            for (i, sample) in channel.iter_mut().enumerate() {
-                let dry_wet = self.params.dry_wet.value();
-                let dry = self.scratch[i];
-                let wet = *sample;
-
-                let mixed = dry * (1.0 - dry_wet) + wet * dry_wet;
-                *sample = mixed;
-            }
-        }
-        */
-
         for (_offset, mut block) in buffer.iter_blocks(MAX_BUFFER_SIZE) {
             // write into input buffer
             for (sample_index, mut channel_samples) in block.iter_samples().enumerate() {
@@ -274,41 +240,30 @@ fn rms_normalize(input: &mut [f32], level: f32) {
 }
 
 #[derive(Clone)]
-struct FunDspConvolver {
-    convolvers: [convolution::fft_convolver::FFTConvolver; 2],
+struct ConvolverNode {
+    convolver: FFTConvolver,
 }
-impl AudioNode for FunDspConvolver {
-    const ID: u64 = 0;
 
-    type Inputs = U2;
+impl ConvolverNode {
+    pub fn new(samples: &[f32]) -> An<Self> {
+        let convolver =
+            convolution::fft_convolver::FFTConvolver::init(samples, MAX_BUFFER_SIZE, samples.len());
 
-    type Outputs = U2;
-
-    fn tick(&mut self, input: &Frame<f32, Self::Inputs>) -> Frame<f32, Self::Outputs> {
-        let mut output = [0.0, 0.0];
-        self.convolvers
-            .iter_mut()
-            .for_each(|c| c.process(input, &mut output));
-        Frame::new(*GenericArray::from_slice(&output.as_slice()[..2]))
+        An(Self { convolver })
     }
 }
 
-impl FunDspConvolver {
-    pub fn new() -> An<Self> {
-        let mut ir_samples =
-            read_samples_from_file("D:\\projects\\rust\\convolution_plug\\test_irs\\medium.wav");
+impl AudioNode for ConvolverNode {
+    // TODO: fix this
+    const ID: u64 = 0;
 
-        rms_normalize(&mut ir_samples, -48.0);
+    type Inputs = U1;
+    type Outputs = U1;
 
-        let convolvers = core::array::from_fn(|_| {
-            convolution::fft_convolver::FFTConvolver::init(
-                &ir_samples,
-                CONVOLVER_BLOCK_SIZE,
-                ir_samples.len(),
-            )
-        });
-
-        An(Self { convolvers })
+    fn tick(&mut self, input: &Frame<f32, Self::Inputs>) -> Frame<f32, Self::Outputs> {
+        let mut output = [0.0];
+        self.convolver.process(input, &mut output);
+        Frame::new(GenericArray::from(output))
     }
 }
 

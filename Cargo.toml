@@ -14,7 +14,7 @@ members = ["xtask"]
 crate-type = ["cdylib"]
 
 [dependencies]
-fft-convolver = "0.2.0"
+
 fundsp = "0.20.0"
 hound = "3.5.1"
 # Remove the `assert_process_allocs` feature to allow allocations on the audio
@@ -22,8 +22,6 @@ hound = "3.5.1"
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = [
     "assert_process_allocs",
 ] }
-symphonia = { version = "0.5.4", features = ["all"] }
-
 
 convolution = { git = "https://github.com/holoplot/fft-convolution.git" }
 
