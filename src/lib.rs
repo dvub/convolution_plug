@@ -1,13 +1,14 @@
+use convolution::Convolution;
 use fft_convolver::FFTConvolver;
 use nih_plug::{prelude::*, util::db_to_gain};
+
+use fundsp::{hacker32::*, numeric_array::generic_array::GenericArray};
 
 use std::sync::Arc;
 
 const CONVOLVER_BLOCK_SIZE: usize = 256;
 
-// This is a shortened version of the gain example with most comments removed, check out
-// https://github.com/robbert-vdh/nih-plug/blob/master/plugins/examples/gain/src/lib.rs to get
-// started
+type StereoBuffer = BufferArray<U2>;
 
 struct ConvolutionPlug {
     scratch: Vec<f32>,
@@ -18,6 +19,11 @@ struct ConvolutionPlug {
     convolvers: [FFTConvolver<f32>; 2],
 
     params: Arc<ConvolutionPlugParams>,
+
+    graph: Box<dyn AudioUnit>,
+
+    input_buffer: StereoBuffer,
+    output_buffer: StereoBuffer,
 }
 
 #[derive(Params)]
@@ -35,12 +41,18 @@ struct ConvolutionPlugParams {
 
 impl Default for ConvolutionPlug {
     fn default() -> Self {
+        let graph = (pass() | pass()) >> FunDspConvolver::new();
+
         Self {
             impulse_response: Vec::new(),
             convolvers: [FFTConvolver::default(), FFTConvolver::default()],
 
             scratch: Vec::new(),
             params: Arc::new(ConvolutionPlugParams::default()),
+
+            graph: Box::new(graph),
+            input_buffer: BufferArray::<U2>::new(),
+            output_buffer: BufferArray::<U2>::new(),
         }
     }
 }
@@ -130,9 +142,8 @@ impl Plugin for ConvolutionPlug {
         let max_buf_len = buffer_config.max_buffer_size;
         self.scratch = vec![0.0; max_buf_len as usize];
 
-        let mut ir_samples = read_samples_from_file(
-            "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\medium.wav",
-        );
+        let mut ir_samples =
+            read_samples_from_file("D:\\projects\\rust\\convolution_plug\\test_irs\\medium.wav");
 
         rms_normalize(&mut ir_samples, -48.0);
 
@@ -162,6 +173,7 @@ impl Plugin for ConvolutionPlug {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
+        /*
         for (i, channel) in buffer.as_slice().iter_mut().enumerate() {
             let scratch = &mut self.scratch[..channel.len()];
             scratch.clone_from_slice(channel);
@@ -175,6 +187,37 @@ impl Plugin for ConvolutionPlug {
 
                 let mixed = dry * (1.0 - dry_wet) + wet * dry_wet;
                 *sample = mixed;
+            }
+        }
+        */
+
+        for (_offset, mut block) in buffer.iter_blocks(MAX_BUFFER_SIZE) {
+            // write into input buffer
+            for (sample_index, mut channel_samples) in block.iter_samples().enumerate() {
+                for channel_index in 0..=1 {
+                    // get our input sample
+                    let input_sample = *channel_samples.get_mut(channel_index).unwrap();
+
+                    self.input_buffer.buffer_mut().set_f32(
+                        channel_index,
+                        sample_index,
+                        input_sample,
+                    );
+                }
+            }
+            // actually do block processing
+            self.graph.process(
+                block.samples(),
+                &self.input_buffer.buffer_ref(),
+                &mut self.output_buffer.buffer_mut(),
+            );
+
+            // write from output buffer
+            for (index, mut channel_samples) in block.iter_samples().enumerate() {
+                for n in 0..=1 {
+                    *channel_samples.get_mut(n).unwrap() =
+                        self.output_buffer.buffer_ref().at_f32(n, index);
+                }
             }
         }
 
@@ -228,6 +271,45 @@ fn rms_normalize(input: &mut [f32], level: f32) {
     println!("Normalizing by factor: {}", a);
 
     input.iter_mut().for_each(|x| *x *= a);
+}
+
+#[derive(Clone)]
+struct FunDspConvolver {
+    convolvers: [convolution::fft_convolver::FFTConvolver; 2],
+}
+impl AudioNode for FunDspConvolver {
+    const ID: u64 = 0;
+
+    type Inputs = U2;
+
+    type Outputs = U2;
+
+    fn tick(&mut self, input: &Frame<f32, Self::Inputs>) -> Frame<f32, Self::Outputs> {
+        let mut output = [0.0, 0.0];
+        self.convolvers
+            .iter_mut()
+            .for_each(|c| c.process(input, &mut output));
+        Frame::new(*GenericArray::from_slice(&output.as_slice()[..2]))
+    }
+}
+
+impl FunDspConvolver {
+    pub fn new() -> An<Self> {
+        let mut ir_samples =
+            read_samples_from_file("D:\\projects\\rust\\convolution_plug\\test_irs\\medium.wav");
+
+        rms_normalize(&mut ir_samples, -48.0);
+
+        let convolvers = core::array::from_fn(|_| {
+            convolution::fft_convolver::FFTConvolver::init(
+                &ir_samples,
+                CONVOLVER_BLOCK_SIZE,
+                ir_samples.len(),
+            )
+        });
+
+        An(Self { convolvers })
+    }
 }
 
 #[cfg(test)]
