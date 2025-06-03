@@ -1,5 +1,5 @@
 use convolution::{fft_convolver::FFTConvolver, Convolution};
-use nih_plug::{prelude::*, util::db_to_gain};
+use nih_plug::{params, prelude::*, util::db_to_gain};
 
 use fundsp::{hacker32::*, numeric_array::generic_array::GenericArray};
 
@@ -132,12 +132,12 @@ impl Plugin for ConvolutionPlug {
         rms_normalize(&mut ir_samples, -48.0);
 
         let wet = ConvolverNode::new(&ir_samples) | ConvolverNode::new(&ir_samples);
-        let dry = pass() | pass();
+        let dry = multipass::<U2>();
 
         let params_clone = self.params.clone();
-        let dw = params_clone.dry_wet.value();
+        let dw = envelope(move |_| params_clone.dry_wet.value()) >> split::<U2>();
 
-        let g = ((1.0 - dw) * dry) & (dw * wet);
+        let g = ((1.0 - dw.clone()) * dry) & (dw * wet);
 
         self.graph = Box::new(g);
 
