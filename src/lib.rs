@@ -126,7 +126,8 @@ impl Plugin for ConvolutionPlug {
         _buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
-        let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
+        // let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
+        let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";
 
         let mut ir_samples = read_samples_from_file(path);
         rms_normalize(&mut ir_samples, -48.0);
@@ -134,12 +135,8 @@ impl Plugin for ConvolutionPlug {
         let wet = ConvolverNode::new(&ir_samples) | ConvolverNode::new(&ir_samples);
         let dry = multipass::<U2>();
 
-        let params_clone = self.params.clone();
-        let dw = envelope(move |_| params_clone.dry_wet.value()) >> split::<U2>();
-
-        let g = ((1.0 - dw.clone()) * dry) & (dw * wet);
-
-        self.graph = Box::new(g);
+        let graph = (0.5 * dry) & (0.5 * wet);
+        self.graph = Box::new(graph);
 
         nih_log!("Initialized Convolution");
 
