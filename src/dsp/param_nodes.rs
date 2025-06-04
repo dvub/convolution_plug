@@ -65,3 +65,7 @@ pub fn lp_cutoff<N: Size<f32>>(params: &Arc<PluginParams>) -> An<ParamNode<impl 
 pub fn lp_q<N: Size<f32>>(params: &Arc<PluginParams>) -> An<ParamNode<impl AccessorFn, N>> {
     ParamNode::new(params, |p| p.lowpass_q.value())
 }
+
+pub fn lp_enabled<N: Size<f32>>(params: &Arc<PluginParams>) -> An<ParamNode<impl AccessorFn, N>> {
+    ParamNode::new(params, |p| p.lowpass_enabled.value() as i32 as f32)
+}

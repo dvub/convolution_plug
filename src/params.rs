@@ -12,10 +12,13 @@ pub struct PluginParams {
     #[id = "drywet"]
     pub dry_wet: FloatParam,
 
-    #[id = "lowcutoff"]
+    #[id = "lowpass_enabled"]
+    pub lowpass_enabled: BoolParam,
+
+    #[id = "lowpass_cutoff"]
     pub lowpass_cutoff: FloatParam,
 
-    #[id = "lowcutq"]
+    #[id = "lowpass_q"]
     pub lowpass_q: FloatParam,
 }
 
@@ -50,20 +53,22 @@ impl Default for PluginParams {
                 .with_value_to_string(formatters::v2s_f32_percentage(2))
                 .with_unit("%"),
 
+            lowpass_enabled: BoolParam::new("Lowpass Enabled", false),
+
             lowpass_cutoff: FloatParam::new(
                 "Lowpass Cutoff",
-                11_000.0,
+                22_050.0,
                 FloatRange::Linear {
                     min: 10.0,
-                    max: 22_000.0,
+                    max: 22_050.0,
                 },
             ),
             lowpass_q: FloatParam::new(
-                "Lowpass Cutoff",
-                5.0,
+                "Lowpass Q",
+                0.1,
                 FloatRange::Linear {
-                    min: 1.0,
-                    max: 10.0,
+                    min: 0.1,
+                    max: 18.0,
                 },
             ),
         }

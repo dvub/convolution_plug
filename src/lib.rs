@@ -94,7 +94,11 @@ impl Plugin for ConvolutionPlug {
 
         let p = &self.params;
 
-        let mono_wet = (convolver(&ir_samples) | lp_cutoff::<U1>(p) | lp_q::<U1>(p)) >> lowpass();
+        let lp = (lp_enabled(p)
+            * ((multipass::<U1>() | lp_cutoff::<U1>(p) | lp_q::<U1>(p)) >> lowpass()))
+            & ((1.0 - lp_enabled(p)) * multipass::<U1>());
+
+        let mono_wet = convolver(&ir_samples) >> lp;
 
         let wet = mono_wet * dry_wet(p);
         let dry = pass() * (1.0 - dry_wet(p));
