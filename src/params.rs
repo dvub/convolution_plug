@@ -1,7 +1,7 @@
 use nih_plug::{prelude::*, util::db_to_gain};
 
 #[derive(Params)]
-pub struct ConvolutionPlugParams {
+pub struct PluginParams {
     /// The parameter's ID is used to identify the parameter in the wrappred plugin API. As long as
     /// these IDs remain constant, you can rename and reorder these fields as you wish. The
     /// parameters are exposed to the host in the same order they were defined. In this case, this
@@ -19,7 +19,7 @@ pub struct ConvolutionPlugParams {
     pub lowpass_q: FloatParam,
 }
 
-impl Default for ConvolutionPlugParams {
+impl Default for PluginParams {
     fn default() -> Self {
         Self {
             // This gain is stored as linear gain. NIH-plug comes with useful conversion functions

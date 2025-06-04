@@ -11,12 +11,12 @@ use dsp::param_nodes::*;
 
 use util::{read_samples_from_file, rms_normalize};
 
-use params::ConvolutionPlugParams;
+use params::PluginParams;
 
 type StereoBuffer = BufferArray<U2>;
 
 struct ConvolutionPlug {
-    params: Arc<ConvolutionPlugParams>,
+    params: Arc<PluginParams>,
 
     graph: Box<dyn AudioUnit>,
 
@@ -29,7 +29,7 @@ impl Default for ConvolutionPlug {
         let graph = pass() | pass();
 
         Self {
-            params: Arc::new(ConvolutionPlugParams::default()),
+            params: Arc::new(PluginParams::default()),
 
             graph: Box::new(graph),
             input_buffer: BufferArray::<U2>::new(),
