@@ -1,9 +1,14 @@
-use convolution::{fft_convolver::FFTConvolver, Convolution};
-use nih_plug::{params, prelude::*, util::db_to_gain};
+mod dsp;
+mod util;
 
-use fundsp::{hacker32::*, numeric_array::generic_array::GenericArray};
-
+use fundsp::hacker32::*;
+use nih_plug::{prelude::*, util::db_to_gain};
 use std::sync::Arc;
+
+use dsp::{convolver, dry_wet};
+use util::{read_samples_from_file, rms_normalize};
+
+use crate::dsp::gain;
 
 type StereoBuffer = BufferArray<U2>;
 
@@ -52,10 +57,10 @@ impl Default for ConvolutionPlugParams {
             // as decibels is easier to work with, but requires a conversion for every sample.
             gain: FloatParam::new(
                 "Gain",
-                util::db_to_gain(0.0),
+                db_to_gain(0.0),
                 FloatRange::Skewed {
-                    min: util::db_to_gain(-30.0),
-                    max: util::db_to_gain(30.0),
+                    min: db_to_gain(-30.0),
+                    max: db_to_gain(30.0),
                     // This makes the range appear as if it was linear when displaying the values as
                     // decibels
                     factor: FloatRange::gain_skew_factor(-30.0, 30.0),
@@ -126,16 +131,19 @@ impl Plugin for ConvolutionPlug {
         _buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
-        // let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
-        let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";
+        let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
+        // let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";
 
         let mut ir_samples = read_samples_from_file(path);
         rms_normalize(&mut ir_samples, -48.0);
 
-        let wet = ConvolverNode::new(&ir_samples) | ConvolverNode::new(&ir_samples);
+        let wet = convolver(&ir_samples) | convolver(&ir_samples);
         let dry = multipass::<U2>();
 
-        let graph = (0.5 * dry) & (0.5 * wet);
+        let p = &self.params;
+
+        let graph = ((wet * dry_wet::<U2>(p)) & (dry * (1.0 - dry_wet::<U2>(p)))) * gain::<U2>(p);
+
         self.graph = Box::new(graph);
 
         nih_log!("Initialized Convolution");
@@ -208,126 +216,3 @@ impl Vst3Plugin for ConvolutionPlug {
 
 nih_export_clap!(ConvolutionPlug);
 nih_export_vst3!(ConvolutionPlug);
-
-fn read_samples_from_file(path: &str) -> Vec<f32> {
-    let mut reader = hound::WavReader::open(path).unwrap();
-
-    let bit_depth = reader.spec().bits_per_sample as u32;
-
-    let max_amplitude = 2_i32.pow(bit_depth - 1) as f32;
-    reader
-        .samples::<i32>()
-        .map(|s| s.unwrap_or(0) as f32 / max_amplitude)
-        .collect()
-}
-
-// first attempt was peak normalization, didn't work very well for a variety of irs
-// https://hackaudio.com/tutorial-courses/learn-audio-programming-table-of-contents/digital-signal-processing/amplitude/rms-normalization/
-
-fn rms_normalize(input: &mut [f32], level: f32) {
-    let n = input.len() as f32;
-    let r = db_to_gain(level);
-
-    let squared_sum = input.iter().map(|x| x * x).sum::<f32>();
-
-    let a = ((n * r.powi(2)) / squared_sum).sqrt();
-    println!("Normalizing by factor: {}", a);
-
-    input.iter_mut().for_each(|x| *x *= a);
-}
-
-#[derive(Clone)]
-struct ConvolverNode {
-    convolver: FFTConvolver,
-}
-
-impl ConvolverNode {
-    pub fn new(samples: &[f32]) -> An<Self> {
-        let convolver =
-            convolution::fft_convolver::FFTConvolver::init(samples, MAX_BUFFER_SIZE, samples.len());
-
-        An(Self { convolver })
-    }
-}
-
-impl AudioNode for ConvolverNode {
-    // TODO: fix this
-    const ID: u64 = 0;
-
-    type Inputs = U1;
-    type Outputs = U1;
-
-    fn tick(&mut self, input: &Frame<f32, Self::Inputs>) -> Frame<f32, Self::Outputs> {
-        let mut output = [0.0];
-        self.convolver.process(input, &mut output);
-        Frame::new(GenericArray::from(output))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::{f32::consts::PI, fs::remove_file};
-
-    use nih_plug::util::gain_to_db;
-
-    use crate::rms_normalize;
-
-    use super::read_samples_from_file;
-
-    // test function
-    // this writes a file AND returns an array of the samples
-    // then the read function can be tested by comparing samples
-    fn write_test_file(name: &str) -> Vec<f32> {
-        let spec = hound::WavSpec {
-            channels: 1,
-            sample_rate: 44100,
-            bits_per_sample: 16,
-            sample_format: hound::SampleFormat::Int,
-        };
-
-        // better to keep this short - easier to inspect for testing
-        let len = 100;
-
-        let mut writer = hound::WavWriter::create(name, spec).unwrap();
-        let mut samples = Vec::new();
-
-        for t in (0..len).map(|x| x as f32 / (len as f32)) {
-            let sample = (t * 440.0 * 2.0 * PI).sin();
-            samples.push(sample);
-            let amplitude = i16::MAX as f32;
-            writer.write_sample((sample * amplitude) as i16).unwrap();
-        }
-        writer.finalize().unwrap();
-
-        samples
-    }
-
-    // TODO: make this test pass without manually checking
-    #[test]
-    fn test_read_write() {
-        // TODO: use better name and proper temp directory
-        let file_name = "sine.wav";
-
-        let samples = write_test_file(file_name);
-        let other = read_samples_from_file(file_name);
-
-        // this might be horrible
-        remove_file(file_name).unwrap();
-
-        assert_eq!(samples, other);
-    }
-
-    // TODO: make this stupid test pass
-    #[test]
-    fn test_normalize() {
-        let mut samples = read_samples_from_file("test_irs\\vsmall.wav");
-
-        let desired_rms = -18.0f32;
-        rms_normalize(&mut samples, desired_rms);
-
-        let n = samples.len() as f32;
-        let new_rms = (samples.iter().map(|x| x.powi(2)).sum::<f32>() / n).sqrt();
-
-        assert_eq!(gain_to_db(new_rms), desired_rms);
-    }
-}
