@@ -1,13 +1,8 @@
 use convolution::{fft_convolver::FFTConvolver, Convolution};
 
-use fundsp::{
-    hacker32::*,
-    numeric_array::generic_array::GenericArray,
-    typenum::{UInt, UTerm, B0, B1},
-};
-use nih_plug::params::Params;
+use fundsp::{hacker32::*, numeric_array::generic_array::GenericArray};
 
-use std::{marker::PhantomData, sync::Arc};
+use std::sync::Arc;
 
 use crate::ConvolutionPlugParams;
 
@@ -85,5 +80,20 @@ pub fn gain<N: Size<f32>>(params: &Arc<ConvolutionPlugParams>) -> Net {
 
     Net::wrap(Box::new(
         envelope(move |_| clone.gain.value()) >> split::<N>(),
+    ))
+}
+
+pub fn lowpass_cutoff<N: Size<f32>>(params: &Arc<ConvolutionPlugParams>) -> Net {
+    let clone = params.clone();
+
+    Net::wrap(Box::new(
+        envelope(move |_| clone.lowpass_cutoff.value()) >> split::<N>(),
+    ))
+}
+pub fn lowpass_q<N: Size<f32>>(params: &Arc<ConvolutionPlugParams>) -> Net {
+    let clone = params.clone();
+
+    Net::wrap(Box::new(
+        envelope(move |_| clone.lowpass_q.value()) >> split::<N>(),
     ))
 }

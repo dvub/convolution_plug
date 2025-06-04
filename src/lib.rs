@@ -8,7 +8,7 @@ use std::sync::Arc;
 use dsp::{convolver, dry_wet};
 use util::{read_samples_from_file, rms_normalize};
 
-use crate::dsp::gain;
+use crate::dsp::{gain, lowpass_cutoff};
 
 type StereoBuffer = BufferArray<U2>;
 
@@ -32,6 +32,12 @@ struct ConvolutionPlugParams {
 
     #[id = "drywet"]
     pub dry_wet: FloatParam,
+
+    #[id = "lowcutoff"]
+    pub lowpass_cutoff: FloatParam,
+
+    #[id = "lowcutq"]
+    pub lowpass_q: FloatParam,
 }
 
 impl Default for ConvolutionPlug {
@@ -79,6 +85,23 @@ impl Default for ConvolutionPlugParams {
             dry_wet: FloatParam::new("Dry/Wet", 0.5, FloatRange::Linear { min: 0.0, max: 1.0 })
                 .with_value_to_string(formatters::v2s_f32_percentage(2))
                 .with_unit("%"),
+
+            lowpass_cutoff: FloatParam::new(
+                "Lowpass Cutoff",
+                11_000.0,
+                FloatRange::Linear {
+                    min: 10.0,
+                    max: 22_000.0,
+                },
+            ),
+            lowpass_q: FloatParam::new(
+                "Lowpass Cutoff",
+                5.0,
+                FloatRange::Linear {
+                    min: 1.0,
+                    max: 10.0,
+                },
+            ),
         }
     }
 }
@@ -137,12 +160,17 @@ impl Plugin for ConvolutionPlug {
         let mut ir_samples = read_samples_from_file(path);
         rms_normalize(&mut ir_samples, -48.0);
 
-        let wet = convolver(&ir_samples) | convolver(&ir_samples);
-        let dry = multipass::<U2>();
-
         let p = &self.params;
 
-        let graph = ((wet * dry_wet::<U2>(p)) & (dry * (1.0 - dry_wet::<U2>(p)))) * gain::<U2>(p);
+        let mono_wet = (convolver(&ir_samples) | lowpass_cutoff::<U1>(p) | dsp::lowpass_q::<U1>(p))
+            >> lowpass();
+
+        let wet = mono_wet * dry_wet::<U1>(p);
+        let dry = pass() * (1.0 - dry_wet::<U1>(p));
+
+        let mixed = wet & dry;
+
+        let graph = mixed >> split::<U2>();
 
         self.graph = Box::new(graph);
 
