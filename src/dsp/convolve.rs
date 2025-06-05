@@ -1,10 +1,19 @@
-use convolution::{fft_convolver::FFTConvolver, Convolution};
+use convolution::{
+    crossfade_convolver::CrossfadeConvolver, fft_convolver::FFTConvolver, Convolution,
+};
 
-use fundsp::{hacker32::*, numeric_array::generic_array::GenericArray};
+use fundsp::hacker32::*;
 
+/// This node is a light wrapper over the [fft-convolution](https://github.com/holoplot/fft-convolution) crate.
 #[derive(Clone)]
 pub struct ConvolverNode {
-    convolver: FFTConvolver,
+    convolver: CrossfadeConvolver<FFTConvolver>,
+}
+
+impl ConvolverNode {
+    pub fn update(&mut self, new_response: &[f32]) {
+        self.convolver.update(new_response);
+    }
 }
 
 // TODO:
@@ -19,7 +28,7 @@ impl AudioNode for ConvolverNode {
     fn tick(&mut self, input: &Frame<f32, Self::Inputs>) -> Frame<f32, Self::Outputs> {
         let mut output = [0.0];
         self.convolver.process(input, &mut output);
-        Frame::new(GenericArray::from(output))
+        Frame::from(output)
     }
 }
 
@@ -27,5 +36,10 @@ impl AudioNode for ConvolverNode {
 pub fn convolver(samples: &[f32]) -> An<ConvolverNode> {
     let convolver = FFTConvolver::init(samples, MAX_BUFFER_SIZE, samples.len());
 
-    An(ConvolverNode { convolver })
+    An(ConvolverNode {
+        // TODO:
+        // choose correct buffer length
+        // choose correct crossfade_samples
+        convolver: CrossfadeConvolver::new(convolver, samples.len(), MAX_BUFFER_SIZE, 1000),
+    })
 }

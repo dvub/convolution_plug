@@ -7,6 +7,12 @@ use std::{marker::PhantomData, sync::Arc};
 pub trait Accessor<P>: Fn(&Arc<P>) -> f32 + Clone + Send + Sync {}
 impl<F, P> Accessor<P> for F where F: Fn(&Arc<P>) -> f32 + Clone + Send + Sync {}
 
+/// An instance of this node represents an `nih-plug` parameter.
+/// Every `tick()`, this node will run the provided closure and output its return value.
+/// - 0 inputs.
+/// - `N` outputs (allows using params with `N` signals).
+///
+/// The provided closure (the accessor) should return a parameter's value directly, or the next value from a smoother.
 pub struct ParamNode<P, F, N>
 where
     P: Params,
@@ -18,6 +24,7 @@ where
     accessor: F,
 }
 
+// manually implement CLone here because rust complains otherwise
 impl<P, F, N> Clone for ParamNode<P, F, N>
 where
     P: Params,
@@ -49,7 +56,7 @@ where
     type Inputs = U0;
     type Outputs = N;
 
-    // TODO: is process() necessary??
+    // this does not process samples, so process() is not needed
 }
 
 impl<P, F, N> ParamNode<P, F, N>
@@ -58,7 +65,9 @@ where
     F: Accessor<P>,
     N: Size<f32>,
 {
-    fn new(params: &Arc<P>, accessor: F) -> An<Self> {
+    /// Create a new `ParamNode`.
+    /// This can be wrapped by functions to return a given parameter with an opcode, similarly to FunDSP's API.
+    pub fn new(params: &Arc<P>, accessor: F) -> An<Self> {
         An(Self {
             _marker: PhantomData,
             params: params.clone(),
