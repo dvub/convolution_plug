@@ -1,36 +1,43 @@
 use fundsp::hacker32::*;
-
-use std::{marker::PhantomData, sync::Arc};
+use nih_plug::params::Params;
 
 use crate::params::PluginParams;
+use std::{marker::PhantomData, sync::Arc};
 
 // TODO:
-// figure out some way to make params generic
+// should the given accessor return the smoother or simply the value itself?
+// TODO: should i use smoothers???
 
-#[derive(Clone)]
-pub struct ParamNode<F, N: Size<f32>> {
+pub struct ParamNode<P, F, N>
+where
+    P: Params,
+    F: Fn(&Arc<P>) -> f32,
+    N: Size<f32>,
+{
     _marker: PhantomData<N>,
-    params: Arc<PluginParams>,
+    params: Arc<P>,
     accessor: F,
 }
 
-impl<F, N> ParamNode<F, N>
+impl<P, F, N> Clone for ParamNode<P, F, N>
 where
-    F: Fn(&PluginParams) -> f32 + Clone + Send + Sync,
+    P: Params,
+    F: Fn(&Arc<P>) -> f32 + Clone,
     N: Size<f32>,
 {
-    fn new(params: &Arc<PluginParams>, accessor: F) -> An<Self> {
-        An(Self {
+    fn clone(&self) -> Self {
+        Self {
+            params: self.params.clone(),
+            accessor: self.accessor.clone(),
             _marker: PhantomData,
-            params: params.clone(),
-            accessor,
-        })
+        }
     }
 }
 
-impl<F, N> AudioNode for ParamNode<F, N>
+impl<P, F, N> AudioNode for ParamNode<P, F, N>
 where
-    F: Fn(&PluginParams) -> f32 + Clone + Send + Sync,
+    P: Params + Send + Sync,
+    F: Fn(&Arc<P>) -> f32 + Clone + Send + Sync,
     N: Size<f32>,
 {
     fn tick(&mut self, _: &Frame<f32, Self::Inputs>) -> Frame<f32, Self::Outputs> {
@@ -46,26 +53,44 @@ where
     // TODO: is process() necessary??
 }
 
-pub trait AccessorFn: Fn(&PluginParams) -> f32 + Clone + Send + Sync {}
-impl<F> AccessorFn for F where F: Fn(&PluginParams) -> f32 + Clone + Send + Sync {}
-
-pub fn dry_wet<N: Size<f32>>(params: &Arc<PluginParams>) -> An<ParamNode<impl AccessorFn, N>> {
-    ParamNode::new(params, |p| p.dry_wet.value())
+impl<P, F, N> ParamNode<P, F, N>
+where
+    P: Params,
+    F: Fn(&Arc<P>) -> f32 + Clone + Send + Sync,
+    N: Size<f32>,
+{
+    fn new(params: &Arc<P>, accessor: F) -> An<Self> {
+        An(Self {
+            _marker: PhantomData,
+            params: params.clone(),
+            accessor,
+        })
+    }
 }
 
-pub fn gain<N: Size<f32>>(params: &Arc<PluginParams>) -> An<ParamNode<impl AccessorFn, N>> {
-    ParamNode::new(params, |p| p.gain.value())
+pub fn gain<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Fn(&Arc<PluginParams>) -> f32 + Clone + Send + Sync, N>> {
+    ParamNode::new(p, |p| p.gain.value())
+}
+pub fn dry_wet<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Fn(&Arc<PluginParams>) -> f32 + Clone + Send + Sync, N>> {
+    ParamNode::new(p, |p| p.dry_wet.value())
+}
+pub fn lp_cutoff<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Fn(&Arc<PluginParams>) -> f32 + Clone + Send + Sync, N>> {
+    ParamNode::new(p, |p| p.lowpass_cutoff.value())
 }
 
-// named lp (instead of lowpass) so as to not collide with fundsp
-pub fn lp_cutoff<N: Size<f32>>(params: &Arc<PluginParams>) -> An<ParamNode<impl AccessorFn, N>> {
-    ParamNode::new(params, |p| p.lowpass_cutoff.value())
+pub fn lp_q<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Fn(&Arc<PluginParams>) -> f32 + Clone + Send + Sync, N>> {
+    ParamNode::new(p, |p| p.lowpass_q.value())
 }
-
-pub fn lp_q<N: Size<f32>>(params: &Arc<PluginParams>) -> An<ParamNode<impl AccessorFn, N>> {
-    ParamNode::new(params, |p| p.lowpass_q.value())
-}
-
-pub fn lp_enabled<N: Size<f32>>(params: &Arc<PluginParams>) -> An<ParamNode<impl AccessorFn, N>> {
-    ParamNode::new(params, |p| p.lowpass_enabled.value() as i32 as f32)
+pub fn lp_enabled<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Fn(&Arc<PluginParams>) -> f32 + Clone + Send + Sync, N>> {
+    ParamNode::new(p, |p| p.lowpass_enabled.value() as i32 as f32)
 }
