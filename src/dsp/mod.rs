@@ -13,7 +13,7 @@ use crate::{
     params::PluginParams,
     util::{read_samples_from_file, rms_normalize},
 };
-
+// yep this is the big thing
 pub fn build_graph(p: &Arc<PluginParams>) -> Box<dyn AudioUnit> {
     let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
     // let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";

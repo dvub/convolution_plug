@@ -1,5 +1,9 @@
 use nih_plug::{prelude::*, util::db_to_gain};
 
+// TODO:
+// add highpass and some sort of middle thing for EQ
+// other params include... idk
+
 #[derive(Params)]
 pub struct PluginParams {
     /// The parameter's ID is used to identify the parameter in the wrappred plugin API. As long as

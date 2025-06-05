@@ -7,6 +7,8 @@ pub struct ConvolverNode {
     convolver: FFTConvolver,
 }
 
+// TODO:
+// implement other features from convolver such as crossfading etc
 impl AudioNode for ConvolverNode {
     // TODO: fix this
     const ID: u64 = 0;
@@ -20,9 +22,10 @@ impl AudioNode for ConvolverNode {
         Frame::new(GenericArray::from(output))
     }
 }
+
+// opcode
 pub fn convolver(samples: &[f32]) -> An<ConvolverNode> {
-    let convolver =
-        convolution::fft_convolver::FFTConvolver::init(samples, MAX_BUFFER_SIZE, samples.len());
+    let convolver = FFTConvolver::init(samples, MAX_BUFFER_SIZE, samples.len());
 
     An(ConvolverNode { convolver })
 }
