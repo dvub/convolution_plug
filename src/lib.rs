@@ -6,12 +6,9 @@ use fundsp::hacker32::*;
 use nih_plug::prelude::*;
 use std::sync::Arc;
 
-use dsp::convolver;
-use dsp::param_nodes::*;
-
-use util::{read_samples_from_file, rms_normalize};
-
 use params::PluginParams;
+
+use crate::dsp::build_graph;
 
 type StereoBuffer = BufferArray<U2>;
 
@@ -86,28 +83,8 @@ impl Plugin for ConvolutionPlug {
         _buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
-        let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
-        // let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";
-
-        let mut ir_samples = read_samples_from_file(path);
-        rms_normalize(&mut ir_samples, -48.0);
-
-        let p = &self.params;
-
-        let lp = (lp_enabled(p)
-            * ((multipass::<U1>() | lp_cutoff::<U1>(p) | lp_q::<U1>(p)) >> lowpass()))
-            & ((1.0 - lp_enabled(p)) * multipass::<U1>());
-
-        let mono_wet = convolver(&ir_samples) >> lp;
-
-        let wet = mono_wet * dry_wet(p);
-        let dry = pass() * (1.0 - dry_wet(p));
-
-        let mixed = wet & dry;
-
-        let graph = (mixed >> split::<U2>()) * gain(p);
-
-        self.graph = Box::new(graph);
+        // IMPORTANT: BUILD GRAPH
+        self.graph = build_graph(&self.params);
 
         nih_log!("Initialized Convolution");
 
