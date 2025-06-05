@@ -4,14 +4,13 @@ use nih_plug::params::Params;
 use crate::params::PluginParams;
 use std::{marker::PhantomData, sync::Arc};
 
-// TODO:
-// should the given accessor return the smoother or simply the value itself?
-// TODO: should i use smoothers???
+pub trait Accessor<P>: Fn(&Arc<P>) -> f32 + Clone + Send + Sync {}
+impl<F, P> Accessor<P> for F where F: Fn(&Arc<P>) -> f32 + Clone + Send + Sync {}
 
 pub struct ParamNode<P, F, N>
 where
     P: Params,
-    F: Fn(&Arc<P>) -> f32,
+    F: Accessor<P>,
     N: Size<f32>,
 {
     _marker: PhantomData<N>,
@@ -22,7 +21,7 @@ where
 impl<P, F, N> Clone for ParamNode<P, F, N>
 where
     P: Params,
-    F: Fn(&Arc<P>) -> f32 + Clone,
+    F: Accessor<P>,
     N: Size<f32>,
 {
     fn clone(&self) -> Self {
@@ -37,7 +36,7 @@ where
 impl<P, F, N> AudioNode for ParamNode<P, F, N>
 where
     P: Params + Send + Sync,
-    F: Fn(&Arc<P>) -> f32 + Clone + Send + Sync,
+    F: Accessor<P>,
     N: Size<f32>,
 {
     fn tick(&mut self, _: &Frame<f32, Self::Inputs>) -> Frame<f32, Self::Outputs> {
@@ -56,7 +55,7 @@ where
 impl<P, F, N> ParamNode<P, F, N>
 where
     P: Params,
-    F: Fn(&Arc<P>) -> f32 + Clone + Send + Sync,
+    F: Accessor<P>,
     N: Size<f32>,
 {
     fn new(params: &Arc<P>, accessor: F) -> An<Self> {
@@ -67,30 +66,32 @@ where
         })
     }
 }
+// NOTE:
+// if we want to do smoothing stuff, its easy to implement in the accessor function
 
 pub fn gain<N: Size<f32>>(
     p: &Arc<PluginParams>,
-) -> An<ParamNode<PluginParams, impl Fn(&Arc<PluginParams>) -> f32 + Clone + Send + Sync, N>> {
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
     ParamNode::new(p, |p| p.gain.value())
 }
 pub fn dry_wet<N: Size<f32>>(
     p: &Arc<PluginParams>,
-) -> An<ParamNode<PluginParams, impl Fn(&Arc<PluginParams>) -> f32 + Clone + Send + Sync, N>> {
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
     ParamNode::new(p, |p| p.dry_wet.value())
 }
 pub fn lp_cutoff<N: Size<f32>>(
     p: &Arc<PluginParams>,
-) -> An<ParamNode<PluginParams, impl Fn(&Arc<PluginParams>) -> f32 + Clone + Send + Sync, N>> {
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
     ParamNode::new(p, |p| p.lowpass_cutoff.value())
 }
 
 pub fn lp_q<N: Size<f32>>(
     p: &Arc<PluginParams>,
-) -> An<ParamNode<PluginParams, impl Fn(&Arc<PluginParams>) -> f32 + Clone + Send + Sync, N>> {
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
     ParamNode::new(p, |p| p.lowpass_q.value())
 }
 pub fn lp_enabled<N: Size<f32>>(
     p: &Arc<PluginParams>,
-) -> An<ParamNode<PluginParams, impl Fn(&Arc<PluginParams>) -> f32 + Clone + Send + Sync, N>> {
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
     ParamNode::new(p, |p| p.lowpass_enabled.value() as i32 as f32)
 }
