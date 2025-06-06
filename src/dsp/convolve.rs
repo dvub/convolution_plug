@@ -1,23 +1,15 @@
-use convolution::{
-    crossfade_convolver::CrossfadeConvolver, fft_convolver::FFTConvolver, Convolution,
-};
+use convolution::{fft_convolver::FFTConvolver, Convolution};
 
 use fundsp::hacker32::*;
 
 /// This node is a light wrapper over the [fft-convolution](https://github.com/holoplot/fft-convolution) crate.
+/// ### Note
+/// Switching out an IR can be done with FunDSP's real-time features, such as swapping nodes within a `Net`.
 #[derive(Clone)]
 pub struct ConvolverNode {
-    convolver: CrossfadeConvolver<FFTConvolver>,
+    convolver: FFTConvolver,
 }
 
-impl ConvolverNode {
-    pub fn update(&mut self, new_response: &[f32]) {
-        self.convolver.update(new_response);
-    }
-}
-
-// TODO:
-// implement other features from convolver such as crossfading etc
 impl AudioNode for ConvolverNode {
     // TODO: fix this
     const ID: u64 = 0;
@@ -36,10 +28,5 @@ impl AudioNode for ConvolverNode {
 pub fn convolver(samples: &[f32]) -> An<ConvolverNode> {
     let convolver = FFTConvolver::init(samples, MAX_BUFFER_SIZE, samples.len());
 
-    An(ConvolverNode {
-        // TODO:
-        // choose correct buffer length
-        // choose correct crossfade_samples
-        convolver: CrossfadeConvolver::new(convolver, samples.len(), MAX_BUFFER_SIZE, 1000),
-    })
+    An(ConvolverNode { convolver })
 }

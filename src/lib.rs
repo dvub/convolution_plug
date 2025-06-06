@@ -15,6 +15,9 @@ type StereoBuffer = BufferArray<U2>;
 struct ConvolutionPlug {
     params: Arc<PluginParams>,
 
+    net_backend: NetBackend,
+    net_frontend: Net,
+
     graph: Box<dyn AudioUnit>,
 
     input_buffer: StereoBuffer,
@@ -22,11 +25,17 @@ struct ConvolutionPlug {
 }
 impl Default for ConvolutionPlug {
     fn default() -> Self {
+        let mut default_net = Net::new(0, 0);
+        let default_backend = default_net.backend();
+
         // TODO: how else can you make this as cheap as possible?
         let graph = pass() | pass();
 
         Self {
             params: Arc::new(PluginParams::default()),
+
+            net_backend: default_backend,
+            net_frontend: default_net,
 
             graph: Box::new(graph),
             input_buffer: BufferArray::<U2>::new(),
@@ -83,6 +92,15 @@ impl Plugin for ConvolutionPlug {
         _buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
+        let mut net = Net::new(2, 2);
+        let noise_id = net.chain(Box::new(pink()));
+        // Create the backend.
+        let mut backend = net.backend();
+        // The backend is now ready to be sent into an audio thread.
+        // We can make changes to the frontend and then commit them to the backend.
+        net.replace(noise_id, Box::new(brown()));
+        net.commit();
+
         // IMPORTANT: BUILD GRAPH
         self.graph = build_graph(&self.params);
 
@@ -117,7 +135,7 @@ impl Plugin for ConvolutionPlug {
                 }
             }
             // actually do block processing
-            self.graph.process(
+            self.net_backend.process(
                 block.samples(),
                 &self.input_buffer.buffer_ref(),
                 &mut self.output_buffer.buffer_mut(),

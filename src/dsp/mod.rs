@@ -25,7 +25,11 @@ pub fn build_graph(p: &Arc<PluginParams>) -> Box<dyn AudioUnit> {
         * ((multipass::<U1>() | lp_cutoff::<U1>(p) | lp_q::<U1>(p)) >> lowpass()))
         & ((1.0 - lp_enabled(p)) * multipass::<U1>());
 
+    let mut net = Net::new(2, 2);
+    let convolver_id = net.chain(Box::new(convolver(&ir_samples)));
+    net.connect(source, source_port, target, target_port);
     let fuhhh = convolver(&ir_samples);
+
     let mono_wet = (fuhhh) >> lp;
 
     let wet = mono_wet * dry_wet(p);
