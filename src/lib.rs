@@ -8,7 +8,8 @@ use std::sync::Arc;
 
 use params::PluginParams;
 
-use crate::dsp::build_graph;
+use dsp::build_graph;
+use util::{read_samples_from_file, rms_normalize};
 
 type StereoBuffer = BufferArray<U2>;
 
@@ -86,8 +87,14 @@ impl Plugin for ConvolutionPlug {
         _buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
+        let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
+        // let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";
+
+        let mut ir_samples = read_samples_from_file(path);
+        rms_normalize(&mut ir_samples, -48.0);
+
         // IMPORTANT: BUILD GRAPH
-        self.net = build_graph(&self.params);
+        self.net = build_graph(&self.params, &ir_samples);
         self.net_backend = self.net.backend();
 
         nih_log!("Initialized Convolution");

@@ -9,18 +9,9 @@ use {
     param_nodes::{dry_wet, gain, lp_cutoff, lp_enabled, lp_q},
 };
 
-use crate::{
-    params::PluginParams,
-    util::{read_samples_from_file, rms_normalize},
-};
+use crate::params::PluginParams;
 // yep this is the big thing
-pub fn build_graph(p: &Arc<PluginParams>) -> Net {
-    let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
-    // let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";
-
-    let mut ir_samples = read_samples_from_file(path);
-    rms_normalize(&mut ir_samples, -48.0);
-
+pub fn build_graph(p: &Arc<PluginParams>, ir_samples: &[f32]) -> Net {
     let lp = (lp_enabled(p)
         * ((multipass::<U1>() | lp_cutoff::<U1>(p) | lp_q::<U1>(p)) >> lowpass()))
         & ((1.0 - lp_enabled(p)) * multipass::<U1>());
