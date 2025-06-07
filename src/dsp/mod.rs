@@ -2,7 +2,7 @@ mod convolve;
 pub mod param_nodes;
 
 use fundsp::hacker32::*;
-use std::{any::Any, sync::Arc};
+use std::sync::Arc;
 
 use {
     convolve::convolver,
@@ -14,9 +14,9 @@ use crate::{
     util::{read_samples_from_file, rms_normalize},
 };
 // yep this is the big thing
-pub fn build_graph(p: &Arc<PluginParams>) -> Box<dyn AudioUnit> {
-    // let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
-    let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";
+pub fn build_graph(p: &Arc<PluginParams>) -> Net {
+    let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
+    // let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";
 
     let mut ir_samples = read_samples_from_file(path);
     rms_normalize(&mut ir_samples, -48.0);
@@ -26,11 +26,8 @@ pub fn build_graph(p: &Arc<PluginParams>) -> Box<dyn AudioUnit> {
         & ((1.0 - lp_enabled(p)) * multipass::<U1>());
 
     let mut net = Net::new(2, 2);
-    let convolver_id = net.chain(Box::new(convolver(&ir_samples)));
-    net.connect(source, source_port, target, target_port);
-    let fuhhh = convolver(&ir_samples);
 
-    let mono_wet = (fuhhh) >> lp;
+    let mono_wet = convolver(&ir_samples) >> lp;
 
     let wet = mono_wet * dry_wet(p);
     let dry = pass() * (1.0 - dry_wet(p));
@@ -39,5 +36,10 @@ pub fn build_graph(p: &Arc<PluginParams>) -> Box<dyn AudioUnit> {
 
     let graph = (mixed >> split::<U2>()) * gain(p);
 
-    Box::new(graph)
+    let graph_id = net.push(Box::new(graph));
+    net.pipe_input(graph_id);
+    net.pipe_output(graph_id);
+
+    net.check();
+    net
 }
