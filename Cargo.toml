@@ -14,16 +14,25 @@ members = ["xtask"]
 crate-type = ["cdylib"]
 
 [dependencies]
-
-fundsp = "0.20.0"
 hound = "3.5.1"
 # Remove the `assert_process_allocs` feature to allow allocations on the audio
 # thread in debug builds.
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = [
     "assert_process_allocs",
 ] }
-
+# DSP
+fundsp = "0.20.0"
 convolution = { git = "https://github.com/holoplot/fft-convolution.git" }
+
+
+# GUI
+nih_plug_webview = { git = "https://github.com/dvub/nih-plug-webview.git" }
+
+# for embedding a bundled frontend
+mime_guess = "2.0.5"
+include_dir = "0.7.4"
+serde = "1.0.219"
+serde_json = "1.0.140"
 
 # Uncomment the below line to disable the on-by-default VST3 feature to remove
 # the GPL compatibility requirement

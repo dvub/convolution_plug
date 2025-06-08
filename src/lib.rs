@@ -1,4 +1,5 @@
 mod dsp;
+mod editor;
 mod params;
 mod util;
 
@@ -110,6 +111,11 @@ impl Plugin for ConvolutionPlug {
     fn reset(&mut self) {
         // Reset buffers and envelopes here. This can be called from the audio thread and may not
         // allocate. You can remove this function if you do not need it.
+    }
+
+    // we probably aren't going to use async executor
+    fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
+        Some(Box::new(editor::create_editor(&self.params)))
     }
 
     fn process(

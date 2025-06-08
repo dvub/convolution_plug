@@ -1,4 +1,5 @@
 use nih_plug::{prelude::*, util::db_to_gain};
+use serde::{ser::SerializeStruct, Serialize};
 
 // TODO:
 // add highpass and some sort of middle thing for EQ
@@ -146,5 +147,19 @@ impl Default for PluginParams {
                 },
             ),
         }
+    }
+}
+
+impl Serialize for PluginParams {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut state = serializer.serialize_struct("PluginParams", 2)?;
+
+        state.serialize_field("gain", &self.gain.value())?;
+        state.serialize_field("dry_wet", &self.dry_wet.value())?;
+
+        state.end()
     }
 }
