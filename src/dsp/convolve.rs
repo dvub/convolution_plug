@@ -6,11 +6,11 @@ use fundsp::hacker32::*;
 /// ### Note
 /// Switching out an IR can be done with FunDSP's real-time features, such as swapping nodes within a `Net`.
 #[derive(Clone)]
-pub struct ConvolverNode {
+pub struct Convolver {
     convolver: FFTConvolver,
 }
 
-impl AudioNode for ConvolverNode {
+impl AudioNode for Convolver {
     // TODO: fix this
     const ID: u64 = 0;
 
@@ -25,8 +25,8 @@ impl AudioNode for ConvolverNode {
 }
 
 // opcode
-pub fn convolver(samples: &[f32]) -> An<ConvolverNode> {
+pub fn convolver(samples: &[f32]) -> An<Convolver> {
     let convolver = FFTConvolver::init(samples, MAX_BUFFER_SIZE, samples.len());
 
-    An(ConvolverNode { convolver })
+    An(Convolver { convolver })
 }

@@ -16,14 +16,38 @@ pub struct PluginParams {
     #[id = "drywet"]
     pub dry_wet: FloatParam,
 
+    // --- LOWPASS ---
     #[id = "lowpass_enabled"]
     pub lowpass_enabled: BoolParam,
 
     #[id = "lowpass_cutoff"]
-    pub lowpass_cutoff: FloatParam,
+    pub lowpass_freq: FloatParam,
 
     #[id = "lowpass_q"]
     pub lowpass_q: FloatParam,
+
+    // --- BELL ---
+    #[id = "bell_enabled"]
+    pub bell_enabled: BoolParam,
+
+    #[id = "bell_freq"]
+    pub bell_freq: FloatParam,
+
+    #[id = "bell_q"]
+    pub bell_q: FloatParam,
+
+    #[id = "bell_gain"]
+    pub bell_gain: FloatParam,
+
+    // --- HIGHPASS ---
+    #[id = "highpass_enabled"]
+    pub highpass_enabled: BoolParam,
+
+    #[id = "highpass_freq"]
+    pub highpass_freq: FloatParam,
+
+    #[id = "highpass_q"]
+    pub highpass_q: FloatParam,
 }
 
 impl Default for PluginParams {
@@ -59,8 +83,8 @@ impl Default for PluginParams {
 
             lowpass_enabled: BoolParam::new("Lowpass Enabled", false),
 
-            lowpass_cutoff: FloatParam::new(
-                "Lowpass Cutoff",
+            lowpass_freq: FloatParam::new(
+                "Lowpass Frequency",
                 22_050.0,
                 FloatRange::Linear {
                     min: 10.0,
@@ -69,6 +93,52 @@ impl Default for PluginParams {
             ),
             lowpass_q: FloatParam::new(
                 "Lowpass Q",
+                0.1,
+                FloatRange::Linear {
+                    min: 0.1,
+                    max: 18.0,
+                },
+            ),
+
+            highpass_enabled: BoolParam::new("Highpass Enabled", false),
+
+            highpass_freq: FloatParam::new(
+                "Highpass Frequency",
+                22_050.0,
+                FloatRange::Linear {
+                    min: 10.0,
+                    max: 22_050.0,
+                },
+            ),
+            highpass_q: FloatParam::new(
+                "Highpass Q",
+                0.1,
+                FloatRange::Linear {
+                    min: 0.1,
+                    max: 18.0,
+                },
+            ),
+
+            bell_enabled: BoolParam::new("Bell Enabled", false),
+
+            bell_freq: FloatParam::new(
+                "Bell Frequency",
+                22_050.0,
+                FloatRange::Linear {
+                    min: 10.0,
+                    max: 22_050.0,
+                },
+            ),
+            bell_q: FloatParam::new(
+                "Bell Q",
+                0.1,
+                FloatRange::Linear {
+                    min: 0.1,
+                    max: 18.0,
+                },
+            ),
+            bell_gain: FloatParam::new(
+                "Bell Gain",
                 0.1,
                 FloatRange::Linear {
                     min: 0.1,

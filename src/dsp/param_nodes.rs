@@ -76,7 +76,7 @@ where
     }
 }
 // NOTE:
-// if we want to do smoothing stuff, its easy to implement in the accessor function
+// if we want to do param smoothing stuff, its easy to implement in the accessor function
 
 pub fn gain<N: Size<f32>>(
     p: &Arc<PluginParams>,
@@ -88,10 +88,13 @@ pub fn dry_wet<N: Size<f32>>(
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
     ParamNode::new(p, |p| p.dry_wet.value())
 }
-pub fn lp_cutoff<N: Size<f32>>(
+
+// wet EQ params
+
+pub fn lp_freq<N: Size<f32>>(
     p: &Arc<PluginParams>,
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
-    ParamNode::new(p, |p| p.lowpass_cutoff.value())
+    ParamNode::new(p, |p| p.lowpass_freq.value())
 }
 
 pub fn lp_q<N: Size<f32>>(
@@ -103,4 +106,46 @@ pub fn lp_enabled<N: Size<f32>>(
     p: &Arc<PluginParams>,
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
     ParamNode::new(p, |p| p.lowpass_enabled.value() as i32 as f32)
+}
+
+// highpass
+pub fn hp_enabled<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
+    ParamNode::new(p, |p| p.highpass_enabled.value() as i32 as f32)
+}
+
+pub fn hp_freq<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
+    ParamNode::new(p, |p| p.highpass_freq.value())
+}
+pub fn hp_q<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
+    ParamNode::new(p, |p| p.highpass_q.value())
+}
+
+// bell
+pub fn bell_enabled<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
+    ParamNode::new(p, |p| p.bell_enabled.value() as i32 as f32)
+}
+
+pub fn bell_freq<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
+    ParamNode::new(p, |p| p.bell_freq.value())
+}
+pub fn bell_q<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
+    ParamNode::new(p, |p| p.bell_q.value())
+}
+
+pub fn bell_gain<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
+    ParamNode::new(p, |p| p.bell_gain.value())
 }

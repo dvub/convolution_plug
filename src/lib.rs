@@ -11,30 +11,36 @@ use params::PluginParams;
 use dsp::build_graph;
 use util::{read_samples_from_file, rms_normalize};
 
+// this is kind of silly in retrospect
 type StereoBuffer = BufferArray<U2>;
 
+// TODO:
+// features:
+// - predelay
+// - decay / speed (something..) - maybe check convology
+// - reverse (for fun LOL)
+
+// - figure out whether to use shelves or passes
 struct ConvolutionPlug {
     params: Arc<PluginParams>,
 
-    net_backend: NetBackend,
-    net: Net,
+    graph: Box<dyn AudioUnit>,
+    slot_front: Slot,
 
     input_buffer: StereoBuffer,
     output_buffer: StereoBuffer,
 }
 impl Default for ConvolutionPlug {
     fn default() -> Self {
-        let mut default_net = Net::new(0, 0);
-        let default_backend = default_net.backend();
+        let graph = Box::new(pass());
+        let slot = Slot::new(Box::new(pass()));
 
         Self {
             params: Arc::new(PluginParams::default()),
-
-            net_backend: default_backend,
-            net: default_net,
-
-            input_buffer: BufferArray::<U2>::new(),
-            output_buffer: BufferArray::<U2>::new(),
+            graph,
+            slot_front: slot.0,
+            input_buffer: StereoBuffer::new(),
+            output_buffer: StereoBuffer::new(),
         }
     }
 }
@@ -94,8 +100,7 @@ impl Plugin for ConvolutionPlug {
         rms_normalize(&mut ir_samples, -48.0);
 
         // IMPORTANT: BUILD GRAPH
-        self.net = build_graph(&self.params, &ir_samples);
-        self.net_backend = self.net.backend();
+        (self.graph, self.slot_front) = build_graph(&self.params, &ir_samples);
 
         nih_log!("Initialized Convolution");
 
@@ -128,7 +133,7 @@ impl Plugin for ConvolutionPlug {
                 }
             }
             // actually do block processing
-            self.net_backend.process(
+            self.graph.process(
                 block.samples(),
                 &self.input_buffer.buffer_ref(),
                 &mut self.output_buffer.buffer_mut(),
