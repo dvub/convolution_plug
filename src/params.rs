@@ -1,53 +1,64 @@
 use nih_plug::{prelude::*, util::db_to_gain};
+
 use serde::{ser::SerializeStruct, Serialize};
+use ts_rs::TS;
 
 // TODO:
 // add highpass and some sort of middle thing for EQ
 // other params include... idk
 
-#[derive(Params)]
+#[derive(Params, TS, Debug)]
+#[ts(export)]
 pub struct PluginParams {
-    /// The parameter's ID is used to identify the parameter in the wrappred plugin API. As long as
-    /// these IDs remain constant, you can rename and reorder these fields as you wish. The
-    /// parameters are exposed to the host in the same order they were defined. In this case, this
-    /// gain parameter is stored as linear gain while the values are displayed in decibels.
     #[id = "gain"]
+    #[ts(type = "number")]
     pub gain: FloatParam,
 
     #[id = "drywet"]
+    #[ts(type = "number")]
     pub dry_wet: FloatParam,
 
     // --- LOWPASS ---
+    #[ts(type = "boolean")]
     #[id = "lowpass_enabled"]
     pub lowpass_enabled: BoolParam,
 
     #[id = "lowpass_cutoff"]
+    #[ts(type = "number")]
     pub lowpass_freq: FloatParam,
 
     #[id = "lowpass_q"]
+    #[ts(type = "number")]
     pub lowpass_q: FloatParam,
 
     // --- BELL ---
     #[id = "bell_enabled"]
+    #[ts(type = "boolean")]
     pub bell_enabled: BoolParam,
 
     #[id = "bell_freq"]
+    #[ts(type = "number")]
     pub bell_freq: FloatParam,
 
     #[id = "bell_q"]
+    #[ts(type = "number")]
     pub bell_q: FloatParam,
 
     #[id = "bell_gain"]
+    #[ts(type = "number")]
     pub bell_gain: FloatParam,
 
     // --- HIGHPASS ---
     #[id = "highpass_enabled"]
+    #[ts(type = "boolean")]
     pub highpass_enabled: BoolParam,
 
     #[id = "highpass_freq"]
+    #[ts(type = "number")]
     pub highpass_freq: FloatParam,
 
     #[id = "highpass_q"]
+    #[ts(type = "number")]
     pub highpass_q: FloatParam,
 }
 
@@ -155,10 +166,11 @@ impl Serialize for PluginParams {
     where
         S: serde::Serializer,
     {
-        let mut state = serializer.serialize_struct("PluginParams", 2)?;
+        let mut state = serializer.serialize_struct("PluginParams", 3)?;
 
         state.serialize_field("gain", &self.gain.value())?;
         state.serialize_field("dry_wet", &self.dry_wet.value())?;
+        state.serialize_field("lowpass_enabled", &self.lowpass_enabled.value())?;
 
         state.end()
     }

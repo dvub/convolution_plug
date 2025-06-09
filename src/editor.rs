@@ -66,6 +66,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
 
     editor = editor.with_event_loop(move |ctx, _setter, _window| {
         let x = &params;
+
         // println!("{}", x.gain.value());
         ctx.send_json(json!(**x))
             .expect("Error sending param struct to frontend");
