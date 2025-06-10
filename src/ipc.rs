@@ -23,21 +23,15 @@ pub enum Message {
 #[ts(export_to = "../convolution-gui/bindings/")]
 #[ts(export)]
 pub struct GUIParams {
-    pub gain: f32,
-    pub dry_wet: f32,
-    pub lowpass_enabled: bool,
-    pub lowpass_freq: f32,
-    pub lowpass_q: f32,
+    pub gain: Option<f32>,
+    pub dry_wet: Option<f32>,
 }
 
 impl From<&Arc<PluginParams>> for GUIParams {
     fn from(params: &Arc<PluginParams>) -> Self {
         GUIParams {
-            gain: params.gain.value(),
-            dry_wet: params.dry_wet.value(),
-            lowpass_enabled: params.lowpass_enabled.value(),
-            lowpass_freq: params.lowpass_freq.value(),
-            lowpass_q: params.lowpass_q.value(),
+            gain: Some(params.gain.value()),
+            dry_wet: Some(params.dry_wet.value()),
         }
     }
 }

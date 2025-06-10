@@ -70,7 +70,6 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
     editor = editor.with_event_loop(move |ctx, setter, _window| {
         let x = &params;
 
-
         // handle all incoming messages
         while let Ok(value) = ctx.next_event() {
             let result = serde_json::from_value::<Message>(value.clone())
@@ -80,11 +79,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                 Message::WindowOpened => x.editor_state.set_open(),
                 Message::WindowClosed => x.editor_state.set_closed(),
                 // pretty much the most important one
-                Message::ParameterUpdate(gui_params) => {
-                    setter.begin_set_parameter(&x.gain);
-                    setter.set_parameter(&x.gain, gui_params.gain);
-                    setter.end_set_parameter(&x.gain);
-                }
+                Message::ParameterUpdate(gui_params) => {}
                 // the GUI shouldn't send us draw data, maybe print something but otherwise don't care
                 Message::DrawData(_) => {
                     println!("Received draw data from the frontend! (this should not happen)")

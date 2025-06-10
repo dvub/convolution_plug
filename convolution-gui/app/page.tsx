@@ -15,16 +15,6 @@ export default function Home() {
 	const [parameters, setParameters] = useState<GUIParams>({
 		gain: 0,
 		dryWet: 0,
-		lowpassEnabled: false,
-		lowpassFreq: 0,
-		lowpassQ: 0,
-		/*bell_enabled: false,
-		bell_freq: 0,
-		bell_q: 0,
-		bell_gain: 0,
-		highpass_enabled: false,
-		highpass_freq: 0,
-		highpass_q: 0,*/
 	});
 
 	useEventDispatcher(messageBus);
