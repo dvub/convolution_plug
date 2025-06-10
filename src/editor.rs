@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
 use nih_plug_webview::{HTMLSource, WebViewEditor};
-use serde::Serialize;
-use serde_json::{json, Value};
 
-use crate::params::PluginParams;
+use serde_json::json;
+
+use crate::{
+    ipc::{GUIParams, Message},
+    params::PluginParams,
+};
 
 const EDITOR_SIZE: (u32, u32) = (600, 600);
 
@@ -64,11 +67,35 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
         };
     }*/
 
-    editor = editor.with_event_loop(move |ctx, _setter, _window| {
+    editor = editor.with_event_loop(move |ctx, setter, _window| {
         let x = &params;
 
-        // println!("{}", x.gain.value());
-        ctx.send_json(json!(**x))
+
+        // handle all incoming messages
+        while let Ok(value) = ctx.next_event() {
+            let result = serde_json::from_value::<Message>(value.clone())
+                .expect("Error reading message from GUI");
+
+            match result {
+                Message::WindowOpened => x.editor_state.set_open(),
+                Message::WindowClosed => x.editor_state.set_closed(),
+                // pretty much the most important one
+                Message::ParameterUpdate(gui_params) => {
+                    setter.begin_set_parameter(&x.gain);
+                    setter.set_parameter(&x.gain, gui_params.gain);
+                    setter.end_set_parameter(&x.gain);
+                }
+                // the GUI shouldn't send us draw data, maybe print something but otherwise don't care
+                Message::DrawData(_) => {
+                    println!("Received draw data from the frontend! (this should not happen)")
+                }
+            }
+        }
+
+        let gui_params = GUIParams::from(x);
+        let message = Message::ParameterUpdate(gui_params);
+
+        ctx.send_json(json!(message))
             .expect("Error sending param struct to frontend");
     });
 

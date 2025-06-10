@@ -1,9 +1,8 @@
+import { GUIParams } from '@/bindings/GUIParams';
 import { Dispatch, SetStateAction } from 'react';
 import { createContext } from 'react';
 
-import { PluginParams } from '../../bindings/PluginParams';
-
 export const GlobalParametersContext = createContext<{
-	parameters: PluginParams;
-	setParameters: Dispatch<SetStateAction<PluginParams>>;
+	parameters: GUIParams;
+	setParameters: Dispatch<SetStateAction<GUIParams>>;
 } | null>(null);

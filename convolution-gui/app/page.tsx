@@ -3,41 +3,55 @@
 import { MessageBus, MessageBusContext } from '@/contexts/MessageBusContext';
 import { useEventDispatcher } from '@/hooks/useEventDispatcher';
 import { useEffect, useState } from 'react';
-import { PluginParams } from '../../bindings/PluginParams';
+
 import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
+import { GUIParams } from '@/bindings/GUIParams';
+import { Message } from '@/bindings/Message';
+
+import { sendToPlugin } from '@/lib';
 
 export default function Home() {
-	console.log('Sanity check.');
-
 	const [messageBus] = useState(new MessageBus());
-	const [parameters, setParameters] = useState<PluginParams>({
+	const [parameters, setParameters] = useState<GUIParams>({
 		gain: 0,
-		dry_wet: 0,
-		lowpass_enabled: false,
-		lowpass_freq: 0,
-		lowpass_q: 0,
-		bell_enabled: false,
+		dryWet: 0,
+		lowpassEnabled: false,
+		lowpassFreq: 0,
+		lowpassQ: 0,
+		/*bell_enabled: false,
 		bell_freq: 0,
 		bell_q: 0,
 		bell_gain: 0,
 		highpass_enabled: false,
 		highpass_freq: 0,
-		highpass_q: 0,
+		highpass_q: 0,*/
 	});
 
 	useEventDispatcher(messageBus);
 
 	useEffect(() => {
-		const handlePluginMessage = (event: unknown) => {
+		sendToPlugin({ type: 'windowOpened' });
+
+		const handlePluginMessage = (event: Message) => {
+			switch (event.type) {
+				case 'parameterUpdate':
+					console.log(event.data);
+					setParameters(event.data);
+
+					break;
+			}
+
 			console.log(event);
 		};
 
 		const unsubscribe = messageBus.subscribe(handlePluginMessage);
 
 		return () => {
+			sendToPlugin({ type: 'windowClosed' });
+
 			unsubscribe();
 		};
-	}, [parameters, messageBus]);
+	}, []);
 
 	return (
 		<MessageBusContext.Provider value={messageBus}>

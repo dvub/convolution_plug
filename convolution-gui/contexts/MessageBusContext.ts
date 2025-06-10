@@ -1,6 +1,7 @@
+import { Message } from '@/bindings/Message';
 import { createContext } from 'react';
 
-type Callback = (message: unknown) => void;
+type Callback = (message: Message) => void;
 
 export class MessageBus {
 	private listeners: Set<Callback> = new Set();
@@ -15,7 +16,7 @@ export class MessageBus {
 		return () => this.listeners.delete(callback);
 	}
 
-	dispatch(message: unknown) {
+	dispatch(message: Message) {
 		this.listeners.forEach((callback) => callback(message));
 	}
 }

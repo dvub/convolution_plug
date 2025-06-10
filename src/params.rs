@@ -1,70 +1,60 @@
 use nih_plug::{prelude::*, util::db_to_gain};
 
-use serde::{ser::SerializeStruct, Serialize};
-use ts_rs::TS;
+use crate::ipc::EditorState;
 
 // TODO:
 // add highpass and some sort of middle thing for EQ
 // other params include... idk
 
-#[derive(Params, TS, Debug)]
-#[ts(export)]
+#[derive(Params, Debug)]
+
 pub struct PluginParams {
+    pub editor_state: EditorState,
+
     #[id = "gain"]
-    #[ts(type = "number")]
     pub gain: FloatParam,
 
     #[id = "drywet"]
-    #[ts(type = "number")]
     pub dry_wet: FloatParam,
 
     // --- LOWPASS ---
-    #[ts(type = "boolean")]
     #[id = "lowpass_enabled"]
     pub lowpass_enabled: BoolParam,
 
     #[id = "lowpass_cutoff"]
-    #[ts(type = "number")]
     pub lowpass_freq: FloatParam,
 
     #[id = "lowpass_q"]
-    #[ts(type = "number")]
     pub lowpass_q: FloatParam,
 
     // --- BELL ---
     #[id = "bell_enabled"]
-    #[ts(type = "boolean")]
     pub bell_enabled: BoolParam,
 
     #[id = "bell_freq"]
-    #[ts(type = "number")]
     pub bell_freq: FloatParam,
 
     #[id = "bell_q"]
-    #[ts(type = "number")]
     pub bell_q: FloatParam,
 
     #[id = "bell_gain"]
-    #[ts(type = "number")]
     pub bell_gain: FloatParam,
 
     // --- HIGHPASS ---
     #[id = "highpass_enabled"]
-    #[ts(type = "boolean")]
     pub highpass_enabled: BoolParam,
 
     #[id = "highpass_freq"]
-    #[ts(type = "number")]
     pub highpass_freq: FloatParam,
 
     #[id = "highpass_q"]
-    #[ts(type = "number")]
     pub highpass_q: FloatParam,
 }
 
 impl Default for PluginParams {
     fn default() -> Self {
         Self {
+            editor_state: EditorState::default(),
             // This gain is stored as linear gain. NIH-plug comes with useful conversion functions
             // to treat these kinds of parameters as if we were dealing with decibels. Storing this
             // as decibels is easier to work with, but requires a conversion for every sample.
@@ -158,20 +148,5 @@ impl Default for PluginParams {
                 },
             ),
         }
-    }
-}
-
-impl Serialize for PluginParams {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut state = serializer.serialize_struct("PluginParams", 3)?;
-
-        state.serialize_field("gain", &self.gain.value())?;
-        state.serialize_field("dry_wet", &self.dry_wet.value())?;
-        state.serialize_field("lowpass_enabled", &self.lowpass_enabled.value())?;
-
-        state.end()
     }
 }

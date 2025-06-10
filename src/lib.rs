@@ -3,6 +3,8 @@ mod editor;
 mod params;
 mod util;
 
+mod ipc;
+
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
 use std::sync::Arc;

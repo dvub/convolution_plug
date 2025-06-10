@@ -81,7 +81,10 @@ where
 pub fn gain<N: Size<f32>>(
     p: &Arc<PluginParams>,
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
-    ParamNode::new(p, |p| p.gain.value())
+    ParamNode::new(p, |p| {
+        println!("FROM GAIN: editor open? {}", p.editor_state.is_open());
+        p.gain.value()
+    })
 }
 pub fn dry_wet<N: Size<f32>>(
     p: &Arc<PluginParams>,

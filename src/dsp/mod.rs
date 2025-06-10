@@ -34,7 +34,7 @@ pub fn build_graph(p: &Arc<PluginParams>, ir_samples: &[f32]) -> (Box<dyn AudioU
 
     let mixed = wet & dry;
 
-    let graph = (mixed >> split::<U2>()) * gain(p);
+    let graph = ((mixed >> split::<U2>()) * gain(p));
 
     (Box::new(graph), slot_front)
 }
