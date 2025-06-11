@@ -12,29 +12,42 @@ use crate::params::PluginParams;
 #[serde(rename_all = "camelCase", tag = "type", content = "data")]
 #[ts(export_to = "../convolution-gui/bindings/")]
 #[ts(export)]
-pub enum Message {
+pub enum Message<T> {
     WindowOpened,
     WindowClosed,
-    ParameterUpdate(GUIParams),
+    ParameterUpdates(Vec<ParameterUpdate<T>>),
     DrawData(f32),
 }
 #[derive(Serialize, Deserialize, TS, Debug)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "../convolution-gui/bindings/")]
 #[ts(export)]
-pub struct GUIParams {
-    pub gain: Option<f32>,
-    pub dry_wet: Option<f32>,
+pub struct ParameterUpdate<T> {
+    paramter: Parameters,
+    value: T,
 }
 
-impl From<&Arc<PluginParams>> for GUIParams {
-    fn from(params: &Arc<PluginParams>) -> Self {
-        GUIParams {
-            gain: Some(params.gain.value()),
-            dry_wet: Some(params.dry_wet.value()),
-        }
-    }
+#[derive(Serialize, Deserialize, TS, Debug)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "../convolution-gui/bindings/")]
+#[ts(export)]
+// TODO: macro or something to automatically generate this
+enum Parameters {
+    Gain,
+    DryWet,
+    LowpassEnabled,
+    LowpassFreq,
+    LowpassQ,
+    BellEnabled,
+    BellFreq,
+    BellQ,
+    BellGain,
+    HighpassEnabled,
+    HighpassFreq,
+    HighpassQ,
 }
+
+/*
 
 // TODO:
 // move this to nih-plug-webview itself
@@ -58,3 +71,5 @@ impl EditorState {
         self.open.load(Ordering::Relaxed)
     }
 }
+
+*/

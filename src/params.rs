@@ -1,7 +1,5 @@
 use nih_plug::{prelude::*, util::db_to_gain};
 
-use crate::ipc::EditorState;
-
 // TODO:
 // add highpass and some sort of middle thing for EQ
 // other params include... idk
@@ -9,8 +7,6 @@ use crate::ipc::EditorState;
 #[derive(Params, Debug)]
 
 pub struct PluginParams {
-    pub editor_state: EditorState,
-
     #[id = "gain"]
     pub gain: FloatParam,
 
@@ -54,7 +50,6 @@ pub struct PluginParams {
 impl Default for PluginParams {
     fn default() -> Self {
         Self {
-            editor_state: EditorState::default(),
             // This gain is stored as linear gain. NIH-plug comes with useful conversion functions
             // to treat these kinds of parameters as if we were dealing with decibels. Storing this
             // as decibels is easier to work with, but requires a conversion for every sample.
