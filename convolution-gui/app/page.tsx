@@ -5,14 +5,14 @@ import { useEventDispatcher } from '@/hooks/useEventDispatcher';
 import { useEffect, useState } from 'react';
 
 import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
-import { GUIParams } from '@/bindings/GUIParams';
+
 import { Message } from '@/bindings/Message';
 
 import { sendToPlugin } from '@/lib';
 
 export default function Home() {
 	const [messageBus] = useState(new MessageBus());
-	const [parameters, setParameters] = useState<GUIParams>({
+	const [parameters, setParameters] = useState({
 		gain: 0,
 		dryWet: 0,
 	});
@@ -25,13 +25,8 @@ export default function Home() {
 		const handlePluginMessage = (event: Message) => {
 			switch (event.type) {
 				case 'parameterUpdate':
-					console.log(event.data);
-					setParameters(event.data);
-
 					break;
 			}
-
-			console.log(event);
 		};
 
 		const unsubscribe = messageBus.subscribe(handlePluginMessage);
@@ -49,6 +44,16 @@ export default function Home() {
 				value={{ parameters, setParameters }}
 			>
 				<h1>hello world</h1>
+				<button
+					onClick={() =>
+						sendToPlugin({
+							type: 'parameterUpdate',
+							data: { parameter: 'highpassEnabled', value: true },
+						})
+					}
+				>
+					BUTTON
+				</button>
 			</GlobalParametersContext.Provider>
 		</MessageBusContext.Provider>
 	);
