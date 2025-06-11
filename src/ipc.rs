@@ -3,6 +3,7 @@ use std::sync::{
     Arc,
 };
 
+use nih_plug::{params::Param, prelude::ParamSetter};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -12,64 +13,52 @@ use crate::params::PluginParams;
 #[serde(rename_all = "camelCase", tag = "type", content = "data")]
 #[ts(export_to = "../convolution-gui/bindings/")]
 #[ts(export)]
-pub enum Message<T> {
+pub enum Message {
     WindowOpened,
     WindowClosed,
-    ParameterUpdates(Vec<ParameterUpdate<T>>),
+    ParameterUpdate(ParameterUpdate),
     DrawData(f32),
 }
 #[derive(Serialize, Deserialize, TS, Debug)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", tag = "parameter", content = "value")]
 #[ts(export_to = "../convolution-gui/bindings/")]
 #[ts(export)]
-pub struct ParameterUpdate<T> {
-    paramter: Parameters,
-    value: T,
+pub enum ParameterUpdate {
+    Gain(f32),
+    DryWet(f32),
+    LowpassEnabled(bool),
+    LowpassFreq(f32),
+    LowpassQ(f32),
+    BellEnabled(bool),
+    BellFreq(f32),
+    BellQ(f32),
+    BellGain(f32),
+    HighpassEnabled(bool),
+    HighpassFreq(f32),
+    HighpassQ(f32),
 }
 
-#[derive(Serialize, Deserialize, TS, Debug)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "../convolution-gui/bindings/")]
-#[ts(export)]
-// TODO: macro or something to automatically generate this
-enum Parameters {
-    Gain,
-    DryWet,
-    LowpassEnabled,
-    LowpassFreq,
-    LowpassQ,
-    BellEnabled,
-    BellFreq,
-    BellQ,
-    BellGain,
-    HighpassEnabled,
-    HighpassFreq,
-    HighpassQ,
-}
-
-/*
-
-// TODO:
-// move this to nih-plug-webview itself
-// refer to nih plug vizia docs or something
-#[derive(Debug, Default)]
-pub struct EditorState {
-    open: AtomicBool,
-}
-impl EditorState {
-    // TODO:
-    // figure out corect Ordering
-    pub fn set_open(&self) {
-        self.open.store(true, Ordering::Relaxed);
-    }
-
-    pub fn set_closed(&self) {
-        self.open.store(false, Ordering::Relaxed);
-    }
-
-    pub fn is_open(&self) -> bool {
-        self.open.load(Ordering::Relaxed)
+impl ParameterUpdate {
+    pub fn set_plugin_param(&self, setter: &ParamSetter, params: &Arc<PluginParams>) {
+        match self {
+            ParameterUpdate::Gain(v) => set_param(setter, &params.gain, *v),
+            ParameterUpdate::DryWet(v) => set_param(setter, &params.dry_wet, *v),
+            ParameterUpdate::LowpassEnabled(v) => set_param(setter, &params.lowpass_enabled, *v),
+            ParameterUpdate::LowpassFreq(v) => set_param(setter, &params.lowpass_freq, *v),
+            ParameterUpdate::LowpassQ(v) => set_param(setter, &params.lowpass_q, *v),
+            ParameterUpdate::BellEnabled(v) => set_param(setter, &params.bell_enabled, *v),
+            ParameterUpdate::BellFreq(v) => set_param(setter, &params.bell_freq, *v),
+            ParameterUpdate::BellQ(v) => set_param(setter, &params.bell_q, *v),
+            ParameterUpdate::BellGain(v) => set_param(setter, &params.bell_gain, *v),
+            ParameterUpdate::HighpassEnabled(v) => set_param(setter, &params.highpass_enabled, *v),
+            ParameterUpdate::HighpassFreq(v) => set_param(setter, &params.highpass_freq, *v),
+            ParameterUpdate::HighpassQ(v) => set_param(setter, &params.highpass_q, *v),
+        }
     }
 }
 
-*/
+fn set_param<P: Param>(setter: &ParamSetter, param: &P, value: P::Plain) {
+    setter.begin_set_parameter(param);
+    setter.set_parameter(param, value);
+    setter.end_set_parameter(param);
+}
