@@ -377,7 +377,9 @@ dependencies = [
 name = "convolution_plug"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "convolution",
+ "crossbeam-channel",
  "fundsp",
  "hound",
  "include_dir",
@@ -386,7 +388,7 @@ dependencies = [
  "nih_plug_webview",
  "serde",
  "serde_json",
- "specta",
+ "thiserror 2.0.12",
  "ts-rs",
 ]
 
@@ -2516,15 +2518,6 @@ dependencies = [
  "gobject-sys",
  "libc",
  "system-deps",
-]
-
-[[package]]
-name = "specta"
-version = "2.0.0-rc.22"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab7f01e9310a820edd31c80fde3cae445295adde21a3f9416517d7d65015b971"
-dependencies = [
- "thiserror 1.0.69",
 ]
 
 [[package]]
