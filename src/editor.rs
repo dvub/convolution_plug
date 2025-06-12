@@ -1,15 +1,11 @@
 use std::sync::Arc;
 
-use nih_plug::{
-    params::{Param, Params},
-    prelude::ParamSetter,
-};
+use nih_plug::nih_log;
 use nih_plug_webview::{HTMLSource, WebViewEditor};
-
-use serde_json::{json, Value};
+use serde_json::json;
 
 use crate::{
-    ipc::{Message, ParameterUpdate},
+    ipc::{build_param_update_vec, Message},
     params::PluginParams,
 };
 
@@ -17,8 +13,6 @@ const EDITOR_SIZE: (u32, u32) = (600, 600);
 
 pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
     let params = params.clone();
-
-    // let param_rx_clone = params.rx.clone();
 
     let src = HTMLSource::URL("http://localhost:3000".to_owned());
     let mut editor = WebViewEditor::new(src, EDITOR_SIZE).with_developer_mode(true);
@@ -72,23 +66,27 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
     }*/
 
     editor = editor.with_event_loop(move |ctx, setter, _window| {
-        let x = &params;
-
         // handle all incoming messages
-        let mut updates = Vec::new();
+        let mut gui_param_updates = Vec::new();
 
         while let Ok(value) = ctx.next_event() {
             let result = serde_json::from_value::<Message>(value.clone())
                 .expect("Error reading message from GUI");
 
             match result {
+                // TODO: add functionality
                 Message::WindowOpened => (),
                 Message::WindowClosed => (),
 
                 // pretty much the most important one
-                Message::ParameterUpdate(param_update) => {
-                    param_update.set_plugin_param(&setter, &params);
-                    updates.push(param_update);
+                Message::ParameterUpdate(updates) => {
+                    // this gives us more flexibility in our GUI
+                    // we could send individual parameter changes..
+                    // OR, we could somehow aggregate them (TODO:)
+                    for update in updates {
+                        update.set_plugin_param(&setter, &params);
+                        gui_param_updates.push(update);
+                    }
                 }
                 // the GUI shouldn't send us draw data, maybe print something but otherwise don't care
                 Message::DrawData(_) => {
@@ -96,14 +94,15 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                 }
             }
         }
+        // TODO: figure out performance of this approach
+        // (as opposed to communication through callbacks)
+        let mut updates_to_send = build_param_update_vec(&params);
+        updates_to_send.retain(|u| !gui_param_updates.contains(u));
 
-        /*
-        let gui_params = GUIParams::from(x);
-        let message = Message::ParameterUpdate(gui_params);
-
-        ctx.send_json(json!(message))
-            .expect("Error sending param struct to frontend");
-        */
+        // send backend params to our GUI
+        // these may be changed by automation, or the user tweaking values in the generic UI
+        ctx.send_json(json!(Message::ParameterUpdate(updates_to_send)))
+            .expect("Error sending param updates to frontend");
     });
 
     editor

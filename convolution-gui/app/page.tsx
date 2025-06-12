@@ -23,6 +23,7 @@ export default function Home() {
 		sendToPlugin({ type: 'windowOpened' });
 
 		const handlePluginMessage = (event: Message) => {
+			console.log(event);
 			switch (event.type) {
 				case 'parameterUpdate':
 					break;
