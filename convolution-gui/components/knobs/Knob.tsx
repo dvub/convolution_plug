@@ -14,13 +14,9 @@ import {
 
 import { KnobBaseThumb } from './KnobBaseThumb';
 
-import { Parameter } from '@/bindings/Parameter';
-import { NormalisableRange } from '@/lib/utils';
+import { NormalisableRange } from '../../lib/utils';
 import { sendToPlugin } from '@/lib';
 import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
-
-import { KnobTextInput } from './KnobTextInput';
-import { GUIParams } from '@/bindings/GUIParams';
 
 /*
 type KnobHeadlessProps = React.ComponentProps<typeof KnobHeadless>;
@@ -40,7 +36,8 @@ export type KnobProps = {
 	size: number;
 	range: NormalisableRange;
 
-	parameter?: Parameter;
+	// optional because knobs dont have to be parameters
+	parameter?: string;
 	onChangeCallback?: (n: number) => void;
 	value?: number;
 	// TODO: make this work
@@ -114,11 +111,10 @@ export function Knob(props: KnobProps) {
 			...parameters,
 			[parameter]: valueRaw,
 		});
-		const x: GUIParams = {};
 
 		sendToPlugin({
 			type: 'parameterUpdate',
-			data: x,
+			data: { parameterId: parameter, value: String(state) },
 		});
 	}
 
@@ -156,13 +152,14 @@ export function Knob(props: KnobProps) {
 				<KnobHeadlessLabel id={labelId} className='text-md'>
 					{label}
 				</KnobHeadlessLabel>
+				{/*
 				<KnobTextInput
 					minValue={minValue}
 					maxValue={maxValue}
 					valueRaw={valueRaw}
 					setVal={setVal}
 					valueRawDisplayFn={valueRawDisplayFn}
-				/>
+				/>*/}
 			</div>
 		</div>
 	);

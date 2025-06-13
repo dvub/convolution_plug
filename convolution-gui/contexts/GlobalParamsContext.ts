@@ -1,8 +1,8 @@
-import { GUIParams } from '@/bindings/GUIParams';
 import { Dispatch, SetStateAction } from 'react';
 import { createContext } from 'react';
 
+// TODO: FIX UNKNOWN
 export const GlobalParametersContext = createContext<{
-	parameters: GUIParams;
-	setParameters: Dispatch<SetStateAction<GUIParams>>;
+	parameters: { gain: number; dryWet: number };
+	setParameters: Dispatch<SetStateAction<{ gain: number; dryWet: number }>>;
 } | null>(null);

@@ -2,9 +2,8 @@ use std::sync::Arc;
 
 use crossbeam_channel::{Receiver, Sender};
 use nih_plug::{prelude::*, util::db_to_gain};
-use serde_json::Value;
 
-use crate::ipc::{ParameterUpdate, Parameters};
+use crate::ipc::ParameterUpdate;
 
 // TODO:
 // add highpass and some sort of middle thing for EQ
@@ -13,7 +12,7 @@ use crate::ipc::{ParameterUpdate, Parameters};
 #[derive(Params, Debug)]
 
 pub struct PluginParams {
-    pub rx: Receiver<ParameterUpdate<Value>>,
+    pub rx: Receiver<ParameterUpdate>,
 
     #[id = "gain"]
     pub gain: FloatParam,
@@ -57,7 +56,7 @@ pub struct PluginParams {
 
 impl Default for PluginParams {
     fn default() -> Self {
-        let (tx, rx) = crossbeam_channel::unbounded::<ParameterUpdate<Value>>();
+        let (tx, rx) = crossbeam_channel::unbounded::<ParameterUpdate>();
 
         Self {
             // This gain is stored as linear gain. NIH-plug comes with useful conversion functions
@@ -83,15 +82,16 @@ impl Default for PluginParams {
             // `.with_step_size(0.1)` function to get internal rounding.
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
-            .with_callback(generate_callback(Parameters::Gain, tx.clone())),
+            .with_callback(generate_callback(String::from("gain"), tx.clone())),
 
             dry_wet: FloatParam::new("Dry/Wet", 0.5, FloatRange::Linear { min: 0.0, max: 1.0 })
                 .with_value_to_string(formatters::v2s_f32_percentage(2))
                 .with_unit("%")
-                .with_callback(generate_callback(Parameters::DryWet, tx.clone())),
+                .with_callback(generate_callback(String::from("dry_wet"), tx.clone())),
 
-            lowpass_enabled: BoolParam::new("Lowpass Enabled", false)
-                .with_callback(generate_callback(Parameters::LowpassEnabled, tx.clone())),
+            lowpass_enabled: BoolParam::new("Lowpass Enabled", false).with_callback(
+                generate_callback(String::from("lowpass_enabled"), tx.clone()),
+            ),
 
             lowpass_freq: FloatParam::new(
                 "Lowpass Frequency",
@@ -101,7 +101,7 @@ impl Default for PluginParams {
                     max: 22_050.0,
                 },
             )
-            .with_callback(generate_callback(Parameters::LowpassFreq, tx.clone())),
+            .with_callback(generate_callback(String::from("lowpass_freq"), tx.clone())),
             lowpass_q: FloatParam::new(
                 "Lowpass Q",
                 0.1,
@@ -110,10 +110,11 @@ impl Default for PluginParams {
                     max: 18.0,
                 },
             )
-            .with_callback(generate_callback(Parameters::LowpassQ, tx.clone())),
+            .with_callback(generate_callback(String::from("lowpass_q"), tx.clone())),
 
-            highpass_enabled: BoolParam::new("Highpass Enabled", false)
-                .with_callback(generate_callback(Parameters::HighpassEnabled, tx.clone())),
+            highpass_enabled: BoolParam::new("Highpass Enabled", false).with_callback(
+                generate_callback(String::from("highpass_enabled"), tx.clone()),
+            ),
             highpass_freq: FloatParam::new(
                 "Highpass Frequency",
                 22_050.0,
@@ -122,7 +123,7 @@ impl Default for PluginParams {
                     max: 22_050.0,
                 },
             )
-            .with_callback(generate_callback(Parameters::HighpassFreq, tx.clone())),
+            .with_callback(generate_callback(String::from("highpass_freq"), tx.clone())),
             highpass_q: FloatParam::new(
                 "Highpass Q",
                 0.1,
@@ -131,10 +132,10 @@ impl Default for PluginParams {
                     max: 18.0,
                 },
             )
-            .with_callback(generate_callback(Parameters::HighpassQ, tx.clone())),
+            .with_callback(generate_callback(String::from("highpass_q"), tx.clone())),
 
             bell_enabled: BoolParam::new("Bell Enabled", false)
-                .with_callback(generate_callback(Parameters::BellEnabled, tx.clone())),
+                .with_callback(generate_callback(String::from("bell_enabled"), tx.clone())),
 
             bell_freq: FloatParam::new(
                 "Bell Frequency",
@@ -144,7 +145,7 @@ impl Default for PluginParams {
                     max: 22_050.0,
                 },
             )
-            .with_callback(generate_callback(Parameters::BellFreq, tx.clone())),
+            .with_callback(generate_callback(String::from("bell_freq"), tx.clone())),
             bell_q: FloatParam::new(
                 "Bell Q",
                 0.1,
@@ -153,7 +154,7 @@ impl Default for PluginParams {
                     max: 18.0,
                 },
             )
-            .with_callback(generate_callback(Parameters::BellQ, tx.clone())),
+            .with_callback(generate_callback(String::from("bell_q"), tx.clone())),
             bell_gain: FloatParam::new(
                 "Bell Gain",
                 0.1,
@@ -162,25 +163,24 @@ impl Default for PluginParams {
                     max: 18.0,
                 },
             )
-            .with_callback(generate_callback(Parameters::BellGain, tx.clone())),
+            .with_callback(generate_callback(String::from("bell_gain"), tx.clone())),
             rx,
         }
     }
 }
 
-fn generate_callback<T>(variant: Parameters, tx: Sender<ParameterUpdate<Value>>) -> Arc<impl Fn(T)>
+// TODO: figure out String or &str
+fn generate_callback<T: ToString>(
+    parameter: String,
+    tx: Sender<ParameterUpdate>,
+) -> Arc<impl Fn(T)>
 where
-    Value: From<T>,
 {
     // this is the callback that each parameter will fire when it updates
     Arc::new(move |value: T| {
-        // create an enum variant from the value
-
-        // TODO:
-        // maybe fix clone() and into()?
         let new_event = ParameterUpdate {
-            parameter: variant.clone(),
-            value: value.into(),
+            parameter_id: parameter.clone(),
+            value: value.to_string(),
         };
 
         // TODO: shoud we handle errors?

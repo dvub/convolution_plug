@@ -9,6 +9,8 @@ import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
 import { Message } from '@/bindings/Message';
 
 import { sendToPlugin } from '@/lib';
+import { Knob } from '@/components/knobs/Knob';
+import { NormalisableRange } from '@/lib/utils';
 
 export default function Home() {
 	const [messageBus] = useState(new MessageBus());
@@ -23,9 +25,16 @@ export default function Home() {
 		sendToPlugin({ type: 'windowOpened' });
 
 		const handlePluginMessage = (event: Message) => {
-			console.log(event);
+			// console.log(event);
 			switch (event.type) {
 				case 'parameterUpdate':
+					setParameters((prevState) => {
+						return {
+							...prevState,
+							[event.data.parameterId]: event.data.value,
+						};
+					});
+
 					break;
 			}
 		};
@@ -44,17 +53,29 @@ export default function Home() {
 			<GlobalParametersContext.Provider
 				value={{ parameters, setParameters }}
 			>
-				<h1>hello world</h1>
+				<h1>hello world {parameters.gain}</h1>
 				<button
 					onClick={() =>
 						sendToPlugin({
 							type: 'parameterUpdate',
-							data: { parameter: 'highpassEnabled', value: true },
+							data: {
+								parameterId: 'highpass_enabled',
+								value: 'true',
+							},
 						})
 					}
 				>
 					BUTTON
 				</button>
+				<Knob
+					minValue={0}
+					maxValue={1}
+					defaultValue={0}
+					label={'hi'}
+					size={50}
+					range={new NormalisableRange(0, 1, 0.5)}
+					parameter='gain'
+				></Knob>
 			</GlobalParametersContext.Provider>
 		</MessageBusContext.Provider>
 	);

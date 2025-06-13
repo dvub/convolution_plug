@@ -1,11 +1,15 @@
 use std::sync::Arc;
 
-use nih_plug::{nih_log, params::Params};
+use nih_plug::{
+    nih_log,
+    params::{Param, Params},
+    prelude::ParamSetter,
+};
 use nih_plug_webview::{HTMLSource, WebViewEditor};
-use serde_json::{json, Value};
+use serde_json::json;
 
 use crate::{
-    ipc::{update_param, Message},
+    ipc::{Message, ParameterUpdate},
     params::PluginParams,
 };
 
@@ -73,7 +77,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
 
         // handle all incoming messages
         while let Ok(value) = ctx.next_event() {
-            let result = serde_json::from_value::<Message<Value>>(value.clone())
+            let result = serde_json::from_value::<Message>(value.clone())
                 .expect("Error reading message from GUI");
 
             match result {
@@ -83,7 +87,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
 
                 // pretty much the most important one
                 Message::ParameterUpdate(update) => {
-                    update_param(&update, &setter, &params);
+                    match_and_update_param(&update, &setter, &params);
                     gui_updates.push(update)
                 }
 
@@ -96,14 +100,53 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
         while let Ok(param_update) = param_rx_clone.try_recv() {
             if gui_updates
                 .iter()
-                .any(|p| p.parameter == param_update.parameter)
+                .any(|p| p.parameter_id == param_update.parameter_id)
             {
                 continue;
             }
 
+            
             ctx.send_json(json!(param_update)).expect("FUCKKK");
         }
     });
 
     editor
+}
+
+// TODO: overhaul error handling for this function
+fn match_and_update_param(
+    update: &ParameterUpdate,
+    setter: &ParamSetter,
+    params: &Arc<PluginParams>,
+) {
+    let value = update.value.as_str();
+    let id = update.parameter_id.as_str();
+
+    match id {
+        "gain" => set_param(setter, &params.gain, value.parse().unwrap()),
+        "dry_wet" => set_param(setter, &params.dry_wet, value.parse().unwrap()),
+
+        // LOWPASS
+        "lowpass_enabled" => set_param(setter, &params.lowpass_enabled, value.parse().unwrap()),
+        "lowpass_freq" => set_param(setter, &params.lowpass_freq, value.parse().unwrap()),
+        "lowpass_q" => set_param(setter, &params.lowpass_q, value.parse().unwrap()),
+        // BELL
+        "bell_enabled" => set_param(setter, &params.bell_enabled, value.parse().unwrap()),
+        "bell_freq" => set_param(setter, &params.bell_freq, value.parse().unwrap()),
+        "bell_q" => set_param(setter, &params.bell_q, value.parse().unwrap()),
+        "bell_gain" => set_param(setter, &params.bell_gain, value.parse().unwrap()),
+        // HP
+        "highpass_enabled" => set_param(setter, &params.highpass_enabled, value.parse().unwrap()),
+        "highpass_freq" => set_param(setter, &params.highpass_freq, value.parse().unwrap()),
+        "highpass_q" => set_param(setter, &params.highpass_q, value.parse().unwrap()),
+
+        &_ => nih_log!("Receiving unknown parameter ID"),
+    }
+}
+
+// TODO: is there a better way to do this
+fn set_param<P: Param>(setter: &ParamSetter, param: &P, value: P::Plain) {
+    setter.begin_set_parameter(param);
+    setter.set_parameter(param, value);
+    setter.end_set_parameter(param);
 }
