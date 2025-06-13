@@ -17,7 +17,7 @@ pub struct PluginParams {
     #[id = "gain"]
     pub gain: FloatParam,
 
-    #[id = "drywet"]
+    #[id = "dry_wet"]
     pub dry_wet: FloatParam,
 
     // --- LOWPASS ---

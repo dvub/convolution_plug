@@ -70,6 +70,7 @@ export function Knob(props: KnobProps) {
 
 	if (parameter) {
 		valueRaw = parameters[parameter];
+		console.log(valueRaw);
 	} else if (value) {
 		valueRaw = value;
 	} else {
@@ -77,7 +78,7 @@ export function Knob(props: KnobProps) {
 	}
 
 	const valueRawDisplayFn = (valueRaw: number) => {
-		return valueRaw.toFixed(2);
+		return valueRaw.toFixed(1);
 	};
 
 	const mapTo01 = (x: number) => range.mapTo01(x);

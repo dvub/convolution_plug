@@ -3,18 +3,19 @@ use std::sync::Arc;
 use nih_plug::{
     nih_log,
     params::{Param, Params},
-    prelude::ParamSetter,
+    prelude::{ParamPtr, ParamSetter},
 };
 use nih_plug_webview::{HTMLSource, WebViewEditor};
 use serde_json::json;
 
 use crate::{
-    ipc::{Message, ParameterUpdate},
+    ipc::{BackendMessage, GuiMessage, ParameterUpdate},
     params::PluginParams,
 };
 
 const EDITOR_SIZE: (u32, u32) = (600, 600);
 
+// TODO: fix nesting issues
 pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
     let params = params.clone();
 
@@ -75,28 +76,22 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
     editor = editor.with_event_loop(move |ctx, setter, _window| {
         let mut gui_updates = Vec::new();
 
-        // handle all incoming messages
+        // handle GUI -> backend messages
         while let Ok(value) = ctx.next_event() {
-            let result = serde_json::from_value::<Message>(value.clone())
+            let result = serde_json::from_value::<GuiMessage>(value.clone())
                 .expect("Error reading message from GUI");
 
             match result {
                 // TODO: add functionality
-                Message::WindowOpened => (),
-                Message::WindowClosed => (),
-
+                GuiMessage::Init => {}
                 // pretty much the most important one
-                Message::ParameterUpdate(update) => {
+                GuiMessage::ParameterUpdate(update) => {
                     match_and_update_param(&update, &setter, &params);
                     gui_updates.push(update)
                 }
-
-                // the GUI shouldn't send us draw data, maybe print something but otherwise don't care
-                Message::DrawData(_) => {
-                    nih_log!("Received draw data from the frontend! (this should not happen)")
-                }
             }
         }
+        // send param updates backend -> GUI
         while let Ok(param_update) = param_rx_clone.try_recv() {
             if gui_updates
                 .iter()
@@ -105,8 +100,9 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                 continue;
             }
 
-            
-            ctx.send_json(json!(param_update)).expect("FUCKKK");
+            ctx.send_json(json!(BackendMessage::ParameterUpdate(param_update)))
+                .expect("FUCKKK");
+            //println!("Sent parameter update to GUI: {:?}", param_update);
         }
     });
 
@@ -122,25 +118,30 @@ fn match_and_update_param(
     let value = update.value.as_str();
     let id = update.parameter_id.as_str();
 
-    match id {
-        "gain" => set_param(setter, &params.gain, value.parse().unwrap()),
-        "dry_wet" => set_param(setter, &params.dry_wet, value.parse().unwrap()),
+    let map = params.param_map();
+    let ptr = map
+        .iter()
+        .find(|(param_id, _, _)| id == param_id)
+        .unwrap_or_else(|| panic!("Couldn't find a parameter with ID {}", id))
+        .1;
 
-        // LOWPASS
-        "lowpass_enabled" => set_param(setter, &params.lowpass_enabled, value.parse().unwrap()),
-        "lowpass_freq" => set_param(setter, &params.lowpass_freq, value.parse().unwrap()),
-        "lowpass_q" => set_param(setter, &params.lowpass_q, value.parse().unwrap()),
-        // BELL
-        "bell_enabled" => set_param(setter, &params.bell_enabled, value.parse().unwrap()),
-        "bell_freq" => set_param(setter, &params.bell_freq, value.parse().unwrap()),
-        "bell_q" => set_param(setter, &params.bell_q, value.parse().unwrap()),
-        "bell_gain" => set_param(setter, &params.bell_gain, value.parse().unwrap()),
-        // HP
-        "highpass_enabled" => set_param(setter, &params.highpass_enabled, value.parse().unwrap()),
-        "highpass_freq" => set_param(setter, &params.highpass_freq, value.parse().unwrap()),
-        "highpass_q" => set_param(setter, &params.highpass_q, value.parse().unwrap()),
-
-        &_ => nih_log!("Receiving unknown parameter ID"),
+    // "Dereferencing the pointers stored in the values is only valid as long as [the param_map() object] is valid."
+    // so we should be fine to dereference these pointers.
+    // this also allows rust to smartly parse the incoming value (which is a string)
+    unsafe {
+        match ptr {
+            ParamPtr::FloatParam(p) => {
+                let float_param = &*p;
+                set_param(setter, float_param, value.parse::<f32>().unwrap());
+            }
+            ParamPtr::BoolParam(p) => {
+                let bool_param = &*p;
+                set_param(setter, bool_param, value.parse::<bool>().unwrap());
+            }
+            // not implemented (yet)
+            ParamPtr::IntParam(_) => todo!(),
+            ParamPtr::EnumParam(_) => todo!(),
+        }
     }
 }
 
@@ -150,3 +151,25 @@ fn set_param<P: Param>(setter: &ParamSetter, param: &P, value: P::Plain) {
     setter.set_parameter(param, value);
     setter.end_set_parameter(param);
 }
+
+/*     match id {
+    "gain" => set_param(setter, &params.gain, value.parse().unwrap()),
+    "dry_wet" => set_param(setter, &params.dry_wet, value.parse().unwrap()),
+
+    // LOWPASS
+    "lowpass_enabled" => set_param(setter, &params.lowpass_enabled, value.parse().unwrap()),
+    "lowpass_freq" => set_param(setter, &params.lowpass_freq, value.parse().unwrap()),
+    "lowpass_q" => set_param(setter, &params.lowpass_q, value.parse().unwrap()),
+    // BELL
+    "bell_enabled" => set_param(setter, &params.bell_enabled, value.parse().unwrap()),
+    "bell_freq" => set_param(setter, &params.bell_freq, value.parse().unwrap()),
+    "bell_q" => set_param(setter, &params.bell_q, value.parse().unwrap()),
+    "bell_gain" => set_param(setter, &params.bell_gain, value.parse().unwrap()),
+    // HP
+    "highpass_enabled" => set_param(setter, &params.highpass_enabled, value.parse().unwrap()),
+    "highpass_freq" => set_param(setter, &params.highpass_freq, value.parse().unwrap()),
+    "highpass_q" => set_param(setter, &params.highpass_q, value.parse().unwrap()),
+
+    &_ => nih_log!("Receiving unknown parameter ID"),
+}
+*/

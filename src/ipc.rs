@@ -6,12 +6,19 @@ use ts_rs::TS;
 #[serde(rename_all = "camelCase", tag = "type", content = "data")]
 #[ts(export_to = "../convolution-gui/bindings/")]
 #[ts(export)]
-pub enum Message {
-    WindowOpened,
-    WindowClosed,
+pub enum GuiMessage {
+    Init,
     ParameterUpdate(ParameterUpdate),
-    DrawData(f32),
 }
+#[derive(Serialize, Deserialize, TS, Debug)]
+#[serde(rename_all = "camelCase", tag = "type", content = "data")]
+#[ts(export_to = "../convolution-gui/bindings/")]
+#[ts(export)]
+pub enum BackendMessage {
+    ParameterUpdate(ParameterUpdate),
+    DrawData,
+}
+
 #[derive(Serialize, Deserialize, TS, Debug)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "../convolution-gui/bindings/")]

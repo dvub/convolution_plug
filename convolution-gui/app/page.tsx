@@ -4,7 +4,10 @@ import { MessageBus, MessageBusContext } from '@/contexts/MessageBusContext';
 import { useEventDispatcher } from '@/hooks/useEventDispatcher';
 import { useEffect, useState } from 'react';
 
-import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
+import {
+	GlobalParameters,
+	GlobalParametersContext,
+} from '@/contexts/GlobalParamsContext';
 
 import { Message } from '@/bindings/Message';
 
@@ -14,9 +17,22 @@ import { NormalisableRange } from '@/lib/utils';
 
 export default function Home() {
 	const [messageBus] = useState(new MessageBus());
-	const [parameters, setParameters] = useState({
+	const [parameters, setParameters] = useState<GlobalParameters>({
 		gain: 0,
-		dryWet: 0,
+		dry_wet: 0,
+
+		lowpass_enabled: false,
+		lowpass_freq: 0,
+		lowpass_q: 0,
+
+		bell_enabled: false,
+		bell_freq: 0,
+		bell_q: 0,
+		bell_gain: 0,
+
+		highpass_enabled: false,
+		highpass_freq: 0,
+		highpass_q: 0,
 	});
 
 	useEventDispatcher(messageBus);
