@@ -1685,13 +1685,11 @@ dependencies = [
 [[package]]
 name = "nih_plug_webview"
 version = "0.0.0"
-source = "git+https://github.com/dvub/nih-plug-webview.git#b21f1005e0ba60c7b3c81ce4b79644919867f0b5"
+source = "git+https://github.com/httnn/nih-plug-webview.git#745d79a32fb21374758812e49436cb2a21e217fd"
 dependencies = [
  "baseview",
  "crossbeam",
- "gtk",
  "keyboard-types",
- "mime_guess",
  "nih_plug",
  "parking_lot",
  "raw-window-handle",

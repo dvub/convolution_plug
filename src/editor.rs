@@ -21,7 +21,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
     let param_rx_clone = params.rx.clone();
     println!("PARAM MAP: {:?}", params.param_map());
 
-    let src = HTMLSource::URL("http://localhost:3000".to_owned());
+    let src = HTMLSource::URL("http://localhost:3000");
     let mut editor = WebViewEditor::new(src, EDITOR_SIZE).with_developer_mode(true);
 
     /*
@@ -72,7 +72,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
         };
     }*/
 
-    editor = editor.with_event_loop(move |ctx, setter, _window| {
+    editor = editor.with_event_loop(move |ctx, setter, window| {
         let mut gui_updates = Vec::new();
 
         // handle GUI -> backend messages
@@ -88,6 +88,9 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                     match_and_update_param(&update, &setter, &params);
                     gui_updates.push(update)
                 }
+                Message::Resize { width, height } => {
+                    ctx.resize(window, width, height);
+                }
             }
         }
         // send param updates backend -> GUI
@@ -99,8 +102,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                 continue;
             }
 
-            ctx.send_json(json!(Message::ParameterUpdate(param_update)))
-                .expect("FUCKKK");
+            ctx.send_json(json!(Message::ParameterUpdate(param_update)));
             //println!("Sent parameter update to GUI: {:?}", param_update);
         }
     });

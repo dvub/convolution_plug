@@ -78,7 +78,7 @@ export function Knob(props: KnobProps) {
 	}
 
 	const valueRawDisplayFn = (valueRaw: number) => {
-		return valueRaw.toFixed(1);
+		return Number(valueRaw).toFixed(1);
 	};
 
 	const mapTo01 = (x: number) => range.mapTo01(x);
