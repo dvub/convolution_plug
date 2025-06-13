@@ -1,22 +1,13 @@
 use serde::{Deserialize, Serialize};
-
 use ts_rs::TS;
 
 #[derive(Serialize, Deserialize, TS, Debug)]
 #[serde(rename_all = "camelCase", tag = "type", content = "data")]
 #[ts(export_to = "../convolution-gui/bindings/")]
 #[ts(export)]
-pub enum GuiMessage {
+pub enum Message {
     Init,
     ParameterUpdate(ParameterUpdate),
-}
-#[derive(Serialize, Deserialize, TS, Debug)]
-#[serde(rename_all = "camelCase", tag = "type", content = "data")]
-#[ts(export_to = "../convolution-gui/bindings/")]
-#[ts(export)]
-pub enum BackendMessage {
-    ParameterUpdate(ParameterUpdate),
-    DrawData,
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]

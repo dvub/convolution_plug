@@ -38,7 +38,7 @@ export default function Home() {
 	useEventDispatcher(messageBus);
 
 	useEffect(() => {
-		sendToPlugin({ type: 'windowOpened' });
+		sendToPlugin({ type: 'init' });
 
 		const handlePluginMessage = (event: Message) => {
 			// console.log(event);
@@ -58,8 +58,6 @@ export default function Home() {
 		const unsubscribe = messageBus.subscribe(handlePluginMessage);
 
 		return () => {
-			sendToPlugin({ type: 'windowClosed' });
-
 			unsubscribe();
 		};
 	}, []);

@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use nih_plug::{
-    nih_log,
     params::{Param, Params},
     prelude::{ParamPtr, ParamSetter},
 };
@@ -9,7 +8,7 @@ use nih_plug_webview::{HTMLSource, WebViewEditor};
 use serde_json::json;
 
 use crate::{
-    ipc::{BackendMessage, GuiMessage, ParameterUpdate},
+    ipc::{Message, ParameterUpdate},
     params::PluginParams,
 };
 
@@ -78,14 +77,14 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
 
         // handle GUI -> backend messages
         while let Ok(value) = ctx.next_event() {
-            let result = serde_json::from_value::<GuiMessage>(value.clone())
+            let result = serde_json::from_value::<Message>(value.clone())
                 .expect("Error reading message from GUI");
 
             match result {
                 // TODO: add functionality
-                GuiMessage::Init => {}
+                Message::Init => {}
                 // pretty much the most important one
-                GuiMessage::ParameterUpdate(update) => {
+                Message::ParameterUpdate(update) => {
                     match_and_update_param(&update, &setter, &params);
                     gui_updates.push(update)
                 }
@@ -100,7 +99,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                 continue;
             }
 
-            ctx.send_json(json!(BackendMessage::ParameterUpdate(param_update)))
+            ctx.send_json(json!(Message::ParameterUpdate(param_update)))
                 .expect("FUCKKK");
             //println!("Sent parameter update to GUI: {:?}", param_update);
         }
