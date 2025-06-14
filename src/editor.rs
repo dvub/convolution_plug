@@ -88,7 +88,8 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                     for entry in map {
                         ctx.send_json(json!(Message::ParameterUpdate(ParameterUpdate {
                             parameter_id: entry.0,
-                            // TODO: make sure this is the value we really want
+                            // TODO: change this to get the actual corresponding float or bool param
+                            // then get the actual f32 OR bool out of that
                             value: entry.1.modulated_plain_value().to_string()
                         })));
                     }
