@@ -80,13 +80,15 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
             let result = serde_json::from_value::<Message>(value.clone())
                 .expect("Error reading message from GUI");
 
+            // TODO:
+            // refactor
             match result {
-                // TODO: add functionality
                 Message::Init => unsafe {
                     let map = params.param_map();
                     for entry in map {
                         ctx.send_json(json!(Message::ParameterUpdate(ParameterUpdate {
                             parameter_id: entry.0,
+                            // TODO: make sure this is the value we really want
                             value: entry.1.modulated_plain_value().to_string()
                         })));
                     }
