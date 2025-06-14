@@ -17,6 +17,7 @@ import { KnobBaseThumb } from './KnobBaseThumb';
 import { NormalisableRange } from '../../lib/utils';
 import { sendToPlugin } from '@/lib';
 import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
+import { KnobTextInput } from './KnobTextInput';
 
 /*
 type KnobHeadlessProps = React.ComponentProps<typeof KnobHeadless>;
@@ -43,6 +44,8 @@ export type KnobProps = {
 	// TODO: make this work
 	// stepFn: (valueRaw: number) => number;
 	// stepLargerFn: (valueRaw: number) => number;
+
+	valueRawDisplayFn: (valueRaw: number) => string;
 };
 
 export function Knob(props: KnobProps) {
@@ -59,16 +62,24 @@ export function Knob(props: KnobProps) {
 		range,
 		onChangeCallback,
 		value,
+		valueRawDisplayFn,
 	} = props;
 	// this value can be tweaked to adjust the feel of the knob
 	const dragSensitivity = 0.006;
 
 	const { parameters, setParameters } = useContext(GlobalParametersContext)!;
+
+	// NOTE:
+	// this is only important if we don't have a parameter supplied
+
+	// TODO: dont set 0 to be default
 	const [state, setState] = useState(0);
 
 	let valueRaw = 0;
 
 	if (parameter) {
+		// TODO:
+		// improve type safety here
 		valueRaw = parameters[parameter];
 		console.log(valueRaw);
 	} else if (value) {
@@ -76,10 +87,6 @@ export function Knob(props: KnobProps) {
 	} else {
 		valueRaw = state;
 	}
-
-	const valueRawDisplayFn = (valueRaw: number) => {
-		return Number(valueRaw).toFixed(1);
-	};
 
 	const mapTo01 = (x: number) => range.mapTo01(x);
 	const mapFrom01 = (x: number) => range.mapFrom01(x);
@@ -104,6 +111,8 @@ export function Knob(props: KnobProps) {
 			onChangeCallback(valueRaw);
 		}
 
+		// as previously mentioned, state is only used if a parameter isn't supplied
+		// (and consequently, we can't use the params context as state)
 		if (!parameter) {
 			setState(valueRaw);
 			return;
@@ -113,9 +122,10 @@ export function Knob(props: KnobProps) {
 			[parameter]: valueRaw,
 		});
 
+		// !!!!
 		sendToPlugin({
 			type: 'parameterUpdate',
-			data: { parameterId: parameter, value: String(state) },
+			data: { parameterId: parameter, value: String(valueRaw) },
 		});
 	}
 
@@ -153,14 +163,14 @@ export function Knob(props: KnobProps) {
 				<KnobHeadlessLabel id={labelId} className='text-md'>
 					{label}
 				</KnobHeadlessLabel>
-				{/*
+
 				<KnobTextInput
 					minValue={minValue}
 					maxValue={maxValue}
 					valueRaw={valueRaw}
 					setVal={setVal}
 					valueRawDisplayFn={valueRawDisplayFn}
-				/>*/}
+				/>
 			</div>
 		</div>
 	);

@@ -96,8 +96,8 @@ impl Plugin for ConvolutionPlug {
         _buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
-        // let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
-        let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";
+        let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
+        // let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";
 
         let mut ir_samples = read_samples_from_file(path);
         rms_normalize(&mut ir_samples, -48.0);

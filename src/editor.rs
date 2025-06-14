@@ -72,7 +72,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
         };
     }*/
 
-    editor = editor.with_event_loop(move |ctx, setter, window| {
+    editor = editor.with_event_loop(move |ctx, setter, _window| {
         let mut gui_updates = Vec::new();
 
         // handle GUI -> backend messages
@@ -88,9 +88,9 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                     match_and_update_param(&update, &setter, &params);
                     gui_updates.push(update)
                 }
-                Message::Resize { width, height } => {
-                    ctx.resize(window, width, height);
-                }
+                // baseview has bugs on windows
+                // once fixed this can be implemented
+                Message::Resize { .. } => todo!(),
             }
         }
         // send param updates backend -> GUI

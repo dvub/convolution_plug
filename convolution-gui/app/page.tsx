@@ -13,11 +13,9 @@ import { Message } from '@/bindings/Message';
 
 import { sendToPlugin } from '@/lib';
 import { Knob } from '@/components/knobs/Knob';
-import { NormalisableRange } from '@/lib/utils';
+import { dbToGain, gainToDb, NormalisableRange } from '@/lib/utils';
 
 export default function Home() {
-	let size = { width: 0, height: 0 };
-
 	const [messageBus] = useState(new MessageBus());
 	const [parameters, setParameters] = useState<GlobalParameters>({
 		gain: 0,
@@ -49,45 +47,15 @@ export default function Home() {
 					setParameters((prevState) => {
 						return {
 							...prevState,
-							[event.data.parameterId]: event.data.value,
+							[event.data.parameterId]: JSON.parse(
+								event.data.value
+							),
 						};
 					});
 
 					break;
 			}
 		};
-
-		let cornerResizeMouseDown = false;
-		let startPos = { x: 0, y: 0 };
-		let startSize = { ...size };
-
-		document
-			.querySelector('.corner-resize')
-			.addEventListener('mousedown', (e) => {
-				cornerResizeMouseDown = true;
-				startPos.x = e.clientX;
-				startPos.y = e.clientY;
-				startSize = { ...size };
-			});
-
-		window.addEventListener('mouseup', () => {
-			cornerResizeMouseDown = false;
-		});
-
-		window.addEventListener('mousemove', (e) => {
-			if (cornerResizeMouseDown) {
-				const deltaX = e.clientX - startPos.x;
-				const deltaY = e.clientY - startPos.y;
-				const width = Math.max(100, startSize.width + deltaX);
-				const height = Math.max(100, startSize.height + deltaY);
-				size.width = width;
-				size.height = height;
-				sendToPlugin({
-					type: 'resize',
-					data: { width, height },
-				});
-			}
-		});
 
 		const unsubscribe = messageBus.subscribe(handlePluginMessage);
 
@@ -101,7 +69,6 @@ export default function Home() {
 			<GlobalParametersContext.Provider
 				value={{ parameters, setParameters }}
 			>
-				<h1>hello world {parameters.gain}</h1>
 				<button
 					onClick={() =>
 						sendToPlugin({
@@ -116,20 +83,21 @@ export default function Home() {
 					BUTTON
 				</button>
 				<Knob
-					minValue={0}
-					maxValue={1}
-					defaultValue={0}
-					label={'hi'}
+					minValue={dbToGain(-30)}
+					maxValue={dbToGain(30)}
+					defaultValue={dbToGain(0)}
+					label={''}
 					size={50}
-					range={new NormalisableRange(0, 1, 0.5)}
+					range={
+						new NormalisableRange(
+							dbToGain(-30),
+							dbToGain(30),
+							dbToGain(0)
+						)
+					}
 					parameter='gain'
+					valueRawDisplayFn={(x) => `${gainToDb(x).toFixed(2)} dB`}
 				></Knob>
-
-				<div className='corner-resize'>
-					<svg viewBox='0 0 10 10' width='10' height='10'>
-						<path d='M 10 0 L 10 10 L 0 10 Z' fill='#ccc' />
-					</svg>
-				</div>
 			</GlobalParametersContext.Provider>
 		</MessageBusContext.Provider>
 	);
