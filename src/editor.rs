@@ -82,7 +82,15 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
 
             match result {
                 // TODO: add functionality
-                Message::Init => {}
+                Message::Init => unsafe {
+                    let map = params.param_map();
+                    for entry in map {
+                        ctx.send_json(json!(Message::ParameterUpdate(ParameterUpdate {
+                            parameter_id: entry.0,
+                            value: entry.1.modulated_plain_value().to_string()
+                        })));
+                    }
+                },
                 // pretty much the most important one
                 Message::ParameterUpdate(update) => {
                     match_and_update_param(&update, &setter, &params);
@@ -111,6 +119,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
 }
 
 // TODO: overhaul error handling for this function
+// TODO: mark function as unsafe?
 fn match_and_update_param(
     update: &ParameterUpdate,
     setter: &ParamSetter,
