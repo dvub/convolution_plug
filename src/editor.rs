@@ -90,17 +90,16 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
 
             match result {
                 Message::Init => unsafe {
-                    let map = params.param_map();
-                    for entry in map {
-                        ctx.send_json(json!(Message::ParameterUpdate(ParameterUpdate {
-                            parameter_id: entry.0,
-                            // TODO: change this to get the actual corresponding float or bool param
-                            // then get the actual f32 OR bool out of that
-                            value: entry.1.modulated_plain_value().to_string()
-                        })));
+                    for param_ptr in &map {
+                        let param_update = ParameterUpdate {
+                            parameter_id: param_ptr.0.clone(),
+                            value: param_ptr.1.modulated_plain_value().to_string(),
+                        };
+                        let message = Message::ParameterUpdate(param_update);
+
+                        ctx.send_json(json!(message));
                     }
                 },
-                // pretty much the most important one
                 Message::ParameterUpdate(update) => unsafe {
                     match_and_update_param(&update, &setter, &map);
                     gui_updates.push(update.parameter_id)
@@ -119,9 +118,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
             if gui_updates.contains(&param_id) {
                 continue;
             }
-
-            // now that we know we REALLY want to send this parameter update to the GUI
-            // we do so here
+            // now we know we REALLY want to send this parameter update to the GUI
             unsafe {
                 let update = ParameterUpdate {
                     parameter_id: param_id.clone(),
@@ -132,7 +129,6 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
             }
         }
     });
-
     editor
 }
 
@@ -140,47 +136,27 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
 // (due to unwrapping the parse())
 
 unsafe fn match_and_update_param(update: &ParameterUpdate, setter: &ParamSetter, map: &ParamMap) {
-    let value = update.value.as_str();
+    let normalized = update.value.as_str().parse().unwrap();
     let id = update.parameter_id.as_str();
+    let param_ptr = get_param_ptr(id.to_owned(), map);
 
-    let ptr = get_ptr(id.to_owned(), map);
-    raw_set_param(setter, ptr, value.parse().unwrap());
+    setter.raw_context.raw_begin_set_parameter(param_ptr);
+    setter
+        .raw_context
+        .raw_set_parameter_normalized(param_ptr, normalized);
+    setter.raw_context.raw_end_set_parameter(param_ptr);
 }
 
+// TODO: is it even worth putting this in a function
 unsafe fn get_normalized_param_value(id: String, map: &ParamMap) -> String {
-    let ptr = get_ptr(id, map);
-    ptr.modulated_normalized_value().to_string()
-
-    // OLD APPROACH
-    /*
-    match ptr {
-        ParamPtr::FloatParam(p) => {
-            let float_param = &*p;
-            float_param.value().to_string()
-        }
-        ParamPtr::BoolParam(p) => {
-            let bool_param = &*p;
-            bool::to_string(&bool_param.value())
-        }
-        // not implemented (yet)
-        ParamPtr::IntParam(_) => todo!(),
-        ParamPtr::EnumParam(_) => todo!(),
-    }
-    */
+    let param_ptr = get_param_ptr(id, map);
+    param_ptr.modulated_normalized_value().to_string()
 }
 
-fn get_ptr(id: String, map: &ParamMap) -> ParamPtr {
+/// Get a `ParamPtr` given a parameter id and a param map.
+fn get_param_ptr(id: String, map: &ParamMap) -> ParamPtr {
     map.iter()
         .find(|(param_id, _, _)| id == *param_id)
         .unwrap_or_else(|| panic!("Couldn't find a parameter with ID {}", id))
         .1
-}
-
-// TODO: is there a better way to do this??
-unsafe fn raw_set_param(setter: &ParamSetter, param: ParamPtr, normalized: f32) {
-    setter.raw_context.raw_begin_set_parameter(param);
-    setter
-        .raw_context
-        .raw_set_parameter_normalized(param, normalized);
-    setter.raw_context.raw_end_set_parameter(param);
 }

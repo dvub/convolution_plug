@@ -1,23 +1,23 @@
-"use client";
+'use client';
 /**
  * Modified knob BASE -
  * source:
  * https://github.com/satelllte/react-knob-headless/blob/main/apps/docs/src/components/knobs/KnobBase.tsx
  */
 
-import { useContext, useId, useState } from "react";
+import { useContext, useId, useState } from 'react';
 import {
-  KnobHeadless,
-  KnobHeadlessLabel,
-  useKnobKeyboardControls,
-} from "react-knob-headless";
+	KnobHeadless,
+	KnobHeadlessLabel,
+	useKnobKeyboardControls,
+} from 'react-knob-headless';
 
-import { KnobBaseThumb } from "./KnobBaseThumb";
+import { KnobBaseThumb } from './KnobBaseThumb';
 
-import { NormalisableRange } from "../../lib/utils";
-import { sendToPlugin } from "@/lib";
-import { GlobalParametersContext } from "@/contexts/GlobalParamsContext";
-import { KnobTextInput } from "./KnobTextInput";
+import { NormalisableRange } from '../../lib/utils';
+import { sendToPlugin } from '@/lib';
+import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
+import { KnobTextInput } from './KnobTextInput';
 
 /*
 type KnobHeadlessProps = React.ComponentProps<typeof KnobHeadless>;
@@ -28,150 +28,151 @@ Pick<
 > & {...}
 */
 export type KnobProps = {
-  // basics
-  minValue: number;
-  maxValue: number;
-  defaultValue: number;
-  // visual stuff
-  label: string;
-  size: number;
-  range: NormalisableRange;
+	defaultValue: number;
+	// visual stuff
+	label: string;
+	size: number;
+	range: NormalisableRange;
 
-  // optional because knobs dont have to be parameters
-  parameter?: string;
-  onChangeCallback?: (n: number) => void;
-  value?: number;
-  // TODO: make this work
-  // stepFn: (valueRaw: number) => number;
-  // stepLargerFn: (valueRaw: number) => number;
+	// optional because knobs dont have to be parameters
+	parameter?: string;
+	onChangeCallback?: (n: number) => void;
+	value?: number;
+	// TODO: make this work
+	// stepFn: (valueRaw: number) => number;
+	// stepLargerFn: (valueRaw: number) => number;
 
-  valueRawDisplayFn: (valueRaw: number) => string;
+	valueRawDisplayFn: (valueRaw: number) => string;
 };
 
 export function Knob(props: KnobProps) {
-  const stepFn = () => 0;
-  const stepLargerFn = () => 0;
+	const stepFn = () => 0;
+	const stepLargerFn = () => 0;
 
-  const {
-    label,
-    defaultValue,
-    minValue,
-    maxValue,
-    size,
-    parameter,
-    range,
-    onChangeCallback,
-    value,
-    valueRawDisplayFn,
-  } = props;
-  // this value can be tweaked to adjust the feel of the knob
-  const dragSensitivity = 0.006;
+	const {
+		label,
+		defaultValue,
 
-  const { parameters, setParameters } = useContext(GlobalParametersContext)!;
+		size,
+		parameter,
+		range,
+		onChangeCallback,
+		value,
+		valueRawDisplayFn,
+	} = props;
+	// this value can be tweaked to adjust the feel of the knob
+	const dragSensitivity = 0.006;
 
-  // NOTE:
-  // this is only important if we don't have a parameter supplied
+	const { parameters, setParameters } = useContext(GlobalParametersContext)!;
 
-  // TODO: dont set 0 to be default
-  const [state, setState] = useState(0);
+	// internally this is
+	const minValue = 0;
+	const maxValue = 1;
 
-  let valueRaw = 0;
+	// NOTE:
+	// this is only important if we don't have a parameter supplied
+	// TODO: dont set 0 to be default
+	const [state, setState] = useState(0);
 
-  if (parameter) {
-    // TODO:
-    // improve type safety here
-    valueRaw = parameters[parameter];
-    // console.log(valueRaw);
-  } else if (value) {
-    valueRaw = value;
-  } else {
-    valueRaw = state;
-  }
+	let valueRaw = 0;
 
-  const mapTo01 = (x: number) => range.mapTo01(x);
-  const mapFrom01 = (x: number) => range.mapFrom01(x);
+	if (parameter) {
+		// TODO:
+		// improve type safety here
+		valueRaw = parameters[parameter];
+		// console.log(valueRaw);
+	} else if (value) {
+		valueRaw = value;
+	} else {
+		valueRaw = state;
+	}
 
-  const knobId = useId();
-  const labelId = useId();
+	const mapTo01 = (x: number) => range.mapTo01(x);
+	const mapFrom01 = (x: number) => range.mapFrom01(x);
 
-  // TODO:
-  // probably make this work
-  const keyboardControlHandlers = useKnobKeyboardControls({
-    valueRaw: valueRaw,
-    valueMin: minValue,
-    valueMax: maxValue,
+	const knobId = useId();
+	const labelId = useId();
 
-    step: stepFn(),
-    stepLarger: stepLargerFn(),
-    onValueRawChange: setVal,
-  });
+	// TODO:
+	// probably make this work
+	const keyboardControlHandlers = useKnobKeyboardControls({
+		valueRaw: valueRaw,
+		valueMin: minValue,
+		valueMax: maxValue,
 
-  function setVal(valueRaw: number) {
-    if (onChangeCallback) {
-      onChangeCallback(valueRaw);
-    }
+		step: stepFn(),
+		stepLarger: stepLargerFn(),
+		onValueRawChange: setVal,
+	});
 
-    // as previously mentioned, state is only used if a parameter isn't supplied
-    // (and consequently, we can't use the params context as state)
-    if (!parameter) {
-      setState(valueRaw);
-      return;
-    }
-    setParameters({
-      ...parameters,
-      [parameter]: valueRaw,
-    });
+	function setVal(valueRaw: number) {
+		if (onChangeCallback) {
+			onChangeCallback(valueRaw);
+		}
 
-    // !!!!
-    sendToPlugin({
-      type: "parameterUpdate",
-      data: { parameterId: parameter, value: String(valueRaw) },
-    });
-  }
+		// as previously mentioned, state is only used if a parameter isn't supplied
+		// (and consequently, we can't use the params context as state)
+		if (!parameter) {
+			setState(valueRaw);
+			return;
+		}
+		setParameters({
+			...parameters,
+			[parameter]: valueRaw,
+		});
 
-  function resetValue() {
-    setVal(defaultValue);
-  }
+		// !!!!
+		sendToPlugin({
+			type: 'parameterUpdate',
+			data: { parameterId: parameter, value: String(valueRaw) },
+		});
+	}
 
-  const thumbProps = {
-    value01: mapTo01(valueRaw),
-    resetValue: resetValue,
-  };
+	function resetValue() {
+		setVal(defaultValue);
+	}
 
-  return (
-    <div className={"flex items-center m-3"}>
-      <KnobHeadless
-        id={knobId}
-        aria-labelledby={labelId}
-        className={`relative outline-none`}
-        style={{ width: `${size}px`, height: `${size}px` }}
-        dragSensitivity={dragSensitivity}
-        mapTo01={mapTo01}
-        mapFrom01={mapFrom01}
-        onValueRawChange={setVal}
-        valueRaw={valueRaw}
-        valueMin={minValue}
-        valueMax={maxValue}
-        valueRawDisplayFn={valueRawDisplayFn}
-        valueRawRoundFn={() => 0.0}
-        {...keyboardControlHandlers}
-      >
-        <KnobBaseThumb {...thumbProps} />
-      </KnobHeadless>
+	const thumbProps = {
+		value01: mapTo01(valueRaw),
+		resetValue: resetValue,
+	};
 
-      <div className="mx-3">
-        <KnobHeadlessLabel id={labelId} className="text-md">
-          {label}
-        </KnobHeadlessLabel>
+	return (
+		<div className={'flex items-center m-3'}>
+			<KnobHeadless
+				id={knobId}
+				aria-labelledby={labelId}
+				className={`relative outline-none`}
+				style={{ width: `${size}px`, height: `${size}px` }}
+				dragSensitivity={dragSensitivity}
+				mapTo01={mapTo01}
+				mapFrom01={mapFrom01}
+				onValueRawChange={setVal}
+				valueRaw={valueRaw}
+				valueMin={minValue}
+				valueMax={maxValue}
+				valueRawDisplayFn={valueRawDisplayFn}
+				// TODO:
+				// what am i doing
+				valueRawRoundFn={() => 0.0}
+				{...keyboardControlHandlers}
+			>
+				<KnobBaseThumb {...thumbProps} />
+			</KnobHeadless>
 
-        <KnobTextInput
-          minValue={minValue}
-          maxValue={maxValue}
-          valueRaw={valueRaw}
-          setVal={setVal}
-          valueRawDisplayFn={valueRawDisplayFn}
-        />
-      </div>
-    </div>
-  );
+			<div className='mx-3'>
+				<KnobHeadlessLabel id={labelId} className='text-md'>
+					{label}
+				</KnobHeadlessLabel>
+
+				<KnobTextInput
+					minValue={minValue}
+					maxValue={maxValue}
+					valueRaw={valueRaw}
+					setVal={setVal}
+					valueRawDisplayFn={valueRawDisplayFn}
+				/>
+			</div>
+		</div>
+	);
 }
