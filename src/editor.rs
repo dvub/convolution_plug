@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use nih_plug::{
-    params::{Param, Params},
+    params::Params,
     prelude::{ParamPtr, ParamSetter},
 };
 use nih_plug_webview::{HTMLSource, WebViewEditor};
@@ -12,14 +12,22 @@ use crate::{
     params::PluginParams,
 };
 
+use itertools::Itertools;
+
+type ParamMap = Vec<(String, ParamPtr, String)>;
+
 const EDITOR_SIZE: (u32, u32) = (600, 600);
+
+// TODO:
+// figure out where to correctly use unsafe keyword for param stuff
 
 // TODO: fix nesting issues
 pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
     let params = params.clone();
+    let map = params.param_map();
+    let param_update_rx = params.rx.clone();
 
-    let param_rx_clone = params.rx.clone();
-    println!("PARAM MAP: {:?}", params.param_map());
+    println!("PARAM MAP: {:?}", map);
 
     let src = HTMLSource::URL("http://localhost:3000");
     let mut editor = WebViewEditor::new(src, EDITOR_SIZE).with_developer_mode(true);
@@ -75,13 +83,11 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
     editor = editor.with_event_loop(move |ctx, setter, _window| {
         let mut gui_updates = Vec::new();
 
-        // handle GUI -> backend messages
+        // --- GUI -> BACKEND COMMUNICATION ---
         while let Ok(value) = ctx.next_event() {
             let result = serde_json::from_value::<Message>(value.clone())
                 .expect("Error reading message from GUI");
 
-            // TODO:
-            // refactor
             match result {
                 Message::Init => unsafe {
                     let map = params.param_map();
@@ -95,26 +101,35 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                     }
                 },
                 // pretty much the most important one
-                Message::ParameterUpdate(update) => {
-                    match_and_update_param(&update, &setter, &params);
-                    gui_updates.push(update)
-                }
+                Message::ParameterUpdate(update) => unsafe {
+                    match_and_update_param(&update, &setter, &map);
+                    gui_updates.push(update.parameter_id)
+                },
                 // baseview has bugs on windows
                 // once fixed this can be implemented
                 Message::Resize { .. } => todo!(),
             }
         }
-        // send param updates backend -> GUI
-        while let Ok(param_update) = param_rx_clone.try_recv() {
-            if gui_updates
-                .iter()
-                .any(|p| p.parameter_id == param_update.parameter_id)
-            {
+        // --- BACKEND -> GUI COMMUNICATION ---
+
+        // for each iteration of this event loop, we only really need to send one update for each parameter
+        // therefore, we use unique() to remove duplicate parameter IDs
+        for param_id in param_update_rx.try_iter().unique() {
+            // if a parameter update comes from GUI, we don't want to send an old (-ish) version of the same parameter to the GUI
+            if gui_updates.contains(&param_id) {
                 continue;
             }
 
-            ctx.send_json(json!(Message::ParameterUpdate(param_update)));
-            //println!("Sent parameter update to GUI: {:?}", param_update);
+            // now that we know we REALLY want to send this parameter update to the GUI
+            // we do so here
+            unsafe {
+                let update = ParameterUpdate {
+                    parameter_id: param_id.clone(),
+                    value: get_normalized_param_value(param_id, &map),
+                };
+                let message = Message::ParameterUpdate(update);
+                ctx.send_json(json!(message));
+            }
         }
     });
 
@@ -122,67 +137,50 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
 }
 
 // TODO: overhaul error handling for this function
-// TODO: mark function as unsafe?
-fn match_and_update_param(
-    update: &ParameterUpdate,
-    setter: &ParamSetter,
-    params: &Arc<PluginParams>,
-) {
+// (due to unwrapping the parse())
+
+unsafe fn match_and_update_param(update: &ParameterUpdate, setter: &ParamSetter, map: &ParamMap) {
     let value = update.value.as_str();
     let id = update.parameter_id.as_str();
 
-    let map = params.param_map();
-    let ptr = map
-        .iter()
-        .find(|(param_id, _, _)| id == param_id)
-        .unwrap_or_else(|| panic!("Couldn't find a parameter with ID {}", id))
-        .1;
+    let ptr = get_ptr(id.to_owned(), map);
+    raw_set_param(setter, ptr, value.parse().unwrap());
+}
 
-    // "Dereferencing the pointers stored in the values is only valid as long as [the param_map() object] is valid."
-    // so we should be fine to dereference these pointers.
-    // this also allows rust to smartly parse the incoming value (which is a string)
-    unsafe {
-        match ptr {
-            ParamPtr::FloatParam(p) => {
-                let float_param = &*p;
-                set_param(setter, float_param, value.parse::<f32>().unwrap());
-            }
-            ParamPtr::BoolParam(p) => {
-                let bool_param = &*p;
-                set_param(setter, bool_param, value.parse::<bool>().unwrap());
-            }
-            // not implemented (yet)
-            ParamPtr::IntParam(_) => todo!(),
-            ParamPtr::EnumParam(_) => todo!(),
+unsafe fn get_normalized_param_value(id: String, map: &ParamMap) -> String {
+    let ptr = get_ptr(id, map);
+    ptr.modulated_normalized_value().to_string()
+
+    // OLD APPROACH
+    /*
+    match ptr {
+        ParamPtr::FloatParam(p) => {
+            let float_param = &*p;
+            float_param.value().to_string()
         }
+        ParamPtr::BoolParam(p) => {
+            let bool_param = &*p;
+            bool::to_string(&bool_param.value())
+        }
+        // not implemented (yet)
+        ParamPtr::IntParam(_) => todo!(),
+        ParamPtr::EnumParam(_) => todo!(),
     }
+    */
 }
 
-// TODO: is there a better way to do this
-fn set_param<P: Param>(setter: &ParamSetter, param: &P, value: P::Plain) {
-    setter.begin_set_parameter(param);
-    setter.set_parameter(param, value);
-    setter.end_set_parameter(param);
+fn get_ptr(id: String, map: &ParamMap) -> ParamPtr {
+    map.iter()
+        .find(|(param_id, _, _)| id == *param_id)
+        .unwrap_or_else(|| panic!("Couldn't find a parameter with ID {}", id))
+        .1
 }
 
-/*     match id {
-    "gain" => set_param(setter, &params.gain, value.parse().unwrap()),
-    "dry_wet" => set_param(setter, &params.dry_wet, value.parse().unwrap()),
-
-    // LOWPASS
-    "lowpass_enabled" => set_param(setter, &params.lowpass_enabled, value.parse().unwrap()),
-    "lowpass_freq" => set_param(setter, &params.lowpass_freq, value.parse().unwrap()),
-    "lowpass_q" => set_param(setter, &params.lowpass_q, value.parse().unwrap()),
-    // BELL
-    "bell_enabled" => set_param(setter, &params.bell_enabled, value.parse().unwrap()),
-    "bell_freq" => set_param(setter, &params.bell_freq, value.parse().unwrap()),
-    "bell_q" => set_param(setter, &params.bell_q, value.parse().unwrap()),
-    "bell_gain" => set_param(setter, &params.bell_gain, value.parse().unwrap()),
-    // HP
-    "highpass_enabled" => set_param(setter, &params.highpass_enabled, value.parse().unwrap()),
-    "highpass_freq" => set_param(setter, &params.highpass_freq, value.parse().unwrap()),
-    "highpass_q" => set_param(setter, &params.highpass_q, value.parse().unwrap()),
-
-    &_ => nih_log!("Receiving unknown parameter ID"),
+// TODO: is there a better way to do this??
+unsafe fn raw_set_param(setter: &ParamSetter, param: ParamPtr, normalized: f32) {
+    setter.raw_context.raw_begin_set_parameter(param);
+    setter
+        .raw_context
+        .raw_set_parameter_normalized(param, normalized);
+    setter.raw_context.raw_end_set_parameter(param);
 }
-*/

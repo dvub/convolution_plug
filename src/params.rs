@@ -3,8 +3,6 @@ use std::sync::Arc;
 use crossbeam_channel::{Receiver, Sender};
 use nih_plug::{prelude::*, util::db_to_gain};
 
-use crate::ipc::ParameterUpdate;
-
 // TODO:
 // add highpass and some sort of middle thing for EQ
 // other params include... idk
@@ -12,7 +10,7 @@ use crate::ipc::ParameterUpdate;
 #[derive(Params, Debug)]
 
 pub struct PluginParams {
-    pub rx: Receiver<ParameterUpdate>,
+    pub rx: Receiver<String>,
 
     #[id = "gain"]
     pub gain: FloatParam,
@@ -56,7 +54,7 @@ pub struct PluginParams {
 
 impl Default for PluginParams {
     fn default() -> Self {
-        let (tx, rx) = crossbeam_channel::unbounded::<ParameterUpdate>();
+        let (tx, rx) = crossbeam_channel::unbounded::<String>();
 
         Self {
             // This gain is stored as linear gain. NIH-plug comes with useful conversion functions
@@ -170,20 +168,11 @@ impl Default for PluginParams {
 }
 
 // TODO: figure out String or &str
-fn generate_callback<T: ToString>(
-    parameter: String,
-    tx: Sender<ParameterUpdate>,
-) -> Arc<impl Fn(T)>
+fn generate_callback<T>(parameter: String, tx: Sender<String>) -> Arc<impl Fn(T)>
 where
 {
-    // this is the callback that each parameter will fire when it updates
-    Arc::new(move |value: T| {
-        let new_event = ParameterUpdate {
-            parameter_id: parameter.clone(),
-            value: value.to_string(),
-        };
-
+    Arc::new(move |_| {
         // TODO: shoud we handle errors?
-        let _ = tx.try_send(new_event);
+        let _ = tx.try_send(parameter.clone());
     })
 }

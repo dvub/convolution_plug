@@ -38,6 +38,7 @@ ts-rs = "11.0.1"
 anyhow = "1.0.98"
 thiserror = "2.0.12"
 crossbeam-channel = "0.5.15"
+itertools = "0.14.0"
 
 # Uncomment the below line to disable the on-by-default VST3 feature to remove
 # the GPL compatibility requirement
