@@ -10,16 +10,16 @@ export interface GlobalParameters {
 	gain: number;
 	dry_wet: number;
 	// LP
-	lowpass_enabled: boolean;
+	lowpass_enabled: number;
 	lowpass_freq: number;
 	lowpass_q: number;
 	// BELL
-	bell_enabled: boolean;
+	bell_enabled: number;
 	bell_freq: number;
 	bell_q: number;
 	bell_gain: number;
 	// HP
-	highpass_enabled: boolean;
+	highpass_enabled: number;
 	highpass_freq: number;
 	highpass_q: number;
 }

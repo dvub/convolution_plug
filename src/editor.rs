@@ -93,7 +93,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                     for param_ptr in &map {
                         let param_update = ParameterUpdate {
                             parameter_id: param_ptr.0.clone(),
-                            value: param_ptr.1.modulated_normalized_value().to_string(),
+                            value: param_ptr.1.modulated_normalized_value(),
                         };
                         let message = Message::ParameterUpdate(param_update);
 
@@ -139,7 +139,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
 // (due to unwrapping the parse())
 
 unsafe fn match_and_update_param(update: &ParameterUpdate, setter: &ParamSetter, map: &ParamMap) {
-    let normalized = update.value.as_str().parse().unwrap();
+    let normalized = update.value;
     let id = update.parameter_id.as_str();
     let param_ptr = get_param_ptr(id.to_owned(), map);
 
@@ -151,9 +151,9 @@ unsafe fn match_and_update_param(update: &ParameterUpdate, setter: &ParamSetter,
 }
 
 // TODO: is it even worth putting this in a function
-unsafe fn get_normalized_param_value(id: String, map: &ParamMap) -> String {
+unsafe fn get_normalized_param_value(id: String, map: &ParamMap) -> f32 {
     let param_ptr = get_param_ptr(id, map);
-    param_ptr.modulated_normalized_value().to_string()
+    param_ptr.modulated_normalized_value()
 }
 
 /// Get a `ParamPtr` given a parameter id and a param map.

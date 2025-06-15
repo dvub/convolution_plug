@@ -73,13 +73,13 @@ impl Default for PluginParams {
             )
             // Because the gain parameter is stored as linear gain instead of storing the value as
             // decibels, we need logarithmic smoothing
-            .with_smoother(SmoothingStyle::Logarithmic(50.0))
-            .with_unit(" dB")
+            // .with_smoother(SmoothingStyle::Logarithmic(50.0))
             // There are many predefined formatters we can use here. If the gain was stored as
             // decibels instead of as a linear gain value, we could have also used the
             // `.with_step_size(0.1)` function to get internal rounding.
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
+            .with_unit(" dB")
             .with_callback(generate_callback(String::from("gain"), tx.clone())),
 
             dry_wet: FloatParam::new("Dry/Wet", 0.5, FloatRange::Linear { min: 0.0, max: 1.0 })
@@ -94,20 +94,26 @@ impl Default for PluginParams {
             lowpass_freq: FloatParam::new(
                 "Lowpass Frequency",
                 22_050.0,
-                FloatRange::Linear {
+                FloatRange::Skewed {
                     min: 10.0,
                     max: 22_050.0,
+                    factor: FloatRange::skew_factor(-2.5),
                 },
             )
+            .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
+            .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_callback(generate_callback(String::from("lowpass_freq"), tx.clone())),
+
             lowpass_q: FloatParam::new(
                 "Lowpass Q",
                 0.1,
-                FloatRange::Linear {
+                FloatRange::Skewed {
                     min: 0.1,
                     max: 18.0,
+                    factor: FloatRange::skew_factor(-2.0),
                 },
             )
+            .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_callback(generate_callback(String::from("lowpass_q"), tx.clone())),
 
             highpass_enabled: BoolParam::new("Highpass Enabled", false).with_callback(
@@ -116,20 +122,25 @@ impl Default for PluginParams {
             highpass_freq: FloatParam::new(
                 "Highpass Frequency",
                 22_050.0,
-                FloatRange::Linear {
+                FloatRange::Skewed {
                     min: 10.0,
                     max: 22_050.0,
+                    factor: FloatRange::skew_factor(-2.5),
                 },
             )
+            .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
+            .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_callback(generate_callback(String::from("highpass_freq"), tx.clone())),
             highpass_q: FloatParam::new(
                 "Highpass Q",
                 0.1,
-                FloatRange::Linear {
+                FloatRange::Skewed {
                     min: 0.1,
                     max: 18.0,
+                    factor: FloatRange::skew_factor(-2.0),
                 },
             )
+            .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_callback(generate_callback(String::from("highpass_q"), tx.clone())),
 
             bell_enabled: BoolParam::new("Bell Enabled", false)
@@ -138,29 +149,38 @@ impl Default for PluginParams {
             bell_freq: FloatParam::new(
                 "Bell Frequency",
                 22_050.0,
-                FloatRange::Linear {
+                FloatRange::Skewed {
                     min: 10.0,
                     max: 22_050.0,
+                    factor: FloatRange::skew_factor(-2.5),
                 },
             )
+            .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
+            .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_callback(generate_callback(String::from("bell_freq"), tx.clone())),
             bell_q: FloatParam::new(
                 "Bell Q",
                 0.1,
-                FloatRange::Linear {
+                FloatRange::Skewed {
                     min: 0.1,
                     max: 18.0,
+                    factor: FloatRange::skew_factor(-2.0),
                 },
             )
+            .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_callback(generate_callback(String::from("bell_q"), tx.clone())),
             bell_gain: FloatParam::new(
                 "Bell Gain",
-                0.1,
-                FloatRange::Linear {
-                    min: 0.1,
-                    max: 18.0,
+                db_to_gain(0.0),
+                FloatRange::Skewed {
+                    min: db_to_gain(-15.0),
+                    max: db_to_gain(15.0),
+                    factor: FloatRange::gain_skew_factor(-30.0, 30.0),
                 },
             )
+            .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
+            .with_string_to_value(formatters::s2v_f32_gain_to_db())
+            .with_unit(" dB")
             .with_callback(generate_callback(String::from("bell_gain"), tx.clone())),
             rx,
         }

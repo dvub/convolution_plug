@@ -17,5 +17,5 @@ pub enum Message {
 #[ts(export)]
 pub struct ParameterUpdate {
     pub parameter_id: String,
-    pub value: String,
+    pub value: f32,
 }
