@@ -111,6 +111,9 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
         }
         // --- BACKEND -> GUI COMMUNICATION ---
 
+        // TODO: 
+        // write test for this behavior
+
         // for each iteration of this event loop, we only really need to send one update for each parameter
         // therefore, we use unique() to remove duplicate parameter IDs
         for param_id in param_update_rx.try_iter().unique() {
