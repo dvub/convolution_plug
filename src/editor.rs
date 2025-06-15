@@ -93,7 +93,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                     for param_ptr in &map {
                         let param_update = ParameterUpdate {
                             parameter_id: param_ptr.0.clone(),
-                            value: param_ptr.1.modulated_plain_value().to_string(),
+                            value: param_ptr.1.modulated_normalized_value().to_string(),
                         };
                         let message = Message::ParameterUpdate(param_update);
 
@@ -111,7 +111,7 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
         }
         // --- BACKEND -> GUI COMMUNICATION ---
 
-        // TODO: 
+        // TODO:
         // write test for this behavior
 
         // for each iteration of this event loop, we only really need to send one update for each parameter

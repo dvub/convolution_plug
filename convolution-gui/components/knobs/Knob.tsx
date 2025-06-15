@@ -9,15 +9,15 @@ import { useContext, useId, useState } from 'react';
 import {
 	KnobHeadless,
 	KnobHeadlessLabel,
+	KnobHeadlessOutput,
 	useKnobKeyboardControls,
 } from 'react-knob-headless';
 
 import { KnobBaseThumb } from './KnobBaseThumb';
 
-import { NormalisableRange } from '../../lib/utils';
+import { dbToGain, NormalisableRange } from '../../lib/utils';
 import { sendToPlugin } from '@/lib';
 import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
-import { KnobTextInput } from './KnobTextInput';
 
 /*
 type KnobHeadlessProps = React.ComponentProps<typeof KnobHeadless>;
@@ -28,11 +28,11 @@ Pick<
 > & {...}
 */
 export type KnobProps = {
-	defaultValue: number;
+	cosmeticDefaultValue: number;
 	// visual stuff
 	label: string;
 	size: number;
-	range: NormalisableRange;
+	cosmeticRange: NormalisableRange;
 
 	// optional because knobs dont have to be parameters
 	parameter?: string;
@@ -51,11 +51,11 @@ export function Knob(props: KnobProps) {
 
 	const {
 		label,
-		defaultValue,
+		cosmeticDefaultValue,
 
 		size,
 		parameter,
-		range,
+		cosmeticRange,
 		onChangeCallback,
 		value,
 		valueRawDisplayFn,
@@ -68,6 +68,8 @@ export function Knob(props: KnobProps) {
 	// internally this is
 	const minValue = 0;
 	const maxValue = 1;
+	const internalRange = new NormalisableRange(0, 1, 0.5);
+	const internalDefaultValue = cosmeticRange.mapTo01(cosmeticDefaultValue);
 
 	// NOTE:
 	// this is only important if we don't have a parameter supplied
@@ -87,8 +89,8 @@ export function Knob(props: KnobProps) {
 		valueRaw = state;
 	}
 
-	const mapTo01 = (x: number) => range.mapTo01(x);
-	const mapFrom01 = (x: number) => range.mapFrom01(x);
+	const mapTo01 = (x: number) => internalRange.mapTo01(x);
+	const mapFrom01 = (x: number) => internalRange.mapFrom01(x);
 
 	const knobId = useId();
 	const labelId = useId();
@@ -129,7 +131,7 @@ export function Knob(props: KnobProps) {
 	}
 
 	function resetValue() {
-		setVal(defaultValue);
+		setVal(internalDefaultValue);
 	}
 
 	const thumbProps = {
@@ -164,14 +166,9 @@ export function Knob(props: KnobProps) {
 				<KnobHeadlessLabel id={labelId} className='text-md'>
 					{label}
 				</KnobHeadlessLabel>
-
-				<KnobTextInput
-					minValue={minValue}
-					maxValue={maxValue}
-					valueRaw={valueRaw}
-					setVal={setVal}
-					valueRawDisplayFn={valueRawDisplayFn}
-				/>
+				<KnobHeadlessOutput htmlFor={''}>
+					{valueRawDisplayFn(cosmeticRange.mapFrom01(valueRaw))}
+				</KnobHeadlessOutput>
 			</div>
 		</div>
 	);

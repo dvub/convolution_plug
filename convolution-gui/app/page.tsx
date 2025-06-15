@@ -83,12 +83,26 @@ export default function Home() {
 					BUTTON
 				</button>
 				<Knob
-					defaultValue={0.5}
-					label={''}
-					size={50}
-					range={new NormalisableRange(0, 1, 0.5)}
 					parameter='gain'
-					valueRawDisplayFn={(x) => `${gainToDb(x).toFixed(2)} dB`}
+					label={'Gain'}
+					size={50}
+					//
+					cosmeticDefaultValue={dbToGain(0)}
+					cosmeticRange={
+						new NormalisableRange(
+							dbToGain(-30),
+							dbToGain(30),
+							dbToGain(0)
+						)
+					}
+					valueRawDisplayFn={(x) => {
+						let g = gainToDb(x).toFixed(2);
+						// TODO: make this not be really scuffed
+						if (g === '-0.00') {
+							g = '0.00';
+						}
+						return `${g} dB`;
+					}}
 				></Knob>
 			</GlobalParametersContext.Provider>
 		</MessageBusContext.Provider>

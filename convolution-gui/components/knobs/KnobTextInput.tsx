@@ -1,3 +1,4 @@
+/*
 import { useState, useEffect } from 'react';
 // import { Input } from '../ui/input';
 import { KnobProps } from './Knob';
@@ -85,3 +86,4 @@ export function KnobTextInput(props: KnobTextInputProps) {
 		/>
 	);
 }
+*/
