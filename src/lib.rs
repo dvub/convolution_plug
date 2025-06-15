@@ -28,7 +28,7 @@ struct ConvolutionPlug {
     params: Arc<PluginParams>,
 
     graph: Box<dyn AudioUnit>,
-    slot_front: Slot,
+    slot: Slot,
 
     input_buffer: StereoBuffer,
     output_buffer: StereoBuffer,
@@ -36,12 +36,12 @@ struct ConvolutionPlug {
 impl Default for ConvolutionPlug {
     fn default() -> Self {
         let graph = Box::new(pass());
-        let slot = Slot::new(Box::new(pass()));
+        let slot = Slot::new(Box::new(pass())).0;
 
         Self {
             params: Arc::new(PluginParams::default()),
             graph,
-            slot_front: slot.0,
+            slot,
             input_buffer: StereoBuffer::new(),
             output_buffer: StereoBuffer::new(),
         }
@@ -103,7 +103,7 @@ impl Plugin for ConvolutionPlug {
         rms_normalize(&mut ir_samples, -48.0);
 
         // IMPORTANT: BUILD GRAPH
-        (self.graph, self.slot_front) = build_graph(&self.params, &ir_samples);
+        (self.graph, self.slot) = build_graph(&self.params, &ir_samples);
 
         nih_log!("Initialized Convolution");
 

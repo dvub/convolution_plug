@@ -82,7 +82,6 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
 
     editor = editor.with_event_loop(move |ctx, setter, _window| {
         let mut gui_updates = Vec::new();
-
         // --- GUI -> BACKEND COMMUNICATION ---
         while let Ok(value) = ctx.next_event() {
             let result = serde_json::from_value::<Message>(value.clone())
