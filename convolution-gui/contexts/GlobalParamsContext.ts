@@ -23,3 +23,5 @@ export interface GlobalParameters {
 	highpass_freq: number;
 	highpass_q: number;
 }
+
+export type Parameter = keyof GlobalParameters;

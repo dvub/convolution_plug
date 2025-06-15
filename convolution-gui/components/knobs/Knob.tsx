@@ -15,9 +15,12 @@ import {
 
 import { KnobBaseThumb } from './KnobBaseThumb';
 
-import { dbToGain, NormalisableRange } from '../../lib/utils';
+import { NormalisableRange } from '../../lib/utils';
 import { sendToPlugin } from '@/lib';
-import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
+import {
+	GlobalParametersContext,
+	Parameter,
+} from '@/contexts/GlobalParamsContext';
 
 /*
 type KnobHeadlessProps = React.ComponentProps<typeof KnobHeadless>;
@@ -27,6 +30,10 @@ Pick<
 	'valueMin' | 'valueMax' | 'orientation'
 > & {...}
 */
+
+// TODO: make this a parameter-only knob
+// create a separate component for setting-related knobs if desired
+
 export type KnobProps = {
 	cosmeticDefaultValue: number;
 	// visual stuff
@@ -35,7 +42,7 @@ export type KnobProps = {
 	cosmeticRange: NormalisableRange;
 
 	// optional because knobs dont have to be parameters
-	parameter?: string;
+	parameter?: Parameter;
 	onChangeCallback?: (n: number) => void;
 	value?: number;
 	// TODO: make this work
@@ -66,8 +73,8 @@ export function Knob(props: KnobProps) {
 	const { parameters, setParameters } = useContext(GlobalParametersContext)!;
 
 	// internally this is
-	const minValue = 0;
-	const maxValue = 1;
+	const internalMinValue = 0;
+	const internalMaxValue = 1;
 	const internalRange = new NormalisableRange(0, 1, 0.5);
 	const internalDefaultValue = cosmeticRange.mapTo01(cosmeticDefaultValue);
 
@@ -99,8 +106,8 @@ export function Knob(props: KnobProps) {
 	// probably make this work
 	const keyboardControlHandlers = useKnobKeyboardControls({
 		valueRaw: valueRaw,
-		valueMin: minValue,
-		valueMax: maxValue,
+		valueMin: internalMinValue,
+		valueMax: internalMaxValue,
 
 		step: stepFn(),
 		stepLarger: stepLargerFn(),
@@ -151,8 +158,8 @@ export function Knob(props: KnobProps) {
 				mapFrom01={mapFrom01}
 				onValueRawChange={setVal}
 				valueRaw={valueRaw}
-				valueMin={minValue}
-				valueMax={maxValue}
+				valueMin={internalMinValue}
+				valueMax={internalMaxValue}
 				valueRawDisplayFn={valueRawDisplayFn}
 				// TODO:
 				// what am i doing
