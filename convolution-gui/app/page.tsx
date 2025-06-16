@@ -76,8 +76,21 @@ export default function Home() {
             })
           }
         >
-          BUTTON
+          ENABLE HIGHPASS
         </button>
+
+        <button
+          onClick={() => {
+            sendToPlugin({
+              type: "slotUpdate",
+              data: "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav",
+            });
+            console.log("hi");
+          }}
+        >
+          CHANGE TO SMALL IR
+        </button>
+
         <Knob
           parameter="gain"
           label={"Gain"}

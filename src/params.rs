@@ -8,7 +8,6 @@ use nih_plug::{prelude::*, util::db_to_gain};
 // other params include... idk
 
 #[derive(Params, Debug)]
-
 pub struct PluginParams {
     pub rx: Receiver<String>,
 

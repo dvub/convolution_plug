@@ -1,18 +1,22 @@
-use std::sync::Arc;
+mod ipc;
 
+use ipc::{Message, ParameterUpdate};
+
+use crate::{
+    params::PluginParams,
+    util::{read_samples_from_file, rms_normalize},
+};
+
+use itertools::Itertools;
 use nih_plug::{
+    nih_log,
     params::Params,
     prelude::{ParamPtr, ParamSetter},
 };
 use nih_plug_webview::{HTMLSource, WebViewEditor};
+use rtrb::Producer;
 use serde_json::json;
-
-use crate::{
-    ipc::{Message, ParameterUpdate},
-    params::PluginParams,
-};
-
-use itertools::Itertools;
+use std::sync::{Arc, Mutex};
 
 type ParamMap = Vec<(String, ParamPtr, String)>;
 
@@ -22,7 +26,9 @@ const EDITOR_SIZE: (u32, u32) = (600, 600);
 // figure out where to correctly use unsafe keyword for param stuff
 
 // TODO: fix nesting issues
-pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
+pub fn create_editor(params: &Arc<PluginParams>, tx: Producer<Vec<f32>>) -> WebViewEditor {
+    let wrapped = Mutex::new(tx);
+
     let params = params.clone();
     let map = params.param_map();
     let param_update_rx = params.rx.clone();
@@ -103,6 +109,25 @@ pub fn create_editor(params: &Arc<PluginParams>) -> WebViewEditor {
                     match_and_update_param(&update, &setter, &map);
                     gui_updates.push(update.parameter_id)
                 },
+
+                Message::SlotUpdate(path) => {
+                    // GUI thread doesn't have to be real-time so we're gonna do a buunch of NOT real-time stuff
+                    nih_log!(
+                        "Received message from GUI to update IR from new path: {}",
+                        path
+                    );
+
+                    let mut ir_samples = read_samples_from_file(&path);
+                    rms_normalize(&mut ir_samples, -48.0);
+
+                    // TODO: possibly improve error handling
+                    wrapped
+                        .lock()
+                        .expect("Error locking IR TX")
+                        .push(ir_samples)
+                        .expect("Error sending IR update over channel");
+                }
+
                 // baseview has bugs on windows
                 // once fixed this can be implemented
                 Message::Resize { .. } => todo!(),

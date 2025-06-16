@@ -3,16 +3,14 @@ mod editor;
 mod params;
 mod util;
 
-mod ipc;
-
-use fundsp::hacker32::*;
-use nih_plug::prelude::*;
-use std::sync::Arc;
-
-use params::PluginParams;
+use crate::dsp::convolve::convolver;
 
 use dsp::build_graph;
-use util::{read_samples_from_file, rms_normalize};
+use fundsp::hacker32::*;
+use nih_plug::prelude::*;
+use params::PluginParams;
+use rtrb::{Consumer, RingBuffer};
+use std::sync::Arc;
 
 // this is kind of silly in retrospect
 type StereoBuffer = BufferArray<U2>;
@@ -23,15 +21,16 @@ type StereoBuffer = BufferArray<U2>;
 // - decay / speed (something..) - maybe check convology
 // - reverse (for fun LOL)
 
-// - figure out whether to use shelves or passes
+// TODO: make logging consistent and improve it in general
 struct ConvolutionPlug {
     params: Arc<PluginParams>,
-
+    // fundsp stuff
     graph: Box<dyn AudioUnit>,
-    slot: Slot,
-
     input_buffer: StereoBuffer,
     output_buffer: StereoBuffer,
+    // for updating IR
+    slot: Slot,
+    slot_rx: Option<Consumer<Vec<f32>>>,
 }
 impl Default for ConvolutionPlug {
     fn default() -> Self {
@@ -42,6 +41,7 @@ impl Default for ConvolutionPlug {
             params: Arc::new(PluginParams::default()),
             graph,
             slot,
+            slot_rx: None,
             input_buffer: StereoBuffer::new(),
             output_buffer: StereoBuffer::new(),
         }
@@ -96,16 +96,11 @@ impl Plugin for ConvolutionPlug {
         _buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
-        let path = "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav";
-        // let path = "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav";
-
-        let mut ir_samples = read_samples_from_file(path);
-        rms_normalize(&mut ir_samples, -48.0);
-
+        nih_log!("Building DSP graph..");
         // IMPORTANT: BUILD GRAPH
-        (self.graph, self.slot) = build_graph(&self.params, &ir_samples);
+        (self.graph, self.slot) = build_graph(&self.params);
 
-        nih_log!("Initialized Convolution");
+        nih_log!("Initialized Convolution.");
 
         true
     }
@@ -117,7 +112,11 @@ impl Plugin for ConvolutionPlug {
 
     // we probably aren't going to use async executor
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        Some(Box::new(editor::create_editor(&self.params)))
+        let (producer, consumer) = RingBuffer::<Vec<f32>>::new(1);
+
+        self.slot_rx = Some(consumer);
+
+        Some(Box::new(editor::create_editor(&self.params, producer)))
     }
 
     fn process(
@@ -153,6 +152,14 @@ impl Plugin for ConvolutionPlug {
                     *channel_samples.get_mut(n).unwrap() =
                         self.output_buffer.buffer_ref().at_f32(n, index);
                 }
+            }
+        }
+
+        if let Some(rx) = self.slot_rx.as_mut() {
+            if let Ok(slot) = rx.pop() {
+                let new_convolver = Box::new(convolver(&slot) | convolver(&slot));
+
+                self.slot.set(Fade::Smooth, 1.0, new_convolver);
             }
         }
 
