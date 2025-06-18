@@ -1,10 +1,12 @@
 pub mod convolve;
-pub mod param_nodes;
+pub mod nodes;
+pub mod param_node;
+pub mod param_node_shared;
 
 use fundsp::hacker32::*;
 use std::sync::Arc;
 
-use param_nodes::*;
+use nodes::*;
 
 use crate::params::PluginParams;
 
@@ -39,7 +41,7 @@ fn hp_with_params(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U1, Outpu
 }
 
 fn bell_with_params(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U1, Outputs = U1>> {
-    (pass() | bell_freq::<U1>(p) | param_nodes::bell_q::<U1>(p) | bell_gain::<U1>(p)) >> bell()
+    (pass() | bell_freq::<U1>(p) | nodes::bell_q::<U1>(p) | bell_gain::<U1>(p)) >> bell()
 }
 
 // ...
