@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use fundsp::hacker32::*;
 
 use convolution_plug::{
@@ -8,55 +8,40 @@ use convolution_plug::{
     params::PluginParams,
 };
 
-fn render_many_params(num_param_nodes: usize, p: &Arc<PluginParams>) -> Wave {
-    let mut net = Net::wrap(Box::new(noise()));
-    // repeatedly add a float param to the DSP graph
-    // (hopefully)
-    for _ in 0..num_param_nodes {
-        net = net * gain::<U1>(p);
-    }
-
-    Wave::render(44100.0, 1.0, &mut net)
-}
-
-fn render_many_params_shared(num_param_nodes: usize, p: &Arc<PluginParams>) -> Wave {
-    let shared = shared(0.0);
-
-    let init_graph = noise() >> gain_shared(p, &shared);
-    let mut net = Net::wrap(Box::new(init_graph));
-
-    // repeatedly add a float param to the DSP graph
-    // (hopefully)
-    for _ in 0..num_param_nodes {
-        net = net * var(&shared);
-    }
-
-    Wave::render(44100.0, 1.0, &mut net)
+fn render_graph(_dummy: usize, node: &mut dyn AudioUnit) -> Wave {
+    Wave::render(44100.0, 1.0, node)
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let mut group = c.benchmark_group("render_many_params");
+    let mut group = c.benchmark_group("params");
 
-    for x in 0..4 {
-        group.bench_with_input(BenchmarkId::from_parameter(x), &x, |b, &x| {
-            let default_params = PluginParams::default();
-            let p = Arc::new(default_params);
+    for n in 0..10 {
+        group.bench_with_input(BenchmarkId::new("many_params", n), &n, |b, n| {
+            /* SETUP */
+            let p = Arc::new(PluginParams::default());
+            let mut graph = Net::wrap(Box::new(noise()));
+            for _ in 0..*n {
+                graph = graph * gain::<U1>(&p);
+            }
 
-            b.iter(|| render_many_params(x, &p));
+            /* BENCHING */
+            b.iter(|| render_graph(black_box(0), &mut graph));
+        });
+
+        group.bench_with_input(BenchmarkId::new("many_params_shared", n), &n, |b, n| {
+            /* SETUP */
+            let p = Arc::new(PluginParams::default());
+            let shared = Shared::new(0.0);
+            let mut shared_graph = Net::wrap(Box::new(noise() >> gain_shared(&p, &shared)));
+
+            for _ in 0..*n {
+                shared_graph = shared_graph * var(&shared);
+            }
+            /* BENCHING */
+            b.iter(|| render_graph(black_box(0), &mut shared_graph));
         });
     }
-    group.finish();
 
-    let mut group = c.benchmark_group("render_many_params_shared");
-
-    for x in 0..4 {
-        group.bench_with_input(BenchmarkId::from_parameter(x), &x, |b, &x| {
-            let default_params = PluginParams::default();
-            let p = Arc::new(default_params);
-
-            b.iter(|| render_many_params_shared(x, &p));
-        });
-    }
     group.finish();
 }
 
