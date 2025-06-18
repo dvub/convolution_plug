@@ -11,7 +11,7 @@ description = "todo"
 members = ["xtask"]
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 hound = "3.5.1"
@@ -41,9 +41,17 @@ crossbeam-channel = "0.5.15"
 itertools = "0.14.0"
 rtrb = "0.3.2"
 
+
 # Uncomment the below line to disable the on-by-default VST3 feature to remove
 # the GPL compatibility requirement
 # nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", default-features = false, features = ["assert_process_allocs"] }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "benchmark"
+harness = false
 
 [profile.release]
 lto = "thin"

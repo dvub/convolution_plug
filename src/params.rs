@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fmt::Display, sync::Arc};
 
 use crossbeam_channel::{Receiver, Sender};
 use nih_plug::{prelude::*, util::db_to_gain};
@@ -49,6 +49,12 @@ pub struct PluginParams {
 
     #[id = "highpass_q"]
     pub highpass_q: FloatParam,
+}
+
+impl Display for PluginParams {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.gain.value())
+    }
 }
 
 impl Default for PluginParams {

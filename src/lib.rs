@@ -1,6 +1,6 @@
-mod dsp;
+pub mod dsp;
 mod editor;
-mod params;
+pub mod params;
 mod util;
 
 use crate::dsp::convolve::convolver;
