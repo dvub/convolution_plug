@@ -11,7 +11,11 @@ description = "todo"
 members = ["xtask"]
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib", "lib"]
+
+[[bin]]
+name = "profiling"
+path = "src/main.rs"
 
 [dependencies]
 hound = "3.5.1"
@@ -53,9 +57,9 @@ criterion = { version = "0.5", features = ["html_reports"] }
 name = "benchmark"
 harness = false
 
-[profile.release]
-lto = "thin"
-strip = "symbols"
+#[profile.release]
+#lto = "thin"
+#strip = "symbols"
 
 [profile.profiling]
 inherits = "release"

@@ -8,12 +8,12 @@ use convolution_plug::{
     params::PluginParams,
 };
 
-fn render_graph(_dummy: usize, node: &mut dyn AudioUnit) -> Wave {
+fn render_graph(node: &mut dyn AudioUnit) -> Wave {
     Wave::render(44100.0, 1.0, node)
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let mut group = c.benchmark_group("params");
+    let mut group = c.benchmark_group("micro_params");
 
     for n in 0..10 {
         group.bench_with_input(BenchmarkId::new("many_params", n), &n, |b, n| {
@@ -25,7 +25,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             }
 
             /* BENCHING */
-            b.iter(|| render_graph(black_box(0), &mut graph));
+            b.iter(|| render_graph(black_box(&mut graph)));
         });
 
         group.bench_with_input(BenchmarkId::new("many_params_shared", n), &n, |b, n| {
@@ -38,7 +38,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 shared_graph = shared_graph * var(&shared);
             }
             /* BENCHING */
-            b.iter(|| render_graph(black_box(0), &mut shared_graph));
+            b.iter(|| render_graph(black_box(&mut shared_graph)));
         });
     }
 
