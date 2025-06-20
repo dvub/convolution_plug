@@ -10,7 +10,7 @@ fn main() {
 
     let mut graph = noise() * gain(&params);
 
-    let wave = Wave::render(44100.0, 1.0, &mut graph);
+    Wave::render(44100.0, 1.0, &mut graph);
 
-    // println!("Done rendering.");
+    println!("Done rendering.");
 }
