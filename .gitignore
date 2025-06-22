@@ -3,4 +3,5 @@
 /convolution-gui/assets
 
 profile.json.gz
-
+perf.data
+perf.data.old
