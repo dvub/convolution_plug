@@ -22,6 +22,7 @@ type StereoBuffer = BufferArray<U2>;
 // - reverse (for fun LOL)
 
 // TODO: make logging consistent and improve it in general
+
 struct ConvolutionPlug {
     params: Arc<PluginParams>,
     // fundsp stuff

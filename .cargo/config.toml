@@ -1,2 +1,6 @@
 [alias]
+#xtask = "run --package xtask --release --"
 xtask = "run --package xtask --release --"
+
+[build]
+rustflags = ["-C", "force-frame-pointers=yes"]
