@@ -23,6 +23,8 @@ type StereoBuffer = BufferArray<U2>;
 
 // TODO: make logging consistent and improve it in general
 
+// TODO: do not send param update channel messages if UI is not open
+
 struct ConvolutionPlug {
     params: Arc<PluginParams>,
     // fundsp stuff
