@@ -1,10 +1,7 @@
 use fundsp::hacker32::*;
 use nih_plug::params::Params;
 
-use std::{
-    marker::PhantomData,
-    sync::{atomic::AtomicU32, Arc},
-};
+use std::sync::{atomic::AtomicU32, Arc};
 
 pub trait Accessor<P>: Fn(&Arc<P>) -> f32 + Clone + Send + Sync {}
 impl<F, P> Accessor<P> for F where F: Fn(&Arc<P>) -> f32 + Clone + Send + Sync {}

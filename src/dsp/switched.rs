@@ -2,7 +2,6 @@ use std::{marker::PhantomData, ops::Sub};
 
 use fundsp::{
     hacker32::*,
-    numeric_array::generic_array::GenericArray,
     typenum::{Sub1, B1},
 };
 
