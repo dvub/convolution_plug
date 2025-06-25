@@ -9,7 +9,7 @@ use nih_plug::{prelude::*, util::db_to_gain};
 
 #[derive(Params, Debug)]
 pub struct PluginParams {
-    pub rx: Receiver<String>,
+    pub rx: Receiver<usize>,
 
     #[id = "gain"]
     pub gain: FloatParam,
@@ -59,7 +59,8 @@ impl Display for PluginParams {
 
 impl Default for PluginParams {
     fn default() -> Self {
-        let (tx, rx) = crossbeam_channel::unbounded::<String>();
+        // FIGURE OUT CORRECT LENGTH??
+        let (tx, rx) = crossbeam_channel::bounded::<usize>(100);
 
         Self {
             // This gain is stored as linear gain. NIH-plug comes with useful conversion functions
@@ -85,15 +86,14 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
-            .with_callback(generate_callback(String::from("gain"), tx.clone())),
+            .with_callback(generate_callback(0, tx.clone())),
             dry_wet: FloatParam::new("Dry/Wet", 0.5, FloatRange::Linear { min: 0.0, max: 1.0 })
                 .with_value_to_string(formatters::v2s_f32_percentage(2))
                 .with_unit("%")
-                .with_callback(generate_callback(String::from("dry_wet"), tx.clone())),
+                .with_callback(generate_callback(1, tx.clone())),
 
-            lowpass_enabled: BoolParam::new("Lowpass Enabled", false).with_callback(
-                generate_callback(String::from("lowpass_enabled"), tx.clone()),
-            ),
+            lowpass_enabled: BoolParam::new("Lowpass Enabled", false)
+                .with_callback(generate_callback(2, tx.clone())),
 
             lowpass_freq: FloatParam::new(
                 "Lowpass Frequency",
@@ -106,7 +106,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
-            .with_callback(generate_callback(String::from("lowpass_freq"), tx.clone())),
+            .with_callback(generate_callback(3, tx.clone())),
 
             lowpass_q: FloatParam::new(
                 "Lowpass Q",
@@ -118,11 +118,10 @@ impl Default for PluginParams {
                 },
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
-            .with_callback(generate_callback(String::from("lowpass_q"), tx.clone())),
+            .with_callback(generate_callback(4, tx.clone())),
 
-            highpass_enabled: BoolParam::new("Highpass Enabled", false).with_callback(
-                generate_callback(String::from("highpass_enabled"), tx.clone()),
-            ),
+            highpass_enabled: BoolParam::new("Highpass Enabled", false)
+                .with_callback(generate_callback(5, tx.clone())),
             highpass_freq: FloatParam::new(
                 "Highpass Frequency",
                 22_050.0,
@@ -134,7 +133,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
-            .with_callback(generate_callback(String::from("highpass_freq"), tx.clone())),
+            .with_callback(generate_callback(6, tx.clone())),
             highpass_q: FloatParam::new(
                 "Highpass Q",
                 0.1,
@@ -145,10 +144,10 @@ impl Default for PluginParams {
                 },
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
-            .with_callback(generate_callback(String::from("highpass_q"), tx.clone())),
+            .with_callback(generate_callback(7, tx.clone())),
 
             bell_enabled: BoolParam::new("Bell Enabled", false)
-                .with_callback(generate_callback(String::from("bell_enabled"), tx.clone())),
+                .with_callback(generate_callback(8, tx.clone())),
 
             bell_freq: FloatParam::new(
                 "Bell Frequency",
@@ -161,7 +160,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
-            .with_callback(generate_callback(String::from("bell_freq"), tx.clone())),
+            .with_callback(generate_callback(9, tx.clone())),
             bell_q: FloatParam::new(
                 "Bell Q",
                 0.1,
@@ -172,7 +171,7 @@ impl Default for PluginParams {
                 },
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
-            .with_callback(generate_callback(String::from("bell_q"), tx.clone())),
+            .with_callback(generate_callback(10, tx.clone())),
             bell_gain: FloatParam::new(
                 "Bell Gain",
                 db_to_gain(0.0),
@@ -185,18 +184,18 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
-            .with_callback(generate_callback(String::from("bell_gain"), tx.clone())),
+            .with_callback(generate_callback(11, tx.clone())),
             rx,
         }
     }
 }
 
 // TODO: figure out String or &str
-fn generate_callback<T>(parameter: String, tx: Sender<String>) -> Arc<impl Fn(T)>
+fn generate_callback<T>(parameter_index: usize, tx: Sender<usize>) -> Arc<impl Fn(T)>
 where
 {
     Arc::new(move |_| {
         // TODO: shoud we handle errors?
-        let _ = tx.try_send(parameter.clone());
+        let _ = tx.try_send(parameter_index);
     })
 }

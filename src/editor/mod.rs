@@ -140,16 +140,18 @@ pub fn create_editor(params: &Arc<PluginParams>, tx: Producer<Vec<f32>>) -> WebV
 
         // for each iteration of this event loop, we only really need to send one update for each parameter
         // therefore, we use unique() to remove duplicate parameter IDs
-        for param_id in param_update_rx.try_iter().unique() {
+        for param_index in param_update_rx.try_iter().unique() {
+            let param_id = &map[param_index].0;
+
             // if a parameter update comes from GUI, we don't want to send an old (-ish) version of the same parameter to the GUI
-            if gui_updates.contains(&param_id) {
+            if gui_updates.contains(param_id) {
                 continue;
             }
             // now we know we REALLY want to send this parameter update to the GUI
             unsafe {
                 let update = ParameterUpdate {
                     parameter_id: param_id.clone(),
-                    value: get_normalized_param_value(param_id, &map),
+                    value: get_normalized_param_value(param_id.to_string(), &map),
                 };
                 let message = Message::ParameterUpdate(update);
                 ctx.send_json(json!(message));

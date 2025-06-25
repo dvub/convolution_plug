@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use nodes::*;
 
-use crate::{dsp::switched::SwitchedNode, params::PluginParams};
+use crate::{dsp::switched::switched_node, params::PluginParams};
 
 // yep this is the big thing
 pub fn build_graph(p: &Arc<PluginParams>) -> (Box<dyn AudioUnit>, Slot) {
@@ -48,26 +48,16 @@ fn bell_with_params(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U1, Out
 // ...
 
 fn switched_bell(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U2, Outputs = U2>> {
-    let stereo_bell = bell_with_params(p) | bell_with_params(p);
-
-    (bell_enabled(p) * stereo_bell) & ((1.0 - bell_enabled(p)) * multipass::<U2>())
+    (multipass::<U2>() | bell_enabled::<U1>(p))
+        >> switched_node(stacki::<U2, _, _>(|_| bell_with_params(p)), |x| x == 1.0)
 }
 
-/*
 fn switched_lowpass(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U2, Outputs = U2>> {
-    let stereo_lp = lp_with_params(p) | lp_with_params(p);
-
-    (multipass::<U2>() | bell_enabled::<U1>(p)) >> SwitchedNode::new(stereo_lp, |x| x == 1.0)
-}*/
-
-fn switched_lowpass(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U2, Outputs = U2>> {
-    let stereo_lowpass = lp_with_params(p) | lp_with_params(p);
-
-    (lp_enabled(p) * stereo_lowpass) & ((1.0 - lp_enabled(p)) * multipass::<U2>())
+    (multipass::<U2>() | lp_enabled::<U1>(p))
+        >> switched_node(stacki::<U2, _, _>(|_| lp_with_params(p)), |x| x == 1.0)
 }
 
 fn switched_highpass(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U2, Outputs = U2>> {
-    let stereo_highpass = hp_with_params(p) | hp_with_params(p);
-
-    (hp_enabled(p) * stereo_highpass) & ((1.0 - hp_enabled(p)) * multipass::<U2>())
+    (multipass::<U2>() | hp_enabled::<U1>(p))
+        >> switched_node(stacki::<U2, _, _>(|_| hp_with_params(p)), |x| x == 1.0)
 }
