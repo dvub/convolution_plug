@@ -2,13 +2,13 @@
 name = "convolution_plug"
 version = "0.1.0"
 edition = "2021"
-authors = ["dvub <todo>"]
+authors = ["dvub <todo@todo.com>"]
 license = "Other licenses can be set in Cargo.toml, but using the project needs to be GPLv3 compliant to be able to use the VST3 exporter. Check Cargo.toml for more information."
 homepage = "todo"
 description = "todo"
 
 [workspace]
-members = ["xtask"]
+members = ["xtask", "nih-plug-webview"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -30,8 +30,7 @@ convolution = { git = "https://github.com/holoplot/fft-convolution.git" }
 
 
 # GUI
-nih_plug_webview = { git = "https://github.com/httnn/nih-plug-webview.git" }
-
+nih-plug-webview = { path = "nih-plug-webview" }
 # for embedding a bundled frontend
 mime_guess = "2.0.5"
 include_dir = "0.7.4"

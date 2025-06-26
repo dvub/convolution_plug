@@ -7,7 +7,6 @@ use ts_rs::TS;
 #[ts(export)]
 pub enum Message {
     Init,
-    WindowClosed,
     Resize { width: u32, height: u32 },
     ParameterUpdate(ParameterUpdate),
     SlotUpdate(String),
