@@ -16,7 +16,7 @@ use nih_plug::{
 use nih_plug_webview::{HTMLSource, WebViewEditor};
 use rtrb::Producer;
 use serde_json::json;
-use std::sync::{Arc, Mutex};
+use std::sync::{atomic::Ordering, Arc, Mutex};
 
 type ParamMap = Vec<(String, ParamPtr, String)>;
 
@@ -31,7 +31,9 @@ pub fn create_editor(params: &Arc<PluginParams>, tx: Producer<Vec<f32>>) -> WebV
 
     let params = params.clone();
     let map = params.param_map();
+
     let param_update_rx = params.rx.clone();
+    let is_editor_open = params.is_editor_open.clone();
 
     println!("PARAM MAP: {:?}", map);
 
@@ -95,6 +97,9 @@ pub fn create_editor(params: &Arc<PluginParams>, tx: Producer<Vec<f32>>) -> WebV
 
             match result {
                 Message::Init => unsafe {
+                    // TODO: figure out correct Ordering
+                    is_editor_open.store(true, Ordering::Relaxed);
+
                     for param_ptr in &map {
                         let param_update = ParameterUpdate {
                             parameter_id: param_ptr.0.clone(),
@@ -105,6 +110,12 @@ pub fn create_editor(params: &Arc<PluginParams>, tx: Producer<Vec<f32>>) -> WebV
                         ctx.send_json(json!(message));
                     }
                 },
+                // TODO: is there anything else we need to do here?
+                Message::WindowClosed => {
+                    is_editor_open.store(false, Ordering::Relaxed);
+                    println!("GUI closed.")
+                }
+
                 Message::ParameterUpdate(update) => unsafe {
                     match_and_update_param(&update, &setter, &map);
                     gui_updates.push(update.parameter_id)

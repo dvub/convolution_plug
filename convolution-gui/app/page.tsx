@@ -57,8 +57,17 @@ export default function Home() {
 
     const unsubscribe = messageBus.subscribe(handlePluginMessage);
 
+    let onBeforeUnload = (e) => {
+      e.preventDefault();
+      console.log("Closing..");
+      sendToPlugin({ type: "windowClosed" });
+    };
+
+    window.addEventListener("beforeunload", onBeforeUnload);
+
     return () => {
       unsubscribe();
+      window.removeEventListener("beforeunload", onBeforeUnload);
     };
   }, []);
 
