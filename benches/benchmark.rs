@@ -3,10 +3,7 @@ use std::sync::Arc;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use fundsp::hacker32::*;
 
-use convolution_plug::{
-    dsp::nodes::{gain, gain_shared},
-    params::PluginParams,
-};
+use convolution_plug::{dsp::nodes::gain, params::PluginParams};
 
 fn render_graph(node: &mut dyn AudioUnit) -> Wave {
     Wave::render(44100.0, 1.0, node)
@@ -28,6 +25,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             b.iter(|| render_graph(black_box(&mut graph)));
         });
 
+        /*
         group.bench_with_input(BenchmarkId::new("many_params_shared", n), &n, |b, n| {
             /* SETUP */
             let p = Arc::new(PluginParams::default());
@@ -39,7 +37,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             }
             /* BENCHING */
             b.iter(|| render_graph(black_box(&mut shared_graph)));
-        });
+        });*/
     }
 
     group.finish();

@@ -1,16 +1,22 @@
 pub mod dsp;
-mod editor;
 pub mod params;
+
+mod config;
+mod editor;
 mod util;
 
 use crate::dsp::convolve::convolver;
 
+use directories::ProjectDirs;
 use dsp::build_graph;
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
 use params::PluginParams;
 use rtrb::{Consumer, RingBuffer};
-use std::sync::Arc;
+use std::{
+    fs::{create_dir_all, read_to_string, File},
+    sync::Arc,
+};
 
 // this is kind of silly in retrospect
 type StereoBuffer = BufferArray<U2>;
@@ -100,6 +106,26 @@ impl Plugin for ConvolutionPlug {
         // IMPORTANT: BUILD GRAPH
         (self.graph, self.slot) = build_graph(&self.params);
 
+        // TODO: fix unwraps
+        // TODO: finish this feature LMFAO
+        if let Some(proj_dirs) = ProjectDirs::from("com", "dvub", "convolution_plug") {
+            let config_dir = proj_dirs.config_dir();
+
+            if !config_dir.exists() {
+                println!("config directory doesn't exist, creating it now");
+                create_dir_all(config_dir).unwrap();
+            }
+
+            let config = config_dir.join("settings.json");
+
+            if !config.exists() {
+                println!("Config doesn't exist, writing a new one");
+                File::create(&config).unwrap();
+            }
+
+            let _contents = read_to_string(&config).unwrap();
+        }
+
         nih_log!("Initialized Convolution.");
 
         true
@@ -110,10 +136,9 @@ impl Plugin for ConvolutionPlug {
         // allocate. You can remove this function if you do not need it.
     }
 
-    // we probably aren't going to use async executor
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
+        // this ring buffer is used to communicate that a new IR needs to be loaded
         let (producer, consumer) = RingBuffer::<Vec<f32>>::new(1);
-
         self.slot_rx = Some(consumer);
 
         Some(Box::new(editor::create_editor(&self.params, producer)))
@@ -155,10 +180,17 @@ impl Plugin for ConvolutionPlug {
             }
         }
 
-        if let Some(rx) = self.slot_rx.as_mut() {
-            if let Ok(slot) = rx.pop() {
-                let new_convolver = Box::new(convolver(&slot) | convolver(&slot));
+        // update IR in our DSP graph
 
+        // note that updating the IR in plugin's persistent data happens on the GUI thread
+        // (because that requires locking a mutex which isn't RT safe)
+        if let Some(rx) = self.slot_rx.as_mut() {
+            // note that these samples should already be processed  from the gui thread
+            // (normalized, whatever)
+            if let Ok(new_ir_samples) = rx.pop() {
+                // TODO: could use stacki here LOL
+                let new_convolver =
+                    Box::new(convolver(&new_ir_samples) | convolver(&new_ir_samples));
                 self.slot.set(Fade::Smooth, 1.0, new_convolver);
             }
         }

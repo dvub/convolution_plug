@@ -3,10 +3,7 @@ use std::sync::Arc;
 use fundsp::hacker32::*;
 
 use crate::{
-    dsp::{
-        param_node::{Accessor, ParamNode},
-        param_node_shared::ParamNodeShared,
-    },
+    dsp::param::{Accessor, ParamNode},
     params::PluginParams,
 };
 
@@ -83,11 +80,4 @@ pub fn bell_gain<N: Size<f32>>(
     p: &Arc<PluginParams>,
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
     ParamNode::new(p, |p| p.bell_gain.value())
-}
-
-pub fn gain_shared(
-    p: &Arc<PluginParams>,
-    shared: &Shared,
-) -> An<ParamNodeShared<PluginParams, impl Accessor<PluginParams>>> {
-    ParamNodeShared::new(p, |p| p.bell_gain.value(), shared)
 }

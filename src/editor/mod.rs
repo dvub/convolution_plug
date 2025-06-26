@@ -26,9 +26,11 @@ const EDITOR_SIZE: (u32, u32) = (600, 600);
 // figure out where to correctly use unsafe keyword for param stuff
 
 // TODO: fix nesting issues
-pub fn create_editor(params: &Arc<PluginParams>, tx: Producer<Vec<f32>>) -> WebViewEditor {
-    let wrapped = Mutex::new(tx);
-
+pub fn create_editor(
+    params: &Arc<PluginParams>,
+    ir_buffer_tx: Producer<Vec<f32>>,
+) -> WebViewEditor {
+    let ir_buffer = Mutex::new(ir_buffer_tx);
     let params = params.clone();
     let map = params.param_map();
     let param_update_rx = params.rx.clone();
@@ -112,27 +114,40 @@ pub fn create_editor(params: &Arc<PluginParams>, tx: Producer<Vec<f32>>) -> WebV
                     match_and_update_param(&update, &setter, &map);
                     gui_updates.push(update.parameter_id)
                 },
-
+                // TODO: improve error handling
                 Message::SlotUpdate(path) => {
-                    // GUI thread doesn't have to be real-time so we're gonna do a buunch of NOT real-time stuff
                     nih_log!(
                         "Received message from GUI to update IR from new path: {}",
                         path
                     );
+                    // GUI thread doesn't have to be real-time
+                    // so we're gonna do a buunch of non real-time stuff here
 
+                    // 1. load samples
+                    // TODO: support stereo IRs (maybe)
                     let mut ir_samples = read_samples_from_file(&path);
                     rms_normalize(&mut ir_samples, -48.0);
 
-                    // TODO: possibly improve error handling
-                    wrapped
+                    // 2. send samples to audio thread to update convolver
+                    ir_buffer
                         .lock()
                         .expect("Error locking IR TX")
-                        .push(ir_samples)
+                        // TODO: it would be great not to clone but eh
+                        .push(ir_samples.clone())
                         .expect("Error sending IR update over channel");
+
+                    // 3. make this particular IR persistent
+                    // Params require the persistent field to be a Mutex<Vec<T>> instead of just a Vec
+                    // so we should lock the mutex and update it here
+                    // (instead of the audio thread)
+                    let mut lock = params.persistent_ir_samples.lock().unwrap();
+                    *lock = Some(ir_samples);
                 }
 
                 // baseview has bugs on windows
                 // once fixed this can be implemented
+
+                // i should do that
                 Message::Resize { .. } => todo!(),
             }
         }

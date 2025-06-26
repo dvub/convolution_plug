@@ -43,6 +43,8 @@ thiserror = "2.0.12"
 crossbeam-channel = "0.5.15"
 itertools = "0.14.0"
 rtrb = "0.3.2"
+directories = "6.0.0"
+json = "0.12.4"
 
 
 # Uncomment the below line to disable the on-by-default VST3 feature to remove
