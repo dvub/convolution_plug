@@ -18,7 +18,7 @@ use crate::{
 };
 
 // TODO: maybe make some sort of trait?
-
+// would be pretty nice
 pub struct PluginDsp {
     // fundsp stuff
     graph: Box<dyn AudioUnit>,
@@ -26,38 +26,29 @@ pub struct PluginDsp {
     output_buffer: StereoBuffer,
     // for updating IR
     slot: Slot,
+    /// Receives messages from the GUI thread.
+    /// When a message is received, the Slot (frontend) will communicate to the backend to update the convolver/IR
     slot_rx: Option<Consumer<Vec<f32>>>,
 }
 
 impl Default for PluginDsp {
     fn default() -> Self {
         Self {
-            graph: Box::new(pass()),
-            input_buffer: StereoBuffer::default(),
-            output_buffer: StereoBuffer::default(),
-            slot: Slot::new(Box::new(pass())).0,
+            graph: Box::new(sink()),
+            input_buffer: StereoBuffer::new(),
+            output_buffer: StereoBuffer::new(),
+            slot: Slot::new(Box::new(sink())).0,
             slot_rx: None,
         }
     }
 }
 
 impl PluginDsp {
-    pub fn new(params: &Arc<PluginParams>, config: &PluginConfig) -> Self {
-        let (g, slot) = build_graph(params, config);
-
-        PluginDsp {
-            graph: g,
-            input_buffer: StereoBuffer::new(),
-            output_buffer: StereoBuffer::new(),
-            slot,
-            slot_rx: None,
-        }
-    }
-
     pub fn set_slot_rx(&mut self, consumer: Consumer<Vec<f32>>) {
         self.slot_rx = Some(consumer);
     }
 
+    // TODO: add arguments like aux inputs that appear in nih-plug's process()
     pub fn process(&mut self, buffer: &mut nih_plug::buffer::Buffer) {
         for (_offset, mut block) in buffer.iter_blocks(MAX_BUFFER_SIZE) {
             // write into input buffer
@@ -104,48 +95,53 @@ impl PluginDsp {
             }
         }
     }
-}
 
-// yep this is the big thing
-pub fn build_graph(p: &Arc<PluginParams>, config: &PluginConfig) -> (Box<dyn AudioUnit>, Slot) {
-    // 1. determine if and from where we should load an IR
-    let samples = p.persistent_ir_samples.lock().unwrap();
-    let slot_element: Box<dyn AudioUnit> = match samples.as_deref() {
-        // if an IR was previously loaded, we detect that here and use it again
-        Some(samples) => Box::new(convolver(samples) | convolver(samples)),
-        None => {
-            // if no IR was previously loaded, *then* we check if we should load anything
-            // based on config
-            if !config.default_ir_path.is_empty() {
-                let mut samples = read_samples_from_file(&config.default_ir_path);
-                if config.normalize_irs {
-                    rms_normalize(&mut samples, config.normalization_level);
+    // TODO: is it smart to have this function be here?
+    pub fn build_graph(&mut self, params: &Arc<PluginParams>, config: &PluginConfig) {
+        // 1. determine if and from where we should load an IR
+        let samples = params.persistent_ir_samples.lock().unwrap();
+        let slot_element: Box<dyn AudioUnit> = match samples.as_deref() {
+            // if an IR was previously loaded, we detect that here and use it again
+            Some(samples) => Box::new(convolver(samples) | convolver(samples)),
+            None => {
+                // if no IR was previously loaded, *then* we check if we should load anything
+                // based on config
+                if !config.default_ir_path.is_empty() {
+                    let mut samples = read_samples_from_file(&config.default_ir_path);
+                    if config.normalize_irs {
+                        rms_normalize(&mut samples, config.normalization_level);
+                    }
+
+                    Box::new(convolver(&samples) | convolver(&samples))
+                } else {
+                    // no IR is loaded.
+                    // we don't even have to convolve by an empty IR, e.g. [1.0, 0.0, 0.0 ... ],
+                    // we can simply pass the signal straight through for the best performance
+                    Box::new(multipass::<U2>())
                 }
-
-                Box::new(convolver(&samples) | convolver(&samples))
-            } else {
-                // no IR is loaded.
-                // we don't even have to convolve by an empty IR, e.g. [1.0, 0.0, 0.0 ... ],
-                // we can simply pass the signal straight through for the best performance
-                Box::new(multipass::<U2>())
             }
-        }
-    };
-    // we want to update the IR/convolver dynamically, so we put it in a Slot
-    let convolver_slot = Slot::new(slot_element);
-    let slot_front = convolver_slot.0;
-    let slot_back = convolver_slot.1;
+        };
+        // we want to update the IR/convolver dynamically, so we put it in a Slot
+        let convolver_slot = Slot::new(slot_element);
+        let slot_frontend = convolver_slot.0;
+        let slot_backend = convolver_slot.1;
 
-    let convolver = unit::<U2, U2>(Box::new(slot_back));
-    let eq_wet = convolver >> switched_lowpass(p) >> switched_bell(p) >> switched_highpass(p);
+        let convolver = unit::<U2, U2>(Box::new(slot_backend));
+        let eq_wet = convolver
+            >> switched_lowpass(params)
+            >> switched_bell(params)
+            >> switched_highpass(params);
 
-    let wet = eq_wet * dry_wet(p);
-    let dry = multipass::<U2>() * (1.0 - dry_wet(p));
-    let mixed = wet & dry;
+        let wet = eq_wet * dry_wet(params);
+        let dry = multipass::<U2>() * (1.0 - dry_wet(params));
+        let mixed = wet & dry;
 
-    let graph = mixed * gain(p);
+        let graph = mixed * gain(params);
 
-    (Box::new(graph), slot_front)
+        self.graph = Box::new(graph);
+        self.slot = slot_frontend;
+        // (Box::new(graph), slot_front)
+    }
 }
 
 fn lp_with_params(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U1, Outputs = U1>> {

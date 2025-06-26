@@ -1,3 +1,5 @@
+// opcodes for all params.
+
 use std::sync::Arc;
 
 use fundsp::hacker32::*;

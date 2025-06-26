@@ -7,15 +7,14 @@ mod util;
 
 use crate::{
     config::{get_plugin_config, PluginConfig},
-    dsp::{convolve::convolver, PluginDsp},
+    dsp::PluginDsp,
     editor::create_editor,
 };
 
-use dsp::build_graph;
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
 use params::PluginParams;
-use rtrb::{Consumer, RingBuffer};
+use rtrb::RingBuffer;
 
 use std::sync::Arc;
 
@@ -32,26 +31,13 @@ type StereoBuffer = BufferArray<U2>;
 struct ConvolutionPlug {
     config: PluginConfig,
     params: Arc<PluginParams>,
-    // fundsp stuff
-    graph: Box<dyn AudioUnit>,
-    input_buffer: StereoBuffer,
-    output_buffer: StereoBuffer,
-    // for updating IR
-    slot: Slot,
-    slot_rx: Option<Consumer<Vec<f32>>>,
+    dsp: PluginDsp,
 }
 impl Default for ConvolutionPlug {
     fn default() -> Self {
-        let graph = Box::new(pass());
-        let slot = Slot::new(Box::new(pass())).0;
-
         Self {
             params: Arc::new(PluginParams::default()),
-            graph,
-            slot,
-            slot_rx: None,
-            input_buffer: StereoBuffer::new(),
-            output_buffer: StereoBuffer::new(),
+            dsp: PluginDsp::default(),
             config: PluginConfig::default(),
         }
     }
@@ -109,7 +95,7 @@ impl Plugin for ConvolutionPlug {
 
         let config = get_plugin_config();
 
-        (self.graph, self.slot) = build_graph(&self.params, &config);
+        self.dsp.build_graph(&self.params, &config);
 
         self.config = config;
         nih_log!("Initialized Convolution.");
@@ -125,7 +111,7 @@ impl Plugin for ConvolutionPlug {
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
         // this ring buffer is used to communicate that a new IR needs to be loaded
         let (ir_buffer_tx, ir_buffer_rx) = RingBuffer::<Vec<f32>>::new(1);
-        self.slot_rx = Some(ir_buffer_rx);
+        self.dsp.set_slot_rx(ir_buffer_rx);
 
         Some(Box::new(create_editor(
             &self.params,
@@ -140,51 +126,7 @@ impl Plugin for ConvolutionPlug {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        for (_offset, mut block) in buffer.iter_blocks(MAX_BUFFER_SIZE) {
-            // write into input buffer
-            for (sample_index, mut channel_samples) in block.iter_samples().enumerate() {
-                for channel_index in 0..=1 {
-                    // get our input sample
-                    let input_sample = *channel_samples.get_mut(channel_index).unwrap();
-
-                    self.input_buffer.buffer_mut().set_f32(
-                        channel_index,
-                        sample_index,
-                        input_sample,
-                    );
-                }
-            }
-            // actually do block processing
-            self.graph.process(
-                block.samples(),
-                &self.input_buffer.buffer_ref(),
-                &mut self.output_buffer.buffer_mut(),
-            );
-
-            // write from output buffer
-            for (index, mut channel_samples) in block.iter_samples().enumerate() {
-                for n in 0..=1 {
-                    *channel_samples.get_mut(n).unwrap() =
-                        self.output_buffer.buffer_ref().at_f32(n, index);
-                }
-            }
-        }
-
-        // update IR in our DSP graph
-
-        // note that updating the IR in plugin's persistent data happens on the GUI thread
-        // (because that requires locking a mutex which isn't RT safe)
-        if let Some(rx) = self.slot_rx.as_mut() {
-            // note that these samples should already be processed  from the gui thread
-            // (normalized, whatever)
-            if let Ok(new_ir_samples) = rx.pop() {
-                // TODO: could use stacki here LOL
-                let new_convolver =
-                    Box::new(convolver(&new_ir_samples) | convolver(&new_ir_samples));
-                self.slot.set(Fade::Smooth, 1.0, new_convolver);
-            }
-        }
-
+        self.dsp.process(buffer);
         ProcessStatus::Normal
     }
 }
