@@ -43,7 +43,7 @@ pub fn create_editor(
         WebViewEditor::new(src, EDITOR_SIZE, params.editor_state.clone()).with_developer_mode(true);
 
     /*
-    #[cfg(not(debug_assertions))]
+    //#[cfg(not(debug_assertions))]
     {
         use include_dir::include_dir;
         use nih_plug_webview::http::Response;
@@ -58,8 +58,8 @@ pub fn create_editor(
             #[cfg(not(target_os = "windows"))]
             let url_scheme = format!("{}://localhost", protocol_name);
 
-            let src = HTMLSource::URL(url_scheme);
-            let mut editor = WebViewEditor::new(src, EDITOR_SIZE);
+            let src = HTMLSource::URL(&url_scheme);
+            let mut editor = WebViewEditor::new(src, EDITOR_SIZE, params.editor_state.clone());
 
             editor = editor.with_custom_protocol(protocol_name.to_string(), move |req| {
                 let path = req.uri().path();
@@ -69,7 +69,7 @@ pub fn create_editor(
                     &path[1..]
                 };
 
-                let dir = include_dir!("$CARGO_MANIFEST_DIR/gui/assets/");
+                let dir = include_dir!("$CARGO_MANIFEST_DIR/convolution-gui/assets/");
 
                 // mime guess is awesome!
                 let mime_type =
