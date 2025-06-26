@@ -7,7 +7,7 @@ mod util;
 
 use crate::{
     config::{get_plugin_config, PluginConfig},
-    dsp::convolve::convolver,
+    dsp::{convolve::convolver, PluginDsp},
     editor::create_editor,
 };
 
@@ -110,6 +110,7 @@ impl Plugin for ConvolutionPlug {
         let config = get_plugin_config();
 
         (self.graph, self.slot) = build_graph(&self.params, &config);
+
         self.config = config;
         nih_log!("Initialized Convolution.");
 

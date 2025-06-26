@@ -4,6 +4,7 @@ pub mod param;
 pub mod switched;
 
 use fundsp::hacker32::*;
+use rtrb::Consumer;
 use std::sync::Arc;
 
 use nodes::*;
@@ -13,7 +14,97 @@ use crate::{
     dsp::{convolve::convolver, switched::switched_node},
     params::PluginParams,
     util::{read_samples_from_file, rms_normalize},
+    StereoBuffer,
 };
+
+// TODO: maybe make some sort of trait?
+
+pub struct PluginDsp {
+    // fundsp stuff
+    graph: Box<dyn AudioUnit>,
+    input_buffer: StereoBuffer,
+    output_buffer: StereoBuffer,
+    // for updating IR
+    slot: Slot,
+    slot_rx: Option<Consumer<Vec<f32>>>,
+}
+
+impl Default for PluginDsp {
+    fn default() -> Self {
+        Self {
+            graph: Box::new(pass()),
+            input_buffer: StereoBuffer::default(),
+            output_buffer: StereoBuffer::default(),
+            slot: Slot::new(Box::new(pass())).0,
+            slot_rx: None,
+        }
+    }
+}
+
+impl PluginDsp {
+    pub fn new(params: &Arc<PluginParams>, config: &PluginConfig) -> Self {
+        let (g, slot) = build_graph(params, config);
+
+        PluginDsp {
+            graph: g,
+            input_buffer: StereoBuffer::new(),
+            output_buffer: StereoBuffer::new(),
+            slot,
+            slot_rx: None,
+        }
+    }
+
+    pub fn set_slot_rx(&mut self, consumer: Consumer<Vec<f32>>) {
+        self.slot_rx = Some(consumer);
+    }
+
+    pub fn process(&mut self, buffer: &mut nih_plug::buffer::Buffer) {
+        for (_offset, mut block) in buffer.iter_blocks(MAX_BUFFER_SIZE) {
+            // write into input buffer
+            for (sample_index, mut channel_samples) in block.iter_samples().enumerate() {
+                for channel_index in 0..=1 {
+                    // get our input sample
+                    let input_sample = *channel_samples.get_mut(channel_index).unwrap();
+
+                    self.input_buffer.buffer_mut().set_f32(
+                        channel_index,
+                        sample_index,
+                        input_sample,
+                    );
+                }
+            }
+            // actually do block processing
+            self.graph.process(
+                block.samples(),
+                &self.input_buffer.buffer_ref(),
+                &mut self.output_buffer.buffer_mut(),
+            );
+
+            // write from output buffer
+            for (index, mut channel_samples) in block.iter_samples().enumerate() {
+                for n in 0..=1 {
+                    *channel_samples.get_mut(n).unwrap() =
+                        self.output_buffer.buffer_ref().at_f32(n, index);
+                }
+            }
+        }
+
+        // update IR in our DSP graph
+
+        // note that updating the IR in plugin's persistent data happens on the GUI thread
+        // (because that requires locking a mutex which isn't RT safe)
+        if let Some(rx) = self.slot_rx.as_mut() {
+            // note that these samples should already be processed  from the gui thread
+            // (normalized, whatever)
+            if let Ok(new_ir_samples) = rx.pop() {
+                // TODO: could use stacki here LOL
+                let new_convolver =
+                    Box::new(convolver(&new_ir_samples) | convolver(&new_ir_samples));
+                self.slot.set(Fade::Smooth, 1.0, new_convolver);
+            }
+        }
+    }
+}
 
 // yep this is the big thing
 pub fn build_graph(p: &Arc<PluginParams>, config: &PluginConfig) -> (Box<dyn AudioUnit>, Slot) {
