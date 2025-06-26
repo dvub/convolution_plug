@@ -214,7 +214,6 @@ fn param_update_callback<T>(
 where
 {
     Arc::new(move |_| {
-        // TODO: figure out ordering
         if state.is_open() {
             // TODO: shoud we handle errors?
             let _ = tx.try_send(parameter_index);

@@ -1,5 +1,7 @@
 use nih_plug::util::db_to_gain;
 
+pub const DEFAULT_NORMALIZATION_LEVEL: f32 = -48.0;
+
 // TODO: return a result, because this can fail in a number of ways
 pub fn read_samples_from_file(path: &str) -> Vec<f32> {
     let mut reader = hound::WavReader::open(path).unwrap();

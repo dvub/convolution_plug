@@ -5,18 +5,19 @@ mod config;
 mod editor;
 mod util;
 
-use crate::dsp::convolve::convolver;
+use crate::{
+    config::{get_plugin_config, PluginConfig},
+    dsp::convolve::convolver,
+    editor::create_editor,
+};
 
-use directories::ProjectDirs;
 use dsp::build_graph;
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
 use params::PluginParams;
 use rtrb::{Consumer, RingBuffer};
-use std::{
-    fs::{create_dir_all, read_to_string, File},
-    sync::Arc,
-};
+
+use std::sync::Arc;
 
 // this is kind of silly in retrospect
 type StereoBuffer = BufferArray<U2>;
@@ -29,6 +30,7 @@ type StereoBuffer = BufferArray<U2>;
 
 // TODO: make logging consistent and improve it in general
 struct ConvolutionPlug {
+    config: PluginConfig,
     params: Arc<PluginParams>,
     // fundsp stuff
     graph: Box<dyn AudioUnit>,
@@ -50,6 +52,7 @@ impl Default for ConvolutionPlug {
             slot_rx: None,
             input_buffer: StereoBuffer::new(),
             output_buffer: StereoBuffer::new(),
+            config: PluginConfig::default(),
         }
     }
 }
@@ -103,29 +106,11 @@ impl Plugin for ConvolutionPlug {
         _context: &mut impl InitContext<Self>,
     ) -> bool {
         nih_log!("Building DSP graph..");
-        // IMPORTANT: BUILD GRAPH
-        (self.graph, self.slot) = build_graph(&self.params);
 
-        // TODO: fix unwraps
-        // TODO: finish this feature LMFAO
-        if let Some(proj_dirs) = ProjectDirs::from("com", "dvub", "convolution_plug") {
-            let config_dir = proj_dirs.config_dir();
+        let config = get_plugin_config();
 
-            if !config_dir.exists() {
-                println!("config directory doesn't exist, creating it now");
-                create_dir_all(config_dir).unwrap();
-            }
-
-            let config = config_dir.join("settings.json");
-
-            if !config.exists() {
-                println!("Config doesn't exist, writing a new one");
-                File::create(&config).unwrap();
-            }
-
-            let _contents = read_to_string(&config).unwrap();
-        }
-
+        (self.graph, self.slot) = build_graph(&self.params, &config);
+        self.config = config;
         nih_log!("Initialized Convolution.");
 
         true
@@ -138,10 +123,14 @@ impl Plugin for ConvolutionPlug {
 
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
         // this ring buffer is used to communicate that a new IR needs to be loaded
-        let (producer, consumer) = RingBuffer::<Vec<f32>>::new(1);
-        self.slot_rx = Some(consumer);
+        let (ir_buffer_tx, ir_buffer_rx) = RingBuffer::<Vec<f32>>::new(1);
+        self.slot_rx = Some(ir_buffer_rx);
 
-        Some(Box::new(editor::create_editor(&self.params, producer)))
+        Some(Box::new(create_editor(
+            &self.params,
+            ir_buffer_tx,
+            &self.config,
+        )))
     }
 
     fn process(

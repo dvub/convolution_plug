@@ -18,6 +18,8 @@ use rtrb::Producer;
 use serde_json::json;
 use std::sync::{Arc, Mutex};
 
+use crate::config::PluginConfig;
+
 type ParamMap = Vec<(String, ParamPtr, String)>;
 
 const EDITOR_SIZE: (u32, u32) = (600, 600);
@@ -29,11 +31,13 @@ const EDITOR_SIZE: (u32, u32) = (600, 600);
 pub fn create_editor(
     params: &Arc<PluginParams>,
     ir_buffer_tx: Producer<Vec<f32>>,
+    config: &PluginConfig,
 ) -> WebViewEditor {
     let ir_buffer = Mutex::new(ir_buffer_tx);
     let params = params.clone();
     let map = params.param_map();
     let param_update_rx = params.rx.clone();
+    let config = config.clone();
 
     println!("PARAM MAP: {:?}", map);
 
@@ -126,7 +130,10 @@ pub fn create_editor(
                     // 1. load samples
                     // TODO: support stereo IRs (maybe)
                     let mut ir_samples = read_samples_from_file(&path);
-                    rms_normalize(&mut ir_samples, -48.0);
+
+                    if config.normalize_irs {
+                        rms_normalize(&mut ir_samples, config.normalization_level);
+                    }
 
                     // 2. send samples to audio thread to update convolver
                     ir_buffer
