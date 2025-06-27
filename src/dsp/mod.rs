@@ -4,6 +4,7 @@ pub mod param;
 pub mod switched;
 
 use fundsp::hacker32::*;
+use nih_plug::buffer::Buffer;
 use rtrb::Consumer;
 use std::sync::Arc;
 
@@ -20,7 +21,6 @@ use crate::{
 // TODO: maybe make some sort of trait?
 // would be pretty nice
 pub struct PluginDsp {
-    // fundsp stuff
     graph: Box<dyn AudioUnit>,
     input_buffer: StereoBuffer,
     output_buffer: StereoBuffer,
@@ -50,38 +50,14 @@ impl PluginDsp {
 
     // TODO: add arguments like aux inputs that appear in nih-plug's process()
     pub fn process(&mut self, buffer: &mut nih_plug::buffer::Buffer) {
-        for (_offset, mut block) in buffer.iter_blocks(MAX_BUFFER_SIZE) {
-            // write into input buffer
-            for (sample_index, mut channel_samples) in block.iter_samples().enumerate() {
-                for channel_index in 0..=1 {
-                    // get our input sample
-                    let input_sample = *channel_samples.get_mut(channel_index).unwrap();
-
-                    self.input_buffer.buffer_mut().set_f32(
-                        channel_index,
-                        sample_index,
-                        input_sample,
-                    );
-                }
-            }
-            // actually do block processing
-            self.graph.process(
-                block.samples(),
-                &self.input_buffer.buffer_ref(),
-                &mut self.output_buffer.buffer_mut(),
-            );
-
-            // write from output buffer
-            for (index, mut channel_samples) in block.iter_samples().enumerate() {
-                for n in 0..=1 {
-                    *channel_samples.get_mut(n).unwrap() =
-                        self.output_buffer.buffer_ref().at_f32(n, index);
-                }
-            }
-        }
+        base_process(
+            buffer,
+            &mut self.graph,
+            &mut self.input_buffer,
+            &mut self.output_buffer,
+        );
 
         // update IR in our DSP graph
-
         // note that updating the IR in plugin's persistent data happens on the GUI thread
         // (because that requires locking a mutex which isn't RT safe)
         if let Some(rx) = self.slot_rx.as_mut() {
@@ -171,4 +147,40 @@ fn switched_lowpass(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U2, Out
 fn switched_highpass(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U2, Outputs = U2>> {
     (multipass::<U2>() | hp_enabled::<U1>(p))
         >> switched_node(stacki::<U2, _, _>(|_| hp_with_params(p)), |x| x == 1.0)
+}
+
+pub fn base_process(
+    buffer: &mut Buffer,
+    graph: &mut Box<dyn AudioUnit>,
+    input_buffer: &mut StereoBuffer,
+    output_buffer: &mut StereoBuffer,
+) {
+    for (_offset, mut block) in buffer.iter_blocks(MAX_BUFFER_SIZE) {
+        // write into input buffer
+        for (sample_index, mut channel_samples) in block.iter_samples().enumerate() {
+            for channel_index in 0..=1 {
+                // get our input sample
+                let input_sample = *channel_samples.get_mut(channel_index).unwrap();
+
+                input_buffer
+                    .buffer_mut()
+                    .set_f32(channel_index, sample_index, input_sample);
+            }
+        }
+
+        {
+            graph.process(
+                block.samples(),
+                &input_buffer.buffer_ref(),
+                &mut output_buffer.buffer_mut(),
+            );
+        }
+
+        // write from output buffer
+        for (index, mut channel_samples) in block.iter_samples().enumerate() {
+            for n in 0..=1 {
+                *channel_samples.get_mut(n).unwrap() = output_buffer.buffer_ref().at_f32(n, index);
+            }
+        }
+    }
 }

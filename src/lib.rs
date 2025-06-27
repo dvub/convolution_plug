@@ -7,7 +7,7 @@ mod util;
 
 use crate::{
     config::{get_plugin_config, PluginConfig},
-    dsp::PluginDsp,
+    dsp::{base_process, PluginDsp},
     editor::create_editor,
 };
 
@@ -31,7 +31,7 @@ type StereoBuffer = BufferArray<U2>;
 struct ConvolutionPlug {
     config: PluginConfig,
     params: Arc<PluginParams>,
-    dsp: PluginDsp,
+    pub dsp: PluginDsp,
 }
 impl Default for ConvolutionPlug {
     fn default() -> Self {
