@@ -6,20 +6,18 @@ mod editor;
 mod util;
 
 use crate::{
-    config::{get_plugin_config, PluginConfig},
-    dsp::{base_process, PluginDsp},
+    config::{PluginConfig, get_plugin_config},
+    dsp::build_graph,
     editor::create_editor,
 };
 
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
+use np_fundsp_bridge::PluginDsp;
 use params::PluginParams;
-use rtrb::RingBuffer;
+use rtrb::{Consumer, RingBuffer};
 
 use std::sync::Arc;
-
-// this is kind of silly in retrospect
-type StereoBuffer = BufferArray<U2>;
 
 // TODO:
 // features:
@@ -31,7 +29,12 @@ type StereoBuffer = BufferArray<U2>;
 struct ConvolutionPlug {
     config: PluginConfig,
     params: Arc<PluginParams>,
-    pub dsp: PluginDsp,
+    dsp: PluginDsp<U2>,
+    // for updating IR
+    slot: Slot,
+    /// Receives messages from the GUI thread.
+    /// When a message is received, the Slot (frontend) will communicate to the backend to update the convolver/IR
+    slot_rx: Option<Consumer<Vec<f32>>>,
 }
 impl Default for ConvolutionPlug {
     fn default() -> Self {
@@ -39,6 +42,8 @@ impl Default for ConvolutionPlug {
             params: Arc::new(PluginParams::default()),
             dsp: PluginDsp::default(),
             config: PluginConfig::default(),
+            slot: Slot::new(Box::new(sink())).0,
+            slot_rx: None,
         }
     }
 }
@@ -95,7 +100,9 @@ impl Plugin for ConvolutionPlug {
 
         let config = get_plugin_config();
 
-        self.dsp.build_graph(&self.params, &config);
+        let (graph, slot) = build_graph(&self.params, &config);
+        self.slot = slot;
+        self.dsp.set_graph(graph);
 
         self.config = config;
         nih_log!("Initialized Convolution.");
@@ -111,7 +118,7 @@ impl Plugin for ConvolutionPlug {
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
         // this ring buffer is used to communicate that a new IR needs to be loaded
         let (ir_buffer_tx, ir_buffer_rx) = RingBuffer::<Vec<f32>>::new(1);
-        self.dsp.set_slot_rx(ir_buffer_rx);
+        self.slot_rx = Some(ir_buffer_rx);
 
         Some(Box::new(create_editor(
             &self.params,

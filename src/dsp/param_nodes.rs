@@ -4,10 +4,8 @@ use std::sync::Arc;
 
 use fundsp::hacker32::*;
 
-use crate::{
-    dsp::param::{Accessor, ParamNode},
-    params::PluginParams,
-};
+use crate::params::PluginParams;
+use np_fundsp_bridge::params::{Accessor, ParamNode};
 
 // NOTE:
 // if we want to do param smoothing stuff, its easy to implement in the accessor function

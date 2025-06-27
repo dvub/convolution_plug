@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use convolution_plug::{dsp::nodes::gain, params::PluginParams};
+use convolution_plug::{dsp::param_nodes::gain, params::PluginParams};
 use fundsp::hacker32::*;
 
 fn main() {

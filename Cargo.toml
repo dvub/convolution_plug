@@ -8,7 +8,7 @@ homepage = "todo"
 description = "todo"
 
 [workspace]
-members = ["xtask", "nih-plug-webview"]
+members = ["xtask", "nih-plug-webview", "np-fundsp-bridge"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -18,6 +18,8 @@ name = "profiling"
 path = "src/main.rs"
 
 [dependencies]
+
+np-fundsp-bridge = { path = "np-fundsp-bridge" }
 hound = "3.5.1"
 # Remove the `assert_process_allocs` feature to allow allocations on the audio
 # thread in debug builds.
@@ -31,6 +33,8 @@ convolution = { git = "https://github.com/holoplot/fft-convolution.git" }
 
 # GUI
 nih-plug-webview = { path = "nih-plug-webview" }
+
+
 # for embedding a bundled frontend
 mime_guess = "2.0.5"
 include_dir = "0.7.4"

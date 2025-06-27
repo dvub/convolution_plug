@@ -473,6 +473,7 @@ dependencies = [
  "mime_guess",
  "nih-plug-webview",
  "nih_plug",
+ "np-fundsp-bridge",
  "rtrb",
  "serde",
  "serde_json",
@@ -1948,6 +1949,14 @@ name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
+
+[[package]]
+name = "np-fundsp-bridge"
+version = "0.1.0"
+dependencies = [
+ "fundsp",
+ "nih_plug",
+]
 
 [[package]]
 name = "num-complex"

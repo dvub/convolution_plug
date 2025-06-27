@@ -3,7 +3,7 @@ use std::sync::Arc;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use fundsp::hacker32::*;
 
-use convolution_plug::{dsp::nodes::gain, params::PluginParams};
+use convolution_plug::{dsp::param_nodes::gain, params::PluginParams};
 
 fn render_graph(node: &mut dyn AudioUnit) -> Wave {
     Wave::render(44100.0, 1.0, node)
