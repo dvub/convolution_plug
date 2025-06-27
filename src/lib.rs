@@ -7,7 +7,7 @@ mod util;
 
 use crate::{
     config::{get_plugin_config, PluginConfig},
-    dsp::build_graph,
+    dsp::{build_graph, convolve::convolver},
     editor::create_editor,
 };
 
@@ -17,7 +17,9 @@ use np_fundsp_bridge::PluginDspProcessor;
 use params::PluginParams;
 use rtrb::{Consumer, RingBuffer};
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+
+const DEFAULT_FADE_TIME: f64 = 1.0;
 
 // TODO:
 // features:
@@ -31,7 +33,7 @@ struct ConvolutionPlug {
     params: Arc<PluginParams>,
     dsp: PluginDspProcessor<U2>,
     // for updating IR
-    slot: Arc<Mutex<Slot>>,
+    slot: Slot,
     /// Receives messages from the GUI thread.
     /// When a message is received, the Slot (frontend) will communicate to the backend to update the convolver/IR
     slot_rx: Option<Consumer<Vec<f32>>>,
@@ -42,7 +44,7 @@ impl Default for ConvolutionPlug {
             params: Arc::new(PluginParams::default()),
             dsp: PluginDspProcessor::default(),
             config: PluginConfig::default(),
-            slot: Arc::new(Mutex::new(Slot::new(Box::new(sink())).0)),
+            slot: Slot::new(Box::new(multipass::<U2>())).0,
             slot_rx: None,
         }
     }
@@ -101,7 +103,7 @@ impl Plugin for ConvolutionPlug {
         let config = get_plugin_config();
 
         let (graph, slot) = build_graph(&self.params, &config);
-        self.slot = Arc::new(Mutex::new(slot));
+        self.slot = slot;
         self.dsp.set_graph(graph);
 
         self.config = config;
@@ -124,7 +126,6 @@ impl Plugin for ConvolutionPlug {
             &self.params,
             ir_buffer_tx,
             &self.config,
-            self.slot.clone(),
         )))
     }
 
@@ -135,6 +136,15 @@ impl Plugin for ConvolutionPlug {
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
         self.dsp.process(buffer);
+
+        if let Some(rx) = self.slot_rx.as_mut() {
+            if let Ok(samples) = rx.pop() {
+                let new_unit = Box::new(convolver(&samples) | convolver(&samples));
+                // TODO: add fade time to config
+                self.slot.set(Fade::Smooth, DEFAULT_FADE_TIME, new_unit);
+            }
+        }
+
         ProcessStatus::Normal
     }
 }

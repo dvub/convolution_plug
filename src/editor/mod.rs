@@ -1,15 +1,8 @@
 mod ipc;
 
-use fundsp::{
-    hacker::{multipass, Fade},
-    hacker32::{pass, U2},
-    prelude::U3,
-    slot::Slot,
-};
 use ipc::{Message, ParameterUpdate};
 
 use crate::{
-    dsp::convolve::convolver,
     params::PluginParams,
     util::{read_samples_from_file, rms_normalize},
 };
@@ -39,7 +32,6 @@ pub fn create_editor(
     params: &Arc<PluginParams>,
     ir_buffer_tx: Producer<Vec<f32>>,
     config: &PluginConfig,
-    slot: Arc<Mutex<Slot>>,
 ) -> WebViewEditor {
     let ir_buffer = Mutex::new(ir_buffer_tx);
     let params = params.clone();
@@ -150,9 +142,6 @@ pub fn create_editor(
                         // TODO: it would be great not to clone but eh
                         .push(ir_samples.clone())
                         .expect("Error sending IR update over channel");
-
-                    let new_unit = Box::new(multipass::<U2>());
-                    slot.lock().unwrap().set(Fade::Smooth, 2.5, new_unit);
 
                     // 3. make this particular IR persistent
                     // Params require the persistent field to be a Mutex<Vec<T>> instead of just a Vec
