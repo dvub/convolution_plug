@@ -35,10 +35,11 @@ pub fn build_graph(
 
                 Box::new(convolver(&samples) | convolver(&samples))
             } else {
+                println!("Passing through");
                 // no IR is loaded.
                 // we don't even have to convolve by an empty IR, e.g. [1.0, 0.0, 0.0 ... ],
                 // we can simply pass the signal straight through for the best performance
-                Box::new(multipass::<U2>())
+                Box::new(pass() | pass())
             }
         }
     };
@@ -75,16 +76,16 @@ fn bell_with_params(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U1, Out
 // ...
 
 fn switched_bell(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U2, Outputs = U2>> {
-    (multipass::<U2>() | bell_enabled::<U1>(p))
-        >> switched_node(stacki::<U2, _, _>(|_| bell_with_params(p)), |x| x == 1.0)
+    let stereo_bell = bell_with_params(p) | bell_with_params(p);
+    (multipass::<U2>() | bell_enabled::<U1>(p)) >> switched_node(stereo_bell, |x| x == 1.0)
 }
 
 fn switched_lowpass(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U2, Outputs = U2>> {
-    (multipass::<U2>() | lp_enabled::<U1>(p))
-        >> switched_node(stacki::<U2, _, _>(|_| lp_with_params(p)), |x| x == 1.0)
+    let stereo_lowpass = lp_with_params(p) | lp_with_params(p);
+    (multipass::<U2>() | lp_enabled::<U1>(p)) >> switched_node(stereo_lowpass, |x| x == 1.0)
 }
 
 fn switched_highpass(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U2, Outputs = U2>> {
-    (multipass::<U2>() | hp_enabled::<U1>(p))
-        >> switched_node(stacki::<U2, _, _>(|_| hp_with_params(p)), |x| x == 1.0)
+    let stereo_highpass = hp_with_params(p) | hp_with_params(p);
+    (multipass::<U2>() | hp_enabled::<U1>(p)) >> switched_node(stereo_highpass, |x| x == 1.0)
 }

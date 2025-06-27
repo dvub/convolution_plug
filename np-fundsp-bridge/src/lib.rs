@@ -46,7 +46,7 @@ where
         for (_offset, mut block) in buffer.iter_blocks(MAX_BUFFER_SIZE) {
             // write into input buffer
             for (sample_index, mut channel_samples) in block.iter_samples().enumerate() {
-                for channel_index in 0..=N::USIZE {
+                for channel_index in 0..N::USIZE {
                     // get our input sample
                     let input_sample = *channel_samples.get_mut(channel_index).unwrap();
 
@@ -66,7 +66,7 @@ where
 
             // write from output buffer
             for (index, mut channel_samples) in block.iter_samples().enumerate() {
-                for n in 0..=N::USIZE {
+                for n in 0..N::USIZE {
                     *channel_samples.get_mut(n).unwrap() =
                         self.output_buffer.buffer_ref().at_f32(n, index);
                 }

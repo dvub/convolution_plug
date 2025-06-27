@@ -17,7 +17,7 @@ use np_fundsp_bridge::PluginDspProcessor;
 use params::PluginParams;
 use rtrb::{Consumer, RingBuffer};
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 // TODO:
 // features:
@@ -31,7 +31,7 @@ struct ConvolutionPlug {
     params: Arc<PluginParams>,
     dsp: PluginDspProcessor<U2>,
     // for updating IR
-    slot: Slot,
+    slot: Arc<Mutex<Slot>>,
     /// Receives messages from the GUI thread.
     /// When a message is received, the Slot (frontend) will communicate to the backend to update the convolver/IR
     slot_rx: Option<Consumer<Vec<f32>>>,
@@ -42,7 +42,7 @@ impl Default for ConvolutionPlug {
             params: Arc::new(PluginParams::default()),
             dsp: PluginDspProcessor::default(),
             config: PluginConfig::default(),
-            slot: Slot::new(Box::new(sink())).0,
+            slot: Arc::new(Mutex::new(Slot::new(Box::new(sink())).0)),
             slot_rx: None,
         }
     }
@@ -101,7 +101,7 @@ impl Plugin for ConvolutionPlug {
         let config = get_plugin_config();
 
         let (graph, slot) = build_graph(&self.params, &config);
-        self.slot = slot;
+        self.slot = Arc::new(Mutex::new(slot));
         self.dsp.set_graph(graph);
 
         self.config = config;
@@ -124,6 +124,7 @@ impl Plugin for ConvolutionPlug {
             &self.params,
             ir_buffer_tx,
             &self.config,
+            self.slot.clone(),
         )))
     }
 

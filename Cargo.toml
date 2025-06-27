@@ -13,13 +13,11 @@ members = ["xtask", "nih-plug-webview", "np-fundsp-bridge"]
 [lib]
 crate-type = ["cdylib", "lib"]
 
-[[bin]]
-name = "profiling"
-path = "src/main.rs"
-
 [dependencies]
-
+# GUI
+nih-plug-webview = { path = "nih-plug-webview" }
 np-fundsp-bridge = { path = "np-fundsp-bridge" }
+
 hound = "3.5.1"
 # Remove the `assert_process_allocs` feature to allow allocations on the audio
 # thread in debug builds.
@@ -29,11 +27,6 @@ nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = [
 # DSP
 fundsp = "0.20.0"
 convolution = { git = "https://github.com/holoplot/fft-convolution.git" }
-
-
-# GUI
-nih-plug-webview = { path = "nih-plug-webview" }
-
 
 # for embedding a bundled frontend
 mime_guess = "2.0.5"
