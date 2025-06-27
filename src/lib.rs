@@ -6,14 +6,14 @@ mod editor;
 mod util;
 
 use crate::{
-    config::{PluginConfig, get_plugin_config},
+    config::{get_plugin_config, PluginConfig},
     dsp::build_graph,
     editor::create_editor,
 };
 
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
-use np_fundsp_bridge::PluginDsp;
+use np_fundsp_bridge::PluginDspProcessor;
 use params::PluginParams;
 use rtrb::{Consumer, RingBuffer};
 
@@ -29,7 +29,7 @@ use std::sync::Arc;
 struct ConvolutionPlug {
     config: PluginConfig,
     params: Arc<PluginParams>,
-    dsp: PluginDsp<U2>,
+    dsp: PluginDspProcessor<U2>,
     // for updating IR
     slot: Slot,
     /// Receives messages from the GUI thread.
@@ -40,7 +40,7 @@ impl Default for ConvolutionPlug {
     fn default() -> Self {
         Self {
             params: Arc::new(PluginParams::default()),
-            dsp: PluginDsp::default(),
+            dsp: PluginDspProcessor::default(),
             config: PluginConfig::default(),
             slot: Slot::new(Box::new(sink())).0,
             slot_rx: None,
