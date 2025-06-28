@@ -15,7 +15,7 @@ use fundsp::hacker32::*;
 use nih_plug::prelude::*;
 use np_fundsp_bridge::PluginDspProcessor;
 use params::PluginParams;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 const DEFAULT_FADE_TIME: f64 = 1.0;
 
@@ -30,6 +30,7 @@ struct ConvolutionPlug {
     config: PluginConfig,
     params: Arc<PluginParams>,
     dsp: PluginDspProcessor<U2>,
+    slot: Arc<Mutex<Slot>>,
 }
 impl Default for ConvolutionPlug {
     fn default() -> Self {
@@ -37,6 +38,7 @@ impl Default for ConvolutionPlug {
             params: Arc::new(PluginParams::default()),
             dsp: PluginDspProcessor::default(),
             config: PluginConfig::default(),
+            slot: Arc::new(Mutex::new(Slot::new(Box::new(pass())).0)),
         }
     }
 }
@@ -92,11 +94,14 @@ impl Plugin for ConvolutionPlug {
         nih_log!("Building DSP graph..");
 
         let config = get_plugin_config();
+        let (graph, slot) = build_graph(&self.params, &config);
 
-        let (graph, _) = build_graph(&self.params, &config);
-        self.dsp.set_graph(graph);
+        let mut lock = self.slot.lock().unwrap();
+        *lock = slot;
 
         self.config = config;
+        self.dsp.graph = graph;
+
         nih_log!("Initialized Convolution.");
 
         true
@@ -108,12 +113,11 @@ impl Plugin for ConvolutionPlug {
     }
 
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        let (graph, slot) = build_graph(&self.params, &self.config);
-
-        self.dsp.set_graph(graph);
-
-        println!("FUCK");
-        Some(Box::new(create_editor(&self.params, &self.config, slot)))
+        Some(Box::new(create_editor(
+            &self.params,
+            &self.config,
+            self.slot.clone(),
+        )))
     }
 
     fn process(

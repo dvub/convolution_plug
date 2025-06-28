@@ -25,9 +25,7 @@ nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = [
     "assert_process_allocs",
 ] }
 # DSP
-fundsp = { git = "https://github.com/dvub/fundsp.git", features = [
-    "crossbeam",
-] }
+
 convolution = { git = "https://github.com/holoplot/fft-convolution.git" }
 
 # for embedding a bundled frontend
@@ -40,6 +38,7 @@ ts-rs = "11.0.1"
 crossbeam-channel = "0.5.15"
 itertools = "0.14.0"
 directories = "6.0.0"
+fundsp = "0.20.0"
 
 
 # Uncomment the below line to disable the on-by-default VST3 feature to remove

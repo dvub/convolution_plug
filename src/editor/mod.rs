@@ -4,10 +4,7 @@ use fundsp::hacker32::*;
 use ipc::{Message, ParameterUpdate};
 
 use crate::{
-    dsp::{
-        convolve::convolver,
-        param_nodes::{dry_wet, gain},
-    },
+    dsp::convolve::convolver,
     params::PluginParams,
     util::{read_samples_from_file, rms_normalize},
     DEFAULT_FADE_TIME,
@@ -36,16 +33,13 @@ const EDITOR_SIZE: (u32, u32) = (600, 600);
 // TODO: fix nesting issues
 pub fn create_editor(
     params: &Arc<PluginParams>,
-
     config: &PluginConfig,
-    slot: Slot,
+    slot: Arc<Mutex<Slot>>,
 ) -> WebViewEditor {
     let params = params.clone();
     let map = params.param_map();
     let param_update_rx = params.rx.clone();
     let config = config.clone();
-
-    let slot = Mutex::new(slot);
 
     println!("PARAM MAP: {:?}", map);
 
@@ -144,14 +138,11 @@ pub fn create_editor(
                     }
 
                     // 2. update our convolver via frontend
-                    // let new_unit = Box::new(convolver(&ir_samples) | convolver(&ir_samples));
-                    let new_unit = Box::new(multipass::<U2>() * dry_wet(&params));
+                    let new_unit = Box::new(convolver(&ir_samples) | convolver(&ir_samples));
                     // TODO: add config option for fade time
-                    slot.lock().unwrap().set(
-                        fundsp::hacker::Fade::Smooth,
-                        DEFAULT_FADE_TIME,
-                        new_unit,
-                    );
+                    slot.lock()
+                        .unwrap()
+                        .set(Fade::Smooth, DEFAULT_FADE_TIME, new_unit);
 
                     // 3. make this particular IR persistent
                     // Params require the persistent field to be a Mutex<Vec<T>> instead of just a Vec

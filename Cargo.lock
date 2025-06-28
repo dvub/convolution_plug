@@ -880,9 +880,9 @@ dependencies = [
 [[package]]
 name = "fundsp"
 version = "0.20.0"
-source = "git+https://github.com/dvub/fundsp.git#b198415cde70d09a8bdb0406dddf25442b6393fd"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fec70d22aa69e70c0e1e461b8a4f3392fa85e1d7421c773c1537dff44a3f74b"
 dependencies = [
- "crossbeam-channel",
  "dyn-clone",
  "funutd",
  "hashbrown 0.15.3",
