@@ -7,7 +7,7 @@ mod util;
 
 use crate::{
     config::{get_plugin_config, PluginConfig},
-    dsp::{build_graph, convolve::convolver},
+    dsp::build_graph,
     editor::create_editor,
 };
 
@@ -15,8 +15,6 @@ use fundsp::hacker32::*;
 use nih_plug::prelude::*;
 use np_fundsp_bridge::PluginDspProcessor;
 use params::PluginParams;
-use rtrb::{Consumer, RingBuffer};
-
 use std::sync::Arc;
 
 const DEFAULT_FADE_TIME: f64 = 1.0;
@@ -32,11 +30,6 @@ struct ConvolutionPlug {
     config: PluginConfig,
     params: Arc<PluginParams>,
     dsp: PluginDspProcessor<U2>,
-    // for updating IR
-    slot: Slot,
-    /// Receives messages from the GUI thread.
-    /// When a message is received, the Slot (frontend) will communicate to the backend to update the convolver/IR
-    slot_rx: Option<Consumer<Vec<f32>>>,
 }
 impl Default for ConvolutionPlug {
     fn default() -> Self {
@@ -44,8 +37,6 @@ impl Default for ConvolutionPlug {
             params: Arc::new(PluginParams::default()),
             dsp: PluginDspProcessor::default(),
             config: PluginConfig::default(),
-            slot: Slot::new(Box::new(multipass::<U2>())).0,
-            slot_rx: None,
         }
     }
 }
@@ -102,8 +93,7 @@ impl Plugin for ConvolutionPlug {
 
         let config = get_plugin_config();
 
-        let (graph, slot) = build_graph(&self.params, &config);
-        self.slot = slot;
+        let (graph, _) = build_graph(&self.params, &config);
         self.dsp.set_graph(graph);
 
         self.config = config;
@@ -118,15 +108,12 @@ impl Plugin for ConvolutionPlug {
     }
 
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        // this ring buffer is used to communicate that a new IR needs to be loaded
-        let (ir_buffer_tx, ir_buffer_rx) = RingBuffer::<Vec<f32>>::new(1);
-        self.slot_rx = Some(ir_buffer_rx);
+        let (graph, slot) = build_graph(&self.params, &self.config);
 
-        Some(Box::new(create_editor(
-            &self.params,
-            ir_buffer_tx,
-            &self.config,
-        )))
+        self.dsp.set_graph(graph);
+
+        println!("FUCK");
+        Some(Box::new(create_editor(&self.params, &self.config, slot)))
     }
 
     fn process(
@@ -136,15 +123,6 @@ impl Plugin for ConvolutionPlug {
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
         self.dsp.process(buffer);
-
-        if let Some(rx) = self.slot_rx.as_mut() {
-            if let Ok(samples) = rx.pop() {
-                let new_unit = Box::new(convolver(&samples) | convolver(&samples));
-                // TODO: add fade time to config
-                self.slot.set(Fade::Smooth, DEFAULT_FADE_TIME, new_unit);
-            }
-        }
-
         ProcessStatus::Normal
     }
 }

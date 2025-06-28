@@ -474,7 +474,6 @@ dependencies = [
  "nih-plug-webview",
  "nih_plug",
  "np-fundsp-bridge",
- "rtrb",
  "serde",
  "serde_json",
  "ts-rs",
@@ -881,9 +880,9 @@ dependencies = [
 [[package]]
 name = "fundsp"
 version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fec70d22aa69e70c0e1e461b8a4f3392fa85e1d7421c773c1537dff44a3f74b"
+source = "git+https://github.com/dvub/fundsp.git#b198415cde70d09a8bdb0406dddf25442b6393fd"
 dependencies = [
+ "crossbeam-channel",
  "dyn-clone",
  "funutd",
  "hashbrown 0.15.3",
@@ -2603,12 +2602,6 @@ name = "regex-syntax"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
-
-[[package]]
-name = "rtrb"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad8388ea1a9e0ea807e442e8263a699e7edcb320ecbcd21b4fa8ff859acce3ba"
 
 [[package]]
 name = "rustc-demangle"

@@ -83,8 +83,8 @@ export default function Home() {
           onClick={() => {
             sendToPlugin({
               type: "slotUpdate",
-              // data: "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav",
-              data: "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav"
+              data: "D:\\projects\\rust\\convolution_plug\\test_irs\\large.wav",
+              // data: "C:\\Users\\Kaya\\Documents\\projects\\convolution_plug\\test_irs\\large.wav"
             });
             console.log("hi");
           }}

@@ -1,10 +1,16 @@
 mod ipc;
 
+use fundsp::hacker32::*;
 use ipc::{Message, ParameterUpdate};
 
 use crate::{
+    dsp::{
+        convolve::convolver,
+        param_nodes::{dry_wet, gain},
+    },
     params::PluginParams,
     util::{read_samples_from_file, rms_normalize},
+    DEFAULT_FADE_TIME,
 };
 
 use itertools::Itertools;
@@ -14,7 +20,7 @@ use nih_plug::{
     prelude::{ParamPtr, ParamSetter},
 };
 use nih_plug_webview::{HTMLSource, WebViewEditor};
-use rtrb::Producer;
+
 use serde_json::json;
 use std::sync::{Arc, Mutex};
 
@@ -30,14 +36,16 @@ const EDITOR_SIZE: (u32, u32) = (600, 600);
 // TODO: fix nesting issues
 pub fn create_editor(
     params: &Arc<PluginParams>,
-    ir_buffer_tx: Producer<Vec<f32>>,
+
     config: &PluginConfig,
+    slot: Slot,
 ) -> WebViewEditor {
-    let ir_buffer = Mutex::new(ir_buffer_tx);
     let params = params.clone();
     let map = params.param_map();
     let param_update_rx = params.rx.clone();
     let config = config.clone();
+
+    let slot = Mutex::new(slot);
 
     println!("PARAM MAP: {:?}", map);
 
@@ -135,13 +143,15 @@ pub fn create_editor(
                         rms_normalize(&mut ir_samples, config.normalization_level);
                     }
 
-                    // 2. send samples to audio thread to update convolver
-                    ir_buffer
-                        .lock()
-                        .expect("Error locking IR TX")
-                        // TODO: it would be great not to clone but eh
-                        .push(ir_samples.clone())
-                        .expect("Error sending IR update over channel");
+                    // 2. update our convolver via frontend
+                    // let new_unit = Box::new(convolver(&ir_samples) | convolver(&ir_samples));
+                    let new_unit = Box::new(multipass::<U2>() * dry_wet(&params));
+                    // TODO: add config option for fade time
+                    slot.lock().unwrap().set(
+                        fundsp::hacker::Fade::Smooth,
+                        DEFAULT_FADE_TIME,
+                        new_unit,
+                    );
 
                     // 3. make this particular IR persistent
                     // Params require the persistent field to be a Mutex<Vec<T>> instead of just a Vec

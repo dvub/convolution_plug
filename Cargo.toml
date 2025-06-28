@@ -25,7 +25,9 @@ nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = [
     "assert_process_allocs",
 ] }
 # DSP
-fundsp = "0.20.0"
+fundsp = { git = "https://github.com/dvub/fundsp.git", features = [
+    "crossbeam",
+] }
 convolution = { git = "https://github.com/holoplot/fft-convolution.git" }
 
 # for embedding a bundled frontend
@@ -37,7 +39,6 @@ ts-rs = "11.0.1"
 
 crossbeam-channel = "0.5.15"
 itertools = "0.14.0"
-rtrb = "0.3.2"
 directories = "6.0.0"
 
 

@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-fundsp = "0.20.0"
+fundsp = { git = "https://github.com/dvub/fundsp.git", features = [
+    "crossbeam",
+] }
 # thread in debug builds.
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = [
     "assert_process_allocs",
