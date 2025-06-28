@@ -5,19 +5,13 @@ mod config;
 mod editor;
 mod util;
 
-use crate::{
-    config::{get_plugin_config, PluginConfig},
-    dsp::build_graph,
-    editor::create_editor,
-};
+use crate::{config::PluginConfig, dsp::build_graph, editor::create_editor};
 
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
 use np_fundsp_bridge::PluginDspProcessor;
 use params::PluginParams;
 use std::sync::{Arc, Mutex};
-
-const DEFAULT_FADE_TIME: f64 = 1.0;
 
 // TODO:
 // features:
@@ -30,6 +24,7 @@ struct ConvolutionPlug {
     config: PluginConfig,
     params: Arc<PluginParams>,
     dsp: PluginDspProcessor<U2>,
+    // this is used for updating the convolver
     slot: Arc<Mutex<Slot>>,
 }
 impl Default for ConvolutionPlug {
@@ -38,7 +33,7 @@ impl Default for ConvolutionPlug {
             params: Arc::new(PluginParams::default()),
             dsp: PluginDspProcessor::default(),
             config: PluginConfig::default(),
-            slot: Arc::new(Mutex::new(Slot::new(Box::new(pass())).0)),
+            slot: Arc::new(Mutex::new(Slot::new(Box::new(sink())).0)),
         }
     }
 }
@@ -93,12 +88,22 @@ impl Plugin for ConvolutionPlug {
     ) -> bool {
         nih_log!("Building DSP graph..");
 
-        let config = get_plugin_config();
+        // it's good to use a Result to say that this plugin could fail due to some OS issue
+        // but when we use this function elsewhere, we don't want to panic or get fucked up because of a failure
+        let config = PluginConfig::get_config().unwrap_or_else(|e| {
+            nih_log!("There was an issue with reading the plugin config; Falling back to default for now.\n Error: {e}");
+            PluginConfig::default()
+        });
         let (graph, slot) = build_graph(&self.params, &config);
 
-        let mut lock = self.slot.lock().unwrap();
-        *lock = slot;
+        // it is very important that we update the existing slot rather than simply overwriting it
+        // (e.g. DO NOT DO: self.slot = Arc::new(Mutex::new(slot)))
 
+        // when we update the existing slot, that will also make sure to update what our GUI thread is pointing to
+        let mut slot_lock = self.slot.lock().unwrap();
+        *slot_lock = slot;
+
+        // otherwise updating all of this is trivial
         self.config = config;
         self.dsp.graph = graph;
 

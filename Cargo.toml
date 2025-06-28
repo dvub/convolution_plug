@@ -39,6 +39,7 @@ crossbeam-channel = "0.5.15"
 itertools = "0.14.0"
 directories = "6.0.0"
 fundsp = "0.20.0"
+anyhow = "1.0.98"
 
 
 # Uncomment the below line to disable the on-by-default VST3 feature to remove

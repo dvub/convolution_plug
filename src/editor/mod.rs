@@ -7,7 +7,6 @@ use crate::{
     dsp::convolve::convolver,
     params::PluginParams,
     util::{read_samples_from_file, rms_normalize},
-    DEFAULT_FADE_TIME,
 };
 
 use itertools::Itertools;
@@ -139,10 +138,11 @@ pub fn create_editor(
 
                     // 2. update our convolver via frontend
                     let new_unit = Box::new(convolver(&ir_samples) | convolver(&ir_samples));
-                    // TODO: add config option for fade time
+
+                    // in our case, i think the fading *type* is such a small detail that it's okay not to expose it as an option in any way
                     slot.lock()
                         .unwrap()
-                        .set(Fade::Smooth, DEFAULT_FADE_TIME, new_unit);
+                        .set(Fade::Smooth, config.fade_time, new_unit);
 
                     // 3. make this particular IR persistent
                     // Params require the persistent field to be a Mutex<Vec<T>> instead of just a Vec
