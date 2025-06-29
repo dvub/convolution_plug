@@ -3,15 +3,10 @@ mod ipc;
 use fundsp::hacker32::*;
 use ipc::{Message, ParameterUpdate};
 
-use crate::{
-    dsp::convolve::convolver,
-    params::PluginParams,
-    util::{read_samples_from_file, rms_normalize},
-};
+use crate::{dsp::convolve::convolver, params::PluginParams, util::rms_normalize};
 
 use itertools::Itertools;
 use nih_plug::{
-    nih_log,
     params::Params,
     prelude::{ParamPtr, ParamSetter},
 };
@@ -120,17 +115,9 @@ pub fn create_editor(
                     gui_updates.push(update.parameter_id)
                 },
                 // TODO: improve error handling
-                Message::SlotUpdate(path) => {
-                    nih_log!(
-                        "Received message from GUI to update IR from new path: {}",
-                        path
-                    );
+                Message::SlotUpdate(mut ir_samples) => {
                     // GUI thread doesn't have to be real-time
                     // so we're gonna do a buunch of non real-time stuff here
-
-                    // 1. load samples
-                    // TODO: support stereo IRs (maybe)
-                    let mut ir_samples = read_samples_from_file(&path);
 
                     if config.normalize_irs {
                         rms_normalize(&mut ir_samples, config.normalization_level);

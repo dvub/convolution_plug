@@ -9,7 +9,7 @@ pub enum Message {
     Init,
     Resize { width: u32, height: u32 },
     ParameterUpdate(ParameterUpdate),
-    SlotUpdate(String),
+    SlotUpdate(Vec<f32>),
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]
