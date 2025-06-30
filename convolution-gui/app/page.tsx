@@ -64,11 +64,17 @@ export default function Home() {
 
 	function onFileChange(event: ChangeEvent<HTMLInputElement>) {
 		const file = event.target;
-		const ctx = new AudioContext();
+		// TODO: should resampling be a feature? if so, shouuld it be through the Web Audio API?
+		// (or e.g. we implement it ourselves somehow)
+
 		const reader = new FileReader();
 
 		reader.onload = () => {
 			const buffer = reader.result as ArrayBuffer;
+			const ctx = new AudioContext({
+				sampleRate: getSampleRate(buffer).sampleRate,
+			});
+
 			ctx.decodeAudioData(buffer, (decoded) => {
 				const typedSamples = decoded.getChannelData(0);
 
@@ -82,6 +88,9 @@ export default function Home() {
 		};
 
 		reader.readAsArrayBuffer(file.files![0]);
+
+		{
+		}
 	}
 
 	return (
@@ -116,4 +125,44 @@ export default function Home() {
 			</GlobalParametersContext.Provider>
 		</MessageBusContext.Provider>
 	);
+}
+
+// TODO: move this elsewhere
+
+// get me out of here
+// https://github.com/WebAudio/web-audio-api/issues/30#issuecomment-1090167849
+function getSampleRate(arrayBuffer: ArrayBuffer) {
+	const view = new DataView(arrayBuffer);
+	const chunkCellSize = 4;
+
+	const getChunkName = (newOffset: number) =>
+		String.fromCharCode.apply(null, [
+			...new Int8Array(
+				arrayBuffer.slice(newOffset, newOffset + chunkCellSize)
+			),
+		]);
+
+	const isWave = getChunkName(0).includes('RIFF');
+	if (!isWave) return { sampleRate: 0, bitsPerSample: 0 };
+
+	let offset = 12;
+	let chunkName = getChunkName(offset);
+	let chunkSize = 0;
+
+	while (!chunkName.includes('fmt')) {
+		chunkSize = view.getUint32(offset + chunkCellSize, true);
+		offset += 2 * chunkCellSize + chunkSize; // name cell + data_size cell + data size
+		chunkName = getChunkName(offset);
+
+		if (offset > view.byteLength)
+			throw new Error("Couldn't find sampleRate.");
+	}
+
+	const sampleRateOffset = 12;
+	const bitsPerSampleOffset = 22;
+
+	const sampleRate = view.getUint32(offset + sampleRateOffset, true);
+	const bitsPerSample = view.getUint16(offset + bitsPerSampleOffset, true);
+
+	return { sampleRate, bitsPerSample };
 }

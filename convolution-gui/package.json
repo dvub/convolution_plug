@@ -12,7 +12,8 @@
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-knob-headless": "^0.3.0"
+    "react-knob-headless": "^0.3.0",
+    "wavesurfer.js": "^7.9.9"
   },
   "devDependencies": {
     "typescript": "^5",

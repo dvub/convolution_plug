@@ -83,7 +83,7 @@ impl Plugin for ConvolutionPlug {
     fn initialize(
         &mut self,
         _audio_io_layout: &AudioIOLayout,
-        _buffer_config: &BufferConfig,
+        buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
         nih_log!("Building DSP graph..");
@@ -94,7 +94,8 @@ impl Plugin for ConvolutionPlug {
             nih_log!("There was an issue with reading the plugin config; Falling back to default for now.\n Error: {e}");
             PluginConfig::default()
         });
-        let (graph, slot) = build_graph(&self.params, &config);
+        let (mut graph, slot) = build_graph(&self.params, &config);
+        graph.set_sample_rate(buffer_config.sample_rate as f64);
 
         // it is very important that we update the existing slot rather than simply overwriting it
         // (e.g. DO NOT DO: self.slot = Arc::new(Mutex::new(slot)))

@@ -3,7 +3,11 @@ mod ipc;
 use fundsp::hacker32::*;
 use ipc::{Message, ParameterUpdate};
 
-use crate::{dsp::convolve::convolver, params::PluginParams, util::rms_normalize};
+use crate::{
+    dsp::convolve::convolver,
+    params::PluginParams,
+    util::{read_samples_from_file, rms_normalize},
+};
 
 use itertools::Itertools;
 use nih_plug::{

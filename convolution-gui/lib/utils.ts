@@ -44,7 +44,6 @@ export class NormalisableRange {
 	}
 }
 
-
 // Conversion functions rewritten from NIH-plug
 // https://github.com/robbert-vdh/nih-plug/blob/ffe9b61fcb0441c9d33f4413f5ebe7394637b21f/src/util.rs#L30
 
