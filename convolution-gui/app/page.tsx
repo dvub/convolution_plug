@@ -88,9 +88,6 @@ export default function Home() {
 		};
 
 		reader.readAsArrayBuffer(file.files![0]);
-
-		{
-		}
 	}
 
 	return (
