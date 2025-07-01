@@ -2,8 +2,7 @@
 
 import { MessageBus, MessageBusContext } from '@/contexts/MessageBusContext';
 import { useEventDispatcher } from '@/hooks/useEventDispatcher';
-import { ChangeEvent, useEffect, useState } from 'react';
-
+import { useEffect, useState } from 'react';
 import {
 	GlobalParameters,
 	GlobalParametersContext,
@@ -14,6 +13,8 @@ import { Message } from '@/bindings/Message';
 import { sendToPlugin } from '@/lib';
 import { Knob } from '@/components/knobs/Knob';
 import { dbToGain, gainToDb, NormalisableRange } from '@/lib/utils';
+
+import { FileInput } from '@/components/fileInput';
 
 export default function Home() {
 	const [messageBus] = useState(new MessageBus());
@@ -62,24 +63,12 @@ export default function Home() {
 		};
 	}, []);
 
-	function onFileChange(event: ChangeEvent<HTMLInputElement>) {
-		const reader = new FileReader();
-		reader.onload = () => {
-			const arrayBuffer = reader.result as ArrayBuffer;
-			const bytes = new Uint8Array(arrayBuffer);
-
-			sendToPlugin({ type: 'slotUpdate', data: [...bytes] });
-		};
-		reader.readAsArrayBuffer(event.target.files![0]);
-	}
-
 	return (
 		<MessageBusContext.Provider value={messageBus}>
 			<GlobalParametersContext.Provider
 				value={{ parameters, setParameters }}
 			>
-				<input type='file' onChange={onFileChange}></input>
-
+				<FileInput />
 				<Knob
 					parameter='gain'
 					label={'Gain'}
