@@ -1,16 +1,20 @@
 use nih_plug::util::db_to_gain;
 
 // TODO: return a result, because this can fail in a number of ways
-pub fn decode_samples(bytes: &[u8]) -> Vec<f32> {
+pub fn decode_samples(bytes: &[u8]) -> (Vec<f32>, u32) {
     let mut reader = hound::WavReader::new(bytes).unwrap();
 
     let bit_depth = reader.spec().bits_per_sample as u32;
 
     let max_amplitude = 2_i32.pow(bit_depth - 1) as f32;
-    reader
+
+    let samples = reader
         .samples::<i32>()
         .map(|s| s.unwrap_or(0) as f32 / max_amplitude)
-        .collect()
+        .collect();
+    let sample_rate = reader.spec().sample_rate;
+
+    (samples, sample_rate)
 }
 
 // first attempt was peak normalization, didn't work very well for a variety of irs

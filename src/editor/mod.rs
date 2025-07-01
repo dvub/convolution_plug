@@ -5,8 +5,8 @@ use ipc::{Message, ParameterUpdate};
 
 use crate::{
     dsp::convolve::convolver,
-    params::PluginParams,
     util::{decode_samples, rms_normalize},
+    ConvolutionPlug,
 };
 
 use itertools::Itertools;
@@ -17,9 +17,10 @@ use nih_plug::{
 use nih_plug_webview::{HTMLSource, WebViewEditor};
 
 use serde_json::json;
-use std::sync::{Arc, Mutex};
 
-use crate::config::PluginConfig;
+use rubato::{
+    Resampler, SincFixedIn, SincInterpolationParameters, SincInterpolationType, WindowFunction,
+};
 
 type ParamMap = Vec<(String, ParamPtr, String)>;
 
@@ -29,17 +30,15 @@ const EDITOR_SIZE: (u32, u32) = (600, 600);
 // figure out where to correctly use unsafe keyword for param stuff
 
 // TODO: fix nesting issues
-pub fn create_editor(
-    params: &Arc<PluginParams>,
-    config: &PluginConfig,
-    slot: Arc<Mutex<Slot>>,
-) -> WebViewEditor {
-    let params = params.clone();
-    let map = params.param_map();
+pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
+    let params = plugin.params.clone();
+    let param_map = params.param_map();
     let param_update_rx = params.rx.clone();
-    let config = config.clone();
+    let config = plugin.config.clone();
+    let sample_rate = plugin.sample_rate;
+    let slot = plugin.slot.clone();
 
-    println!("PARAM MAP: {:?}", map);
+    println!("PARAM MAP: {:?}", param_map);
 
     let src = HTMLSource::URL("http://localhost:3000");
 
@@ -103,7 +102,7 @@ pub fn create_editor(
 
             match result {
                 Message::Init => unsafe {
-                    for param_ptr in &map {
+                    for param_ptr in &param_map {
                         let param_update = ParameterUpdate {
                             parameter_id: param_ptr.0.clone(),
                             value: param_ptr.1.modulated_normalized_value(),
@@ -115,21 +114,42 @@ pub fn create_editor(
                 },
 
                 Message::ParameterUpdate(update) => unsafe {
-                    match_and_update_param(&update, &setter, &map);
+                    match_and_update_param(&update, &setter, &param_map);
                     gui_updates.push(update.parameter_id)
                 },
                 // TODO: improve error handling
+                // GUI thread doesn't have to be real-time
+                // so we're gonna do a buunch of non real-time stuff here
                 Message::SlotUpdate(ir_file_bytes) => {
-                    let mut ir_samples = decode_samples(ir_file_bytes.as_slice());
-                    // GUI thread doesn't have to be real-time
-                    // so we're gonna do a buunch of non real-time stuff here
+                    let (ir_samples, ir_sample_rate) = decode_samples(ir_file_bytes.as_slice());
+
+                    // TODO: refactor this quite a lot
+                    let resampling_params = SincInterpolationParameters {
+                        sinc_len: 512,
+                        f_cutoff: 5.0,
+                        interpolation: SincInterpolationType::Cubic,
+                        oversampling_factor: 512,
+                        window: WindowFunction::Hann,
+                    };
+
+                    let mut resampler = SincFixedIn::<f32>::new(
+                        sample_rate as f64 / ir_sample_rate as f64,
+                        10.0,
+                        resampling_params,
+                        1024,
+                        1,
+                    )
+                    .unwrap();
+
+                    let mut resampled_ir = resampler.process(&[ir_samples], None).unwrap();
+                    let res = &mut resampled_ir[0];
 
                     if config.normalize_irs {
-                        rms_normalize(&mut ir_samples, config.normalization_level);
+                        rms_normalize(res, config.normalization_level);
                     }
 
                     // 2. update our convolver via frontend
-                    let new_unit = Box::new(convolver(&ir_samples) | convolver(&ir_samples));
+                    let new_unit = Box::new(convolver(res) | convolver(res));
 
                     // in our case, i think the fading *type* is such a small detail that it's okay not to expose it as an option in any way
                     slot.lock()
@@ -140,8 +160,8 @@ pub fn create_editor(
                     // Params require the persistent field to be a Mutex<Vec<T>> instead of just a Vec
                     // so we should lock the mutex and update it here
                     // (instead of the audio thread)
-                    let mut lock = params.persistent_ir_samples.lock().unwrap();
-                    *lock = Some(ir_samples);
+                    // let mut lock = params.persistent_ir_samples.lock().unwrap();
+                    // *lock = Some(ir_samples);
                 }
 
                 // baseview has bugs on windows
@@ -159,7 +179,7 @@ pub fn create_editor(
         // for each iteration of this event loop, we only really need to send one update for each parameter
         // therefore, we use unique() to remove duplicate parameter IDs
         for param_index in param_update_rx.try_iter().unique() {
-            let param_id = &map[param_index].0;
+            let param_id = &param_map[param_index].0;
 
             // if a parameter update comes from GUI, we don't want to send an old (-ish) version of the same parameter to the GUI
             if gui_updates.contains(param_id) {
@@ -169,7 +189,7 @@ pub fn create_editor(
             unsafe {
                 let update = ParameterUpdate {
                     parameter_id: param_id.clone(),
-                    value: get_normalized_param_value(param_id.to_string(), &map),
+                    value: get_normalized_param_value(param_id.to_string(), &param_map),
                 };
                 let message = Message::ParameterUpdate(update);
                 ctx.send_json(json!(message));

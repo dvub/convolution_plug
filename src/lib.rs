@@ -24,6 +24,7 @@ struct ConvolutionPlug {
     config: PluginConfig,
     params: Arc<PluginParams>,
     dsp: PluginDspProcessor<U2>,
+    sample_rate: f32,
     // this is used for updating the convolver
     slot: Arc<Mutex<Slot>>,
 }
@@ -34,6 +35,7 @@ impl Default for ConvolutionPlug {
             dsp: PluginDspProcessor::default(),
             config: PluginConfig::default(),
             slot: Arc::new(Mutex::new(Slot::new(Box::new(sink())).0)),
+            sample_rate: 44100.0,
         }
     }
 }
@@ -107,6 +109,7 @@ impl Plugin for ConvolutionPlug {
         // otherwise updating all of this is trivial
         self.config = config;
         self.dsp.graph = graph;
+        self.sample_rate = buffer_config.sample_rate;
 
         nih_log!("Initialized Convolution.");
 
@@ -119,11 +122,7 @@ impl Plugin for ConvolutionPlug {
     }
 
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        Some(Box::new(create_editor(
-            &self.params,
-            &self.config,
-            self.slot.clone(),
-        )))
+        Some(Box::new(create_editor(self)))
     }
 
     fn process(
