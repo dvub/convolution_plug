@@ -11,7 +11,7 @@ use crate::{
     config::PluginConfig,
     dsp::{convolve::convolver, switched::switched_node},
     params::PluginParams,
-    util::{read_samples_from_file, rms_normalize},
+    util::{decode_samples, rms_normalize},
 };
 
 // TODO: is it smart to have this function be here?
@@ -28,12 +28,15 @@ pub fn build_graph(
             // if no IR was previously loaded, *then* we check if we should load anything
             // based on config
             if !config.default_ir_path.is_empty() {
+                /*
                 let mut samples = read_samples_from_file(&config.default_ir_path);
                 if config.normalize_irs {
                     rms_normalize(&mut samples, config.normalization_level);
                 }
 
                 Box::new(convolver(&samples) | convolver(&samples))
+                */
+                todo!()
             } else {
                 println!("Passing through");
                 // no IR is loaded.

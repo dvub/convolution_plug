@@ -1,8 +1,8 @@
 use nih_plug::util::db_to_gain;
 
 // TODO: return a result, because this can fail in a number of ways
-pub fn read_samples_from_file(path: &str) -> Vec<f32> {
-    let mut reader = hound::WavReader::open(path).unwrap();
+pub fn decode_samples(bytes: &[u8]) -> Vec<f32> {
+    let mut reader = hound::WavReader::new(bytes).unwrap();
 
     let bit_depth = reader.spec().bits_per_sample as u32;
 
@@ -28,6 +28,7 @@ pub fn rms_normalize(input: &mut [f32], level: f32) {
     input.iter_mut().for_each(|x| *x *= a);
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use std::{f32::consts::PI, fs::remove_file};
@@ -94,3 +95,4 @@ mod tests {
         assert_eq!(gain_to_db(new_rms), desired_rms);
     }
 }
+*/

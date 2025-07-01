@@ -6,7 +6,7 @@ use ipc::{Message, ParameterUpdate};
 use crate::{
     dsp::convolve::convolver,
     params::PluginParams,
-    util::{read_samples_from_file, rms_normalize},
+    util::{decode_samples, rms_normalize},
 };
 
 use itertools::Itertools;
@@ -119,7 +119,8 @@ pub fn create_editor(
                     gui_updates.push(update.parameter_id)
                 },
                 // TODO: improve error handling
-                Message::SlotUpdate(mut ir_samples) => {
+                Message::SlotUpdate(ir_file_bytes) => {
+                    let mut ir_samples = decode_samples(ir_file_bytes.as_slice());
                     // GUI thread doesn't have to be real-time
                     // so we're gonna do a buunch of non real-time stuff here
 
