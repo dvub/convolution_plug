@@ -18,9 +18,10 @@ use nih_plug_webview::{HTMLSource, WebViewEditor};
 
 use serde_json::json;
 
+/*
 use rubato::{
     Resampler, SincFixedIn, SincInterpolationParameters, SincInterpolationType, WindowFunction,
-};
+}; */
 
 type ParamMap = Vec<(String, ParamPtr, String)>;
 
@@ -35,7 +36,7 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
     let param_map = params.param_map();
     let param_update_rx = params.rx.clone();
     let config = plugin.config.clone();
-    let sample_rate = plugin.sample_rate;
+    let _sample_rate = plugin.sample_rate;
     let slot = plugin.slot.clone();
 
     println!("PARAM MAP: {:?}", param_map);
@@ -121,9 +122,11 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
                 // GUI thread doesn't have to be real-time
                 // so we're gonna do a buunch of non real-time stuff here
                 Message::SlotUpdate(ir_file_bytes) => {
-                    let (ir_samples, ir_sample_rate) = decode_samples(ir_file_bytes.as_slice());
+                    let (ir_samples, _ir_sample_rate) = decode_samples(ir_file_bytes.as_slice());
 
                     // TODO: refactor this quite a lot
+
+                    /*
                     let resampling_params = SincInterpolationParameters {
                         sinc_len: 512,
                         f_cutoff: 5.0,
@@ -141,15 +144,18 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
                     )
                     .unwrap();
 
+
                     let mut resampled_ir = resampler.process(&[ir_samples], None).unwrap();
                     let res = &mut resampled_ir[0];
+                    */
+                    let mut res = ir_samples;
 
                     if config.normalize_irs {
-                        rms_normalize(res, config.normalization_level);
+                        rms_normalize(&mut res, config.normalization_level);
                     }
 
                     // 2. update our convolver via frontend
-                    let new_unit = Box::new(convolver(res) | convolver(res));
+                    let new_unit = Box::new(convolver(&res) | convolver(&res));
 
                     // in our case, i think the fading *type* is such a small detail that it's okay not to expose it as an option in any way
                     slot.lock()

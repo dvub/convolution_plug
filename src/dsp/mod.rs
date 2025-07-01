@@ -11,7 +11,6 @@ use crate::{
     config::PluginConfig,
     dsp::{convolve::convolver, switched::switched_node},
     params::PluginParams,
-    util::{decode_samples, rms_normalize},
 };
 
 // TODO: is it smart to have this function be here?
