@@ -59,6 +59,9 @@ pub struct PluginParams {
 
     #[id = "highpass_q"]
     pub highpass_q: FloatParam,
+
+    #[id = "wet_gain"]
+    pub wet_gain: FloatParam,
 }
 
 impl Display for PluginParams {
@@ -196,6 +199,20 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_callback(param_update_callback(11, tx.clone(), state.clone())),
+
+            wet_gain: FloatParam::new(
+                "Wet Gain",
+                db_to_gain(0.0),
+                FloatRange::Skewed {
+                    min: db_to_gain(-30.0),
+                    max: db_to_gain(30.0),
+                    factor: FloatRange::gain_skew_factor(-30.0, 30.0),
+                },
+            )
+            .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
+            .with_string_to_value(formatters::s2v_f32_gain_to_db())
+            .with_unit(" dB")
+            .with_callback(param_update_callback(12, tx.clone(), state.clone())),
 
             // EXTRA GOODIES
             rx,

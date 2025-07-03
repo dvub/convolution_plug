@@ -54,7 +54,7 @@ pub fn build_graph(
     let eq_wet =
         convolver >> switched_lowpass(params) >> switched_bell(params) >> switched_highpass(params);
 
-    let wet = eq_wet * dry_wet(params);
+    let wet = eq_wet * dry_wet(params) * wet_gain(params);
     let dry = multipass::<U2>() * (1.0 - dry_wet(params));
     let mixed = wet & dry;
 

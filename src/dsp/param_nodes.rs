@@ -81,3 +81,9 @@ pub fn bell_gain<N: Size<f32>>(
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
     ParamNode::new(p, |p| p.bell_gain.value())
 }
+
+pub fn wet_gain<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
+    ParamNode::new(p, |p| p.wet_gain.value())
+}

@@ -18,10 +18,11 @@ use nih_plug_webview::{HTMLSource, WebViewEditor};
 
 use serde_json::json;
 
-/*
 use rubato::{
     Resampler, SincFixedIn, SincInterpolationParameters, SincInterpolationType, WindowFunction,
-}; */
+};
+
+const RESAMPLING_CHANNELS: usize = 1;
 
 type ParamMap = Vec<(String, ParamPtr, String)>;
 
@@ -36,7 +37,7 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
     let param_map = params.param_map();
     let param_update_rx = params.rx.clone();
     let config = plugin.config.clone();
-    let _sample_rate = plugin.sample_rate;
+    let sample_rate = plugin.sample_rate;
     let slot = plugin.slot.clone();
 
     println!("PARAM MAP: {:?}", param_map);
@@ -119,19 +120,16 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
                     gui_updates.push(update.parameter_id)
                 },
                 // TODO: improve error handling
-                // GUI thread doesn't have to be real-time
-                // so we're gonna do a buunch of non real-time stuff here
+
+                // TODO: refactor this quite a lot
                 Message::SlotUpdate(ir_file_bytes) => {
-                    let (ir_samples, _ir_sample_rate) = decode_samples(ir_file_bytes.as_slice());
+                    let (ir_samples, ir_sample_rate) = decode_samples(ir_file_bytes.as_slice());
 
-                    // TODO: refactor this quite a lot
-
-                    /*
                     let resampling_params = SincInterpolationParameters {
-                        sinc_len: 512,
-                        f_cutoff: 5.0,
+                        sinc_len: 384,
+                        f_cutoff: 1.0,
                         interpolation: SincInterpolationType::Cubic,
-                        oversampling_factor: 512,
+                        oversampling_factor: 128,
                         window: WindowFunction::Hann,
                     };
 
@@ -139,35 +137,29 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
                         sample_rate as f64 / ir_sample_rate as f64,
                         10.0,
                         resampling_params,
-                        1024,
-                        1,
+                        ir_samples.len(),
+                        RESAMPLING_CHANNELS,
                     )
                     .unwrap();
 
-
-                    let mut resampled_ir = resampler.process(&[ir_samples], None).unwrap();
-                    let res = &mut resampled_ir[0];
-                    */
-                    let mut res = ir_samples;
+                    let res = &mut resampler.process(&[ir_samples], None).unwrap()[0];
 
                     if config.normalize_irs {
-                        rms_normalize(&mut res, config.normalization_level);
+                        rms_normalize(res, config.normalization_level);
                     }
 
-                    // 2. update our convolver via frontend
-                    let new_unit = Box::new(convolver(&res) | convolver(&res));
-
-                    // in our case, i think the fading *type* is such a small detail that it's okay not to expose it as an option in any way
+                    // 2. update our convolver via Slot frontend
+                    let new_unit = Box::new(convolver(res) | convolver(res));
+                    // i think the fading *type* is such a small detail that it's okay not to expose it as an option in any way
                     slot.lock()
                         .unwrap()
                         .set(Fade::Smooth, config.fade_time, new_unit);
 
-                    // 3. make this particular IR persistent
-                    // Params require the persistent field to be a Mutex<Vec<T>> instead of just a Vec
-                    // so we should lock the mutex and update it here
-                    // (instead of the audio thread)
-                    // let mut lock = params.persistent_ir_samples.lock().unwrap();
-                    // *lock = Some(ir_samples);
+                    // 3. make this IR persistent
+                    let mut lock = params.persistent_ir_samples.lock().unwrap();
+
+                    // TODO: fix this clone
+                    *lock = Some(res.clone());
                 }
 
                 // baseview has bugs on windows
