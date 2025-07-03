@@ -104,6 +104,11 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
 
             match result {
                 Message::Init => unsafe {
+                    let state = setter.raw_context.get_state();
+                    // println!("fields: {:?}", state.fields);
+                    let m = Message::Fields(state.fields);
+                    ctx.send_json(json!(m));
+
                     for param_ptr in &param_map {
                         let param_update = ParameterUpdate {
                             parameter_id: param_ptr.0.clone(),
@@ -167,6 +172,7 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
 
                 // i should do that
                 Message::Resize { .. } => todo!(),
+                Message::Fields(..) => todo!(),
             }
         }
         // --- BACKEND -> GUI COMMUNICATION ---

@@ -2,7 +2,9 @@ import { sendToPlugin } from '@/lib';
 import { useWavesurfer } from '@wavesurfer/react';
 import { ChangeEvent, useRef, useState } from 'react';
 
-export function FileInput() {
+export function FileInput(props: { peaks: number[] | null }) {
+	console.log('this component rerednered');
+	console.log('HI:', props.peaks);
 	const [fileName, setFileName] = useState('...');
 
 	const containerRef = useRef(null);
@@ -35,6 +37,11 @@ export function FileInput() {
 
 		// finally, visualization
 		wavesurfer?.loadBlob(input);
+
+		if (props.peaks) {
+			wavesurfer?.load('', [props.peaks]);
+		}
+
 		setFileName(event.target.files[0].name);
 	}
 	return (

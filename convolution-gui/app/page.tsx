@@ -17,6 +17,8 @@ import { dbToGain, gainToDb, NormalisableRange } from '@/lib/utils';
 import { FileInput } from '@/components/fileInput';
 
 export default function Home() {
+	const [peaks, setPeaks] = useState<number[] | null>(null);
+
 	const [messageBus] = useState(new MessageBus());
 	const [parameters, setParameters] = useState<GlobalParameters>({
 		gain: 0,
@@ -53,6 +55,10 @@ export default function Home() {
 					});
 
 					break;
+				case 'fields':
+					// console.log(JSON.parse(event.data['ir_samples']!));
+					setPeaks(JSON.parse(event.data['ir_samples']!));
+					break;
 			}
 		};
 
@@ -68,7 +74,7 @@ export default function Home() {
 			<GlobalParametersContext.Provider
 				value={{ parameters, setParameters }}
 			>
-				<FileInput />
+				<FileInput peaks={peaks} />
 				<Knob
 					parameter='gain'
 					label={'Gain'}
