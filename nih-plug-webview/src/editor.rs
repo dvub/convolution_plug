@@ -54,7 +54,7 @@ impl Editor for WebViewEditor {
                     if let Ok(json_value) = serde_json::from_str(&msg) {
                         let _ = events_sender.send(json_value);
                     } else {
-                        panic!("Invalid JSON from web view: {}.", msg);
+                        panic!("Invalid JSON from web view: {msg}.");
                     }
                 })
                 .with_background_color(background_color);
@@ -77,7 +77,7 @@ impl Editor for WebViewEditor {
             WindowHandler {
                 context,
                 event_loop_handler,
-                webview: webview.unwrap_or_else(|e| panic!("Failed to construct webview. {}", e)),
+                webview: webview.unwrap_or_else(|e| panic!("Failed to construct webview. {e}")),
                 events_receiver,
                 keyboard_handler,
                 mouse_handler,

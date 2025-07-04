@@ -27,7 +27,7 @@ pub fn rms_normalize(input: &mut [f32], level: f32) {
     let squared_sum = input.iter().map(|x| x * x).sum::<f32>();
 
     let a = ((n * r.powi(2)) / squared_sum).sqrt();
-    println!("Normalizing by factor: {}", a);
+    println!("Normalizing by factor: {a}");
 
     input.iter_mut().for_each(|x| *x *= a);
 }

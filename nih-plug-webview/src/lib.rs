@@ -144,7 +144,7 @@ impl WindowHandler {
         let json_str_quoted =
             serde_json::to_string(&json_str).expect("Should not fail: the value is always string");
         self.webview
-            .evaluate_script(&format!("onPluginMessageInternal({});", json_str_quoted))
+            .evaluate_script(&format!("onPluginMessageInternal({json_str_quoted});"))
             .unwrap();
     }
 
