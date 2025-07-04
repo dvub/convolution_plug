@@ -149,14 +149,13 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
                     )
                     .unwrap();
 
-                    let res = &mut resampler.process(&[ir_samples], None).unwrap()[0];
-
+                    let resampled = &mut resampler.process(&[ir_samples], None).unwrap()[0];
                     if config.normalize_irs {
-                        rms_normalize(res, config.normalization_level);
+                        rms_normalize(resampled, config.normalization_level);
                     }
 
                     // 2. update our convolver via Slot frontend
-                    let new_unit = Box::new(convolver(res) | convolver(res));
+                    let new_unit = Box::new(convolver(resampled) | convolver(resampled));
                     // i think the fading *type* is such a small detail that it's okay not to expose it as an option in any way
                     slot.lock()
                         .unwrap()
@@ -165,6 +164,9 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
                     // 3. make IR persistent
                     let mut ir_data_lock = params.ir_data.lock().unwrap();
                     *ir_data_lock = Some(ir_data);
+
+                    let mut ir_samples_lock = params.ir_samples.lock().unwrap();
+                    *ir_samples_lock = Some(resampled.to_vec());
                 }
 
                 // baseview has bugs on windows

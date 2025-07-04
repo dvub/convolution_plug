@@ -25,7 +25,7 @@ export function FileInput() {
     });
 
     const handlePluginMessage = (event: Message) => {
-      if (event.type === "slotUpdate") {
+      if (event.type === "irUpdate") {
         const blob = new Blob([new Uint8Array(event.data.rawBytes)], {
           type: "wav",
         });
@@ -54,7 +54,7 @@ export function FileInput() {
       const bytes = new Uint8Array(arrayBuffer);
 
       sendToPlugin({
-        type: "slotUpdate",
+        type: "irUpdate",
         data: {
           name: fileName,
           rawBytes: [...bytes],
