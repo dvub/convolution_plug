@@ -1,20 +1,44 @@
+import { Message } from '@/bindings/Message';
+import { MessageBusContext } from '@/contexts/MessageBusContext';
 import { sendToPlugin } from '@/lib';
-import { useWavesurfer } from '@wavesurfer/react';
-import { ChangeEvent, useRef, useState } from 'react';
 
-export function FileInput(props: { peaks: number[] | null }) {
-	console.log('this component rerednered');
-	console.log('HI:', props.peaks);
+import { ChangeEvent, useContext, useEffect, useRef, useState } from 'react';
+import WaveSurfer from 'wavesurfer.js';
+
+export function FileInput() {
+	const waveSurferRef = useRef<WaveSurfer | null>(null);
+	const containerRef = useRef(null);
+
+	const messageBus = useContext(MessageBusContext)!;
 	const [fileName, setFileName] = useState('...');
 
-	const containerRef = useRef(null);
-	const { wavesurfer } = useWavesurfer({
-		url: '',
-		container: containerRef,
-		waveColor: 'purple',
-		normalize: true,
-		height: 200,
-	});
+	useEffect(() => {
+		const waveSurfer = WaveSurfer.create({
+			container: containerRef.current!,
+			height: 200,
+			waveColor: 'purple',
+			normalize: true,
+		});
+
+		waveSurfer.on('init', () => {
+			waveSurferRef.current = waveSurfer;
+		});
+
+		const handlePluginMessage = (event: Message) => {
+			if (event.type === 'slotUpdate') {
+				const blob = new Blob([new Uint8Array(event.data)], {
+					type: 'wav',
+				});
+				waveSurfer.loadBlob(blob);
+			}
+		};
+
+		const unsubscribe = messageBus.subscribe(handlePluginMessage);
+		return () => {
+			unsubscribe();
+			waveSurfer.destroy();
+		};
+	}, [messageBus]);
 
 	function onFileChange(event: ChangeEvent<HTMLInputElement>) {
 		if (!event.target.files || event.target.files.length === 0) {
@@ -36,11 +60,7 @@ export function FileInput(props: { peaks: number[] | null }) {
 		reader.readAsArrayBuffer(input);
 
 		// finally, visualization
-		wavesurfer?.loadBlob(input);
-
-		if (props.peaks) {
-			wavesurfer?.load('', [props.peaks]);
-		}
+		waveSurferRef.current?.loadBlob(input);
 
 		setFileName(event.target.files[0].name);
 	}

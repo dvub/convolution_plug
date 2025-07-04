@@ -17,8 +17,6 @@ import { dbToGain, gainToDb, NormalisableRange } from '@/lib/utils';
 import { FileInput } from '@/components/fileInput';
 
 export default function Home() {
-	const [peaks, setPeaks] = useState<number[] | null>(null);
-
 	const [messageBus] = useState(new MessageBus());
 	const [parameters, setParameters] = useState<GlobalParameters>({
 		gain: 0,
@@ -37,33 +35,20 @@ export default function Home() {
 		highpass_freq: 0,
 		highpass_q: 0,
 	});
-
 	useEventDispatcher(messageBus);
-
 	useEffect(() => {
 		sendToPlugin({ type: 'init' });
-
 		const handlePluginMessage = (event: Message) => {
-			console.log(event);
-			switch (event.type) {
-				case 'parameterUpdate':
-					setParameters((prevState) => {
-						return {
-							...prevState,
-							[event.data.parameterId]: event.data.value,
-						};
-					});
-
-					break;
-				case 'fields':
-					// console.log(JSON.parse(event.data['ir_samples']!));
-					setPeaks(JSON.parse(event.data['ir_samples']!));
-					break;
+			if (event.type === 'parameterUpdate') {
+				setParameters((prevState) => {
+					return {
+						...prevState,
+						[event.data.parameterId]: event.data.value,
+					};
+				});
 			}
 		};
-
 		const unsubscribe = messageBus.subscribe(handlePluginMessage);
-
 		return () => {
 			unsubscribe();
 		};
@@ -74,7 +59,7 @@ export default function Home() {
 			<GlobalParametersContext.Provider
 				value={{ parameters, setParameters }}
 			>
-				<FileInput peaks={peaks} />
+				<FileInput />
 				<Knob
 					parameter='gain'
 					label={'Gain'}

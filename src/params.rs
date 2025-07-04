@@ -16,9 +16,12 @@ pub struct PluginParams {
     // non param stuff
     pub rx: Receiver<usize>,
     pub editor_state: Arc<WebviewState>,
-    // TODO: what's a good string to go here?
+
     #[persist = "ir_samples"]
     pub persistent_ir_samples: Mutex<Option<Vec<f32>>>,
+
+    #[persist = "ir_bytes"]
+    pub ir_bytes: Mutex<Option<Vec<u8>>>,
 
     // actual param stuff
     #[id = "gain"]
@@ -218,6 +221,7 @@ impl Default for PluginParams {
             rx,
             editor_state: state,
             persistent_ir_samples: Mutex::new(None),
+            ir_bytes: Mutex::new(None),
         }
     }
 }

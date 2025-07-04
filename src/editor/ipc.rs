@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -12,7 +10,6 @@ pub enum Message {
     Resize { width: u32, height: u32 },
     ParameterUpdate(ParameterUpdate),
     SlotUpdate(Vec<u8>),
-    Fields(BTreeMap<String, String>),
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]

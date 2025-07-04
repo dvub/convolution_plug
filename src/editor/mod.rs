@@ -40,7 +40,7 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
     let sample_rate = plugin.sample_rate;
     let slot = plugin.slot.clone();
 
-    println!("PARAM MAP: {:?}", param_map);
+    println!("PARAM MAP: {param_map:?}");
 
     let src = HTMLSource::URL("http://localhost:3000");
 
@@ -104,10 +104,10 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
 
             match result {
                 Message::Init => unsafe {
-                    let state = setter.raw_context.get_state();
-                    // println!("fields: {:?}", state.fields);
-                    let m = Message::Fields(state.fields);
-                    ctx.send_json(json!(m));
+                    if let Some(b) = params.ir_bytes.lock().unwrap().as_deref() {
+                        println!("Found IR byte array, sending to editor");
+                        ctx.send_json(json!(Message::SlotUpdate(b.to_vec())));
+                    }
 
                     for param_ptr in &param_map {
                         let param_update = ParameterUpdate {
@@ -165,6 +165,9 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
 
                     // TODO: fix this clone
                     *lock = Some(res.clone());
+
+                    let mut bytes = params.ir_bytes.lock().unwrap();
+                    *bytes = Some(ir_file_bytes);
                 }
 
                 // baseview has bugs on windows
@@ -172,7 +175,6 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
 
                 // i should do that
                 Message::Resize { .. } => todo!(),
-                Message::Fields(..) => todo!(),
             }
         }
         // --- BACKEND -> GUI COMMUNICATION ---
@@ -228,6 +230,6 @@ unsafe fn get_normalized_param_value(id: String, map: &ParamMap) -> f32 {
 fn get_param_ptr(id: String, map: &ParamMap) -> ParamPtr {
     map.iter()
         .find(|(param_id, _, _)| id == *param_id)
-        .unwrap_or_else(|| panic!("Couldn't find a parameter with ID {}", id))
+        .unwrap_or_else(|| panic!("Couldn't find a parameter with ID {id}"))
         .1
 }
