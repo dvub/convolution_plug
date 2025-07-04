@@ -7,6 +7,7 @@ use crossbeam_channel::{Receiver, Sender};
 use nih_plug::{prelude::*, util::db_to_gain};
 use nih_plug_webview::state::WebviewState;
 
+use crate::editor::ipc::IrData;
 // TODO:
 // add highpass and some sort of middle thing for EQ
 // other params include... idk
@@ -17,11 +18,11 @@ pub struct PluginParams {
     pub rx: Receiver<usize>,
     pub editor_state: Arc<WebviewState>,
 
-    #[persist = "ir_samples"]
-    pub persistent_ir_samples: Mutex<Option<Vec<f32>>>,
+    #[persist = "ir_data"]
+    pub ir_data: Mutex<Option<IrData>>,
 
-    #[persist = "ir_bytes"]
-    pub ir_bytes: Mutex<Option<Vec<u8>>>,
+    #[persist = "ir_samples"]
+    pub samples: Mutex<Option<Vec<f32>>>,
 
     // actual param stuff
     #[id = "gain"]
@@ -220,8 +221,8 @@ impl Default for PluginParams {
             // EXTRA GOODIES
             rx,
             editor_state: state,
-            persistent_ir_samples: Mutex::new(None),
-            ir_bytes: Mutex::new(None),
+            ir_data: Mutex::new(None),
+            samples: Mutex::new(None),
         }
     }
 }

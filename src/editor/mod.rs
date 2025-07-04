@@ -1,4 +1,4 @@
-mod ipc;
+pub mod ipc;
 
 use fundsp::hacker32::*;
 use ipc::{Message, ParameterUpdate};
@@ -104,9 +104,11 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
 
             match result {
                 Message::Init => unsafe {
-                    if let Some(b) = params.ir_bytes.lock().unwrap().as_deref() {
+                    let lock = params.ir_data.lock().unwrap();
+
+                    if let Some(ir_data) = &*lock {
                         println!("Found IR byte array, sending to editor");
-                        ctx.send_json(json!(Message::SlotUpdate(b.to_vec())));
+                        ctx.send_json(json!(Message::IrUpdate(ir_data.clone())));
                     }
 
                     for param_ptr in &param_map {
@@ -127,8 +129,8 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
                 // TODO: improve error handling
 
                 // TODO: refactor this quite a lot
-                Message::SlotUpdate(ir_file_bytes) => {
-                    let (ir_samples, ir_sample_rate) = decode_samples(ir_file_bytes.as_slice());
+                Message::IrUpdate(ir_data) => {
+                    let (ir_samples, ir_sample_rate) = decode_samples(&ir_data.raw_bytes);
 
                     let resampling_params = SincInterpolationParameters {
                         sinc_len: 384,
@@ -161,13 +163,10 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
                         .set(Fade::Smooth, config.fade_time, new_unit);
 
                     // 3. make this IR persistent
-                    let mut lock = params.persistent_ir_samples.lock().unwrap();
+                    let mut lock = params.ir_data.lock().unwrap();
 
                     // TODO: fix this clone
-                    *lock = Some(res.clone());
-
-                    let mut bytes = params.ir_bytes.lock().unwrap();
-                    *bytes = Some(ir_file_bytes);
+                    *lock = Some(ir_data);
                 }
 
                 // baseview has bugs on windows

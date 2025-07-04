@@ -9,7 +9,7 @@ pub enum Message {
     Init,
     Resize { width: u32, height: u32 },
     ParameterUpdate(ParameterUpdate),
-    SlotUpdate(Vec<u8>),
+    IrUpdate(IrData),
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]
@@ -19,4 +19,12 @@ pub enum Message {
 pub struct ParameterUpdate {
     pub parameter_id: String,
     pub value: f32,
+}
+#[derive(Serialize, Deserialize, TS, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "../convolution-gui/bindings/")]
+#[ts(export)]
+pub struct IrData {
+    pub name: String,
+    pub raw_bytes: Vec<u8>,
 }

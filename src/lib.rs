@@ -2,7 +2,7 @@ pub mod dsp;
 pub mod params;
 
 mod config;
-mod editor;
+pub mod editor;
 mod util;
 
 use crate::{config::PluginConfig, dsp::build_graph, editor::create_editor};
@@ -20,7 +20,7 @@ use std::sync::{Arc, Mutex};
 // - reverse (for fun LOL)
 
 // TODO: make logging consistent and improve it in general
-struct ConvolutionPlug {
+pub struct ConvolutionPlug {
     config: PluginConfig,
     params: Arc<PluginParams>,
     dsp: PluginDspProcessor<U2>,

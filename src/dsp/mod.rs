@@ -19,10 +19,10 @@ pub fn build_graph(
     config: &PluginConfig,
 ) -> (Box<dyn AudioUnit>, Slot) {
     // 1. determine if and from where we should load an IR
-    let samples = params.persistent_ir_samples.lock().unwrap();
-    let slot_element: Box<dyn AudioUnit> = match samples.as_deref() {
+    let mut samples = params.samples.lock().unwrap();
+    let slot_element: Box<dyn AudioUnit> = match &mut *samples {
         // if an IR was previously loaded, we detect that here and use it again
-        Some(samples) => Box::new(convolver(samples) | convolver(samples)),
+        Some(data) => Box::new(convolver(data) | convolver(data)),
         None => {
             // if no IR was previously loaded, *then* we check if we should load anything
             // based on config
