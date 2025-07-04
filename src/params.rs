@@ -22,7 +22,7 @@ pub struct PluginParams {
     pub ir_data: Mutex<Option<IrData>>,
 
     #[persist = "ir_samples"]
-    pub samples: Mutex<Option<Vec<f32>>>,
+    pub ir_samples: Mutex<Option<Vec<f32>>>,
 
     // actual param stuff
     #[id = "gain"]
@@ -222,7 +222,7 @@ impl Default for PluginParams {
             rx,
             editor_state: state,
             ir_data: Mutex::new(None),
-            samples: Mutex::new(None),
+            ir_samples: Mutex::new(None),
         }
     }
 }

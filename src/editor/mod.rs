@@ -40,7 +40,7 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
     let sample_rate = plugin.sample_rate;
     let slot = plugin.slot.clone();
 
-    println!("PARAM MAP: {param_map:?}");
+    // println!("PARAM MAP: {param_map:?}");
 
     let src = HTMLSource::URL("http://localhost:3000");
 
@@ -162,11 +162,9 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
                         .unwrap()
                         .set(Fade::Smooth, config.fade_time, new_unit);
 
-                    // 3. make this IR persistent
-                    let mut lock = params.ir_data.lock().unwrap();
-
-                    // TODO: fix this clone
-                    *lock = Some(ir_data);
+                    // 3. make IR persistent
+                    let mut ir_data_lock = params.ir_data.lock().unwrap();
+                    *ir_data_lock = Some(ir_data);
                 }
 
                 // baseview has bugs on windows
