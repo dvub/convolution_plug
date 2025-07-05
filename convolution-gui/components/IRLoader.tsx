@@ -16,7 +16,7 @@ export function IrLoader() {
 	useEffect(() => {
 		const waveSurfer = WaveSurfer.create({
 			container: containerRef.current!,
-			height: 200,
+			height: 'auto',
 			waveColor: 'white',
 			normalize: true,
 		});
@@ -74,12 +74,12 @@ export function IrLoader() {
 		setFileName(fileName);
 	}
 	return (
-		<div className='border-1 rounded-sm w-[50%]'>
+		<div className='rounded-sm w-full'>
 			<div>
-				<div ref={containerRef} className='w-full' />
+				<div ref={containerRef} className='w-full h-[30vh]' />
 			</div>
 
-			<div className='flex items-center justify-between gap-2 border-t-1 text-md'>
+			<div className='flex items-center justify-between gap-2 border-t-1 text-md h-[5vh]'>
 				<input
 					id='inp'
 					type='file'

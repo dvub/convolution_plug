@@ -66,8 +66,8 @@ export default function Home() {
 			<GlobalParametersContext.Provider
 				value={{ parameters, setParameters }}
 			>
-				<div className='m-1 flex-col h-[100%]'>
-					<div className='flex justify-between gap-2 items-center'>
+				<div className='flex-col h-[100vh] w-[100vw]'>
+					<div className='flex justify-between gap-2 items-center h-[5vh]'>
 						<h1>CONVOLUTION</h1>
 						<div className='w-full text-right'>
 							<h1>dvub</h1>
@@ -99,7 +99,7 @@ export default function Home() {
 							return `${g} dB`;
 						}}
 					/>*/}
-					<div className='w-[60%] h-10 bg-red-500'></div>
+					<div className='w-[60%] bg-red-500 h-[60vh] '></div>
 				</div>
 			</GlobalParametersContext.Provider>
 		</MessageBusContext.Provider>
