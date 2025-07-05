@@ -74,32 +74,30 @@ export function IrLoader() {
 		setFileName(fileName);
 	}
 	return (
-		<div className='rounded-sm w-full'>
-			<div>
-				<div ref={containerRef} className='w-full h-[30vh]' />
-			</div>
+		<div className='w-full bg-zinc-700 rounded-sm'>
+			<div
+				ref={containerRef}
+				className='h-[30vh] bg-zinc-500 rounded-sm '
+			/>
 
-			<div className='flex items-center justify-between gap-2 border-t-1 text-md h-[5vh]'>
+			<div className='flex items-center justify-between gap-2 text-md h-[5vh]'>
 				<input
 					id='inp'
 					type='file'
 					onChange={onFileChange}
 					className='hidden'
 				/>
-				<label
-					htmlFor='inp'
-					className='p-1 hover:cursor-pointer border-r-1 rounded-r-sm'
-				>
+				<label htmlFor='inp' className='p-1 hover:cursor-pointer'>
 					<UploadIcon />
 				</label>
 				<div className='w-full'>
 					<h1>{fileName}</h1>
 				</div>
 
-				<button className='p-1 hover:cursor-pointer border-l-1 rounded-l-sm'>
+				<button className='p-1 hover:cursor-pointer '>
 					<ValueNoneIcon />
 				</button>
-				<button className='p-1 hover:cursor-pointer border-l-1 rounded-l-sm'>
+				<button className='p-1 hover:cursor-pointer'>
 					<GearIcon />
 				</button>
 			</div>

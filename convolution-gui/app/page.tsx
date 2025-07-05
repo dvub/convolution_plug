@@ -66,8 +66,8 @@ export default function Home() {
 			<GlobalParametersContext.Provider
 				value={{ parameters, setParameters }}
 			>
-				<div className='flex-col h-[100vh] w-[100vw]'>
-					<div className='flex justify-between gap-2 items-center h-[5vh]'>
+				<div className='flex-col h-[100vh] w-[100vw] px-1'>
+					<div className='flex justify-between gap-2 items-center h-[5vh] py-1 '>
 						<h1>CONVOLUTION</h1>
 						<div className='w-full text-right'>
 							<h1>dvub</h1>
@@ -99,7 +99,170 @@ export default function Home() {
 							return `${g} dB`;
 						}}
 					/>*/}
-					<div className='w-[60%] bg-red-500 h-[60vh] '></div>
+
+					{/* ALL processing */}
+					<div className='flex gap-1 py-1 h-[60vh]'>
+						<div className='w-[60%] h-full flex bg-zinc-700 rounded-sm p-1 gap-1'>
+							{/* LP column */}
+							<div className='w-[33%] h-full flex flex-col items-center justify-between bg-zinc-500 rounded-sm'>
+								<h1>Lowpass</h1>
+								<button>enabled?</button>
+								<Knob
+									parameter='lowpass_freq'
+									label={'Freq.'}
+									size={36}
+									//
+									cosmeticDefaultValue={dbToGain(0)}
+									cosmeticRange={
+										new NormalisableRange(
+											dbToGain(-30),
+											dbToGain(30),
+											dbToGain(0)
+										)
+									}
+									valueRawDisplayFn={(x) => x.toFixed(2)}
+								/>
+								<Knob
+									parameter='lowpass_q'
+									label={'Q'}
+									size={36}
+									//
+									cosmeticDefaultValue={dbToGain(0)}
+									cosmeticRange={
+										new NormalisableRange(
+											dbToGain(-30),
+											dbToGain(30),
+											dbToGain(0)
+										)
+									}
+									valueRawDisplayFn={(x) => x.toFixed(2)}
+								/>
+							</div>
+							{/* BELL COLUMN */}
+							<div className='w-[33%] h-full flex flex-col items-center justify-between bg-zinc-500 rounded-sm'>
+								<h1>Bell</h1>
+								<button>enabled?</button>
+								<Knob
+									parameter='bell_freq'
+									label={'Freq.'}
+									size={36}
+									//
+									cosmeticDefaultValue={dbToGain(0)}
+									cosmeticRange={
+										new NormalisableRange(
+											dbToGain(-30),
+											dbToGain(30),
+											dbToGain(0)
+										)
+									}
+									valueRawDisplayFn={(x) => x.toFixed(2)}
+								/>
+								<Knob
+									parameter='bell_q'
+									label={'Q'}
+									size={36}
+									//
+									cosmeticDefaultValue={dbToGain(0)}
+									cosmeticRange={
+										new NormalisableRange(
+											dbToGain(-30),
+											dbToGain(30),
+											dbToGain(0)
+										)
+									}
+									valueRawDisplayFn={(x) => x.toFixed(2)}
+								/>
+								<Knob
+									parameter='bell_gain'
+									label={'Gain'}
+									size={36}
+									//
+									cosmeticDefaultValue={dbToGain(0)}
+									cosmeticRange={
+										new NormalisableRange(
+											dbToGain(-30),
+											dbToGain(30),
+											dbToGain(0)
+										)
+									}
+									valueRawDisplayFn={(x) => x.toFixed(2)}
+								/>
+							</div>
+
+							{/* HP Column */}
+							<div className='w-[33%] h-full flex flex-col items-center justify-between bg-zinc-500 rounded-sm'>
+								<h1>Highpass</h1>
+								<button>enabled?</button>
+								<Knob
+									parameter='highpass_freq'
+									label={'Freq.'}
+									size={36}
+									//
+									cosmeticDefaultValue={dbToGain(0)}
+									cosmeticRange={
+										new NormalisableRange(
+											dbToGain(-30),
+											dbToGain(30),
+											dbToGain(0)
+										)
+									}
+									valueRawDisplayFn={(x) => x.toFixed(2)}
+								/>
+								<Knob
+									parameter='highpass_q'
+									label={'Q'}
+									size={36}
+									//
+									cosmeticDefaultValue={dbToGain(0)}
+									cosmeticRange={
+										new NormalisableRange(
+											dbToGain(-30),
+											dbToGain(30),
+											dbToGain(0)
+										)
+									}
+									valueRawDisplayFn={(x) => x.toFixed(2)}
+								/>
+							</div>
+						</div>
+						{/* GAIN CONTROLS */}
+						<div className='w-[40%] h-full'>
+							<div className='w-full h-full flex flex-col items-center justify-center gap-5 bg-zinc-700 rounded-sm'>
+								<div className='bg-zinc-500 rounded-sm'>
+									<Knob
+										parameter='highpass_q'
+										label={'Dry Gain'}
+										size={64}
+										//
+										cosmeticDefaultValue={dbToGain(0)}
+										cosmeticRange={
+											new NormalisableRange(
+												dbToGain(-30),
+												dbToGain(30),
+												dbToGain(0)
+											)
+										}
+										valueRawDisplayFn={(x) => x.toFixed(2)}
+									/>
+									<Knob
+										parameter='highpass_q'
+										label={'Wet Gain'}
+										size={64}
+										//
+										cosmeticDefaultValue={dbToGain(0)}
+										cosmeticRange={
+											new NormalisableRange(
+												dbToGain(-30),
+												dbToGain(30),
+												dbToGain(0)
+											)
+										}
+										valueRawDisplayFn={(x) => x.toFixed(2)}
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			</GlobalParametersContext.Provider>
 		</MessageBusContext.Provider>
