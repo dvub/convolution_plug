@@ -1,7 +1,7 @@
 import { Message } from '@/bindings/Message';
 import { MessageBusContext } from '@/contexts/MessageBusContext';
 import { sendToPlugin } from '@/lib';
-import { GearIcon, UploadIcon, ValueNoneIcon } from '@radix-ui/react-icons';
+import { GearIcon, UploadIcon } from '@radix-ui/react-icons';
 
 import { ChangeEvent, useContext, useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
@@ -94,9 +94,6 @@ export function IrLoader() {
 					<h1>{fileName}</h1>
 				</div>
 
-				<button className='p-1 hover:cursor-pointer '>
-					<ValueNoneIcon />
-				</button>
 				<button className='p-1 hover:cursor-pointer'>
 					<GearIcon />
 				</button>

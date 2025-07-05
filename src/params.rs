@@ -196,7 +196,7 @@ impl Default for PluginParams {
                 FloatRange::Skewed {
                     min: db_to_gain(-15.0),
                     max: db_to_gain(15.0),
-                    factor: FloatRange::gain_skew_factor(-30.0, 30.0),
+                    factor: FloatRange::gain_skew_factor(-15.0, 15.0),
                 },
             )
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))

@@ -15,31 +15,24 @@ import {
 
 import { KnobBaseThumb } from './KnobBaseThumb';
 
-import { NormalisableRange } from '../../lib/utils';
 import { sendToPlugin } from '@/lib';
 import {
 	GlobalParametersContext,
 	Parameter,
 } from '@/contexts/GlobalParamsContext';
-
-/*
-type KnobHeadlessProps = React.ComponentProps<typeof KnobHeadless>;
-
-Pick<
-	KnobHeadlessProps,
-	'valueMin' | 'valueMax' | 'orientation'
-> & {...}
-*/
+import { NumericRange, RangeType } from '@/lib/range';
 
 // TODO: make this a parameter-only knob
 // create a separate component for setting-related knobs if desired
 
+// TODO: fix this whole component tbh
+
 export type KnobProps = {
-	cosmeticDefaultValue: number;
+	defaultValue: number;
 	// visual stuff
 	label: string;
 	size: number;
-	cosmeticRange: NormalisableRange;
+	range: NumericRange;
 
 	// optional because knobs dont have to be parameters
 	parameter?: Parameter;
@@ -58,11 +51,11 @@ export function Knob(props: KnobProps) {
 
 	const {
 		label,
-		cosmeticDefaultValue,
+		defaultValue: cosmeticDefaultValue,
 
 		size,
 		parameter,
-		cosmeticRange,
+		range: cosmeticRange,
 		onChangeCallback,
 		value,
 		valueRawDisplayFn,
@@ -75,8 +68,8 @@ export function Knob(props: KnobProps) {
 	// internally this is
 	const internalMinValue = 0;
 	const internalMaxValue = 1;
-	const internalRange = new NormalisableRange(0, 1, 0.5);
-	const internalDefaultValue = cosmeticRange.mapTo01(cosmeticDefaultValue);
+	const internalRange = new NumericRange(0, 1, 0.5, RangeType.Linear);
+	const internalDefaultValue = cosmeticRange.normalize(cosmeticDefaultValue);
 
 	// NOTE:
 	// this is only important if we don't have a parameter supplied
@@ -96,8 +89,8 @@ export function Knob(props: KnobProps) {
 		valueRaw = state;
 	}
 
-	const mapTo01 = (x: number) => internalRange.mapTo01(x);
-	const mapFrom01 = (x: number) => internalRange.mapFrom01(x);
+	const mapTo01 = (x: number) => internalRange.normalize(x);
+	const mapFrom01 = (x: number) => internalRange.unnormalize(x);
 
 	const knobId = useId();
 	const labelId = useId();
@@ -174,7 +167,7 @@ export function Knob(props: KnobProps) {
 
 			<div>
 				<KnobHeadlessOutput htmlFor={''}>
-					{valueRawDisplayFn(cosmeticRange.mapFrom01(valueRaw))}
+					{valueRawDisplayFn(cosmeticRange.unnormalize(valueRaw))}
 				</KnobHeadlessOutput>
 			</div>
 		</div>
