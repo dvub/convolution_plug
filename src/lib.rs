@@ -13,12 +13,6 @@ use np_fundsp_bridge::PluginDspProcessor;
 use params::PluginParams;
 use std::sync::{Arc, Mutex};
 
-// TODO:
-// features:
-// - predelay
-// - decay / speed (something..) - maybe check convology
-// - reverse (for fun LOL)
-
 // TODO: make logging consistent and improve it in general
 pub struct ConvolutionPlug {
     config: PluginConfig,

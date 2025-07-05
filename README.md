@@ -13,6 +13,9 @@ Note to self:
 
 - use (fundsp) Net for DSP
 - be able to apply envelope to IRs
+- predelay
+- decay / speed (something..) - maybe check convology
+- reverse (for fun LOL)
 - add visual EQ controls (spline type thing)
-- support stereo IRs as well as multiple formats
+- support stereo/quad/whatever IRs as well as multiple formats
 - general optimizations

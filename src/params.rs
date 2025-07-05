@@ -8,9 +8,19 @@ use nih_plug::{prelude::*, util::db_to_gain};
 use nih_plug_webview::state::WebviewState;
 
 use crate::editor::ipc::IrData;
-// TODO:
-// add highpass and some sort of middle thing for EQ
-// other params include... idk
+
+// TODO: figure out good defaults for filter frequencies
+// currently i've got it so that filters do nothing with their default frequencies even if they're enabled
+// but maybe it would be more intuitive if the default frequencies had some effect without being crazy
+
+const MIN_FREQ: f32 = 10.0;
+const MAX_FREQ: f32 = 22_050.0;
+
+// i got these from playing around with ableton's stock EQs
+// they seemed sensible enough to me!
+const DEFAULT_Q: f32 = 0.1;
+const MIN_Q: f32 = 0.1;
+const MAX_Q: f32 = 18.0;
 
 #[derive(Params, Debug)]
 pub struct PluginParams {
@@ -122,10 +132,10 @@ impl Default for PluginParams {
 
             lowpass_freq: FloatParam::new(
                 "Lowpass Frequency",
-                22_050.0,
+                MAX_FREQ,
                 FloatRange::Skewed {
-                    min: 10.0,
-                    max: 22_050.0,
+                    min: MIN_FREQ,
+                    max: MAX_FREQ,
                     factor: FloatRange::skew_factor(-2.5),
                 },
             )
@@ -135,10 +145,10 @@ impl Default for PluginParams {
 
             lowpass_q: FloatParam::new(
                 "Lowpass Q",
-                0.1,
+                DEFAULT_Q,
                 FloatRange::Skewed {
-                    min: 0.1,
-                    max: 18.0,
+                    min: MIN_Q,
+                    max: MAX_Q,
                     factor: FloatRange::skew_factor(-2.0),
                 },
             )
@@ -149,10 +159,10 @@ impl Default for PluginParams {
                 .with_callback(param_update_callback(5, tx.clone(), state.clone())),
             highpass_freq: FloatParam::new(
                 "Highpass Frequency",
-                22_050.0,
+                MIN_FREQ,
                 FloatRange::Skewed {
-                    min: 10.0,
-                    max: 22_050.0,
+                    min: MIN_FREQ,
+                    max: MAX_FREQ,
                     factor: FloatRange::skew_factor(-2.5),
                 },
             )
@@ -161,10 +171,10 @@ impl Default for PluginParams {
             .with_callback(param_update_callback(6, tx.clone(), state.clone())),
             highpass_q: FloatParam::new(
                 "Highpass Q",
-                0.1,
+                DEFAULT_Q,
                 FloatRange::Skewed {
-                    min: 0.1,
-                    max: 18.0,
+                    min: MIN_Q,
+                    max: MAX_Q,
                     factor: FloatRange::skew_factor(-2.0),
                 },
             )
@@ -176,10 +186,10 @@ impl Default for PluginParams {
 
             bell_freq: FloatParam::new(
                 "Bell Frequency",
-                22_050.0,
+                MIN_FREQ,
                 FloatRange::Skewed {
-                    min: 10.0,
-                    max: 22_050.0,
+                    min: MIN_FREQ,
+                    max: MAX_FREQ,
                     factor: FloatRange::skew_factor(-2.5),
                 },
             )
@@ -188,10 +198,10 @@ impl Default for PluginParams {
             .with_callback(param_update_callback(9, tx.clone(), state.clone())),
             bell_q: FloatParam::new(
                 "Bell Q",
-                0.1,
+                DEFAULT_Q,
                 FloatRange::Skewed {
-                    min: 0.1,
-                    max: 18.0,
+                    min: MIN_Q,
+                    max: MAX_Q,
                     factor: FloatRange::skew_factor(-2.0),
                 },
             )
@@ -220,7 +230,6 @@ impl Default for PluginParams {
     }
 }
 
-// TODO: figure out String or &str
 fn param_update_callback<T>(
     parameter_index: usize,
     tx: Sender<usize>,
