@@ -13,12 +13,7 @@ use np_fundsp_bridge::params::{Accessor, ParamNode};
 pub fn gain<N: Size<f32>>(
     p: &Arc<PluginParams>,
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
-    ParamNode::new(p, |p| p.gain.value())
-}
-pub fn dry_wet<N: Size<f32>>(
-    p: &Arc<PluginParams>,
-) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
-    ParamNode::new(p, |p| p.dry_wet.value())
+    ParamNode::new(p, |p| p.dry_gain.value())
 }
 
 // wet EQ params
@@ -86,4 +81,10 @@ pub fn wet_gain<N: Size<f32>>(
     p: &Arc<PluginParams>,
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
     ParamNode::new(p, |p| p.wet_gain.value())
+}
+
+pub fn dry_gain<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
+    ParamNode::new(p, |p| p.dry_gain.value())
 }

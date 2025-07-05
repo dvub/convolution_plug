@@ -7,8 +7,8 @@ export const GlobalParametersContext = createContext<{
 } | null>(null);
 
 export interface GlobalParameters {
-	gain: number;
-	dry_wet: number;
+	dry_gain: number;
+	wet_gain: number;
 	// LP
 	lowpass_enabled: number;
 	lowpass_freq: number;

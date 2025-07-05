@@ -40,8 +40,8 @@ const DEFAULT_Q_RANGE = new NumericRange(
 export default function Home() {
 	const [messageBus] = useState(new MessageBus());
 	const [parameters, setParameters] = useState<GlobalParameters>({
-		gain: 0,
-		dry_wet: 0,
+		dry_gain: 0,
+		wet_gain: 0,
 
 		lowpass_enabled: 0,
 		lowpass_freq: 0,
@@ -195,7 +195,7 @@ export default function Home() {
 							<div className='w-full h-full flex flex-col items-center justify-center gap-5 bg-zinc-700 rounded-sm'>
 								<div className='bg-zinc-500 rounded-sm p-10'>
 									<Knob
-										parameter='gain'
+										parameter='dry_gain'
 										label={'Gain'}
 										size={50}
 										defaultValue={dbToGain(0)}
@@ -204,6 +204,24 @@ export default function Home() {
 												dbToGain(-30),
 												dbToGain(30),
 												gainSkewFactor(-30, 30),
+												RangeType.Skewed
+											)
+										}
+										valueRawDisplayFn={(x) => {
+											const g = gainToDb(x).toFixed(2);
+											return `${g} dB`;
+										}}
+									/>
+									<Knob
+										parameter='wet_gain'
+										label={'Gain'}
+										size={50}
+										defaultValue={dbToGain(0)}
+										range={
+											new NumericRange(
+												dbToGain(-40),
+												dbToGain(40),
+												gainSkewFactor(-40, 40),
 												RangeType.Skewed
 											)
 										}

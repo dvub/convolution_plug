@@ -24,12 +24,12 @@ pub struct PluginParams {
     #[persist = "ir_samples"]
     pub ir_samples: Mutex<Option<Vec<f32>>>,
 
-    // actual param stuff
-    #[id = "gain"]
-    pub gain: FloatParam,
+    // --- actual param stuff ---
+    #[id = "dry_gain"]
+    pub dry_gain: FloatParam,
 
-    #[id = "dry_wet"]
-    pub dry_wet: FloatParam,
+    #[id = "wet_gain"]
+    pub wet_gain: FloatParam,
 
     // --- LOWPASS ---
     #[id = "lowpass_enabled"]
@@ -63,14 +63,11 @@ pub struct PluginParams {
 
     #[id = "highpass_q"]
     pub highpass_q: FloatParam,
-
-    #[id = "wet_gain"]
-    pub wet_gain: FloatParam,
 }
 
 impl Display for PluginParams {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.gain.value())
+        write!(f, "{}", self.dry_gain.value())
     }
 }
 
@@ -84,8 +81,8 @@ impl Default for PluginParams {
             // This gain is stored as linear gain. NIH-plug comes with useful conversion functions
             // to treat these kinds of parameters as if we were dealing with decibels. Storing this
             // as decibels is easier to work with, but requires a conversion for every sample.
-            gain: FloatParam::new(
-                "Gain",
+            dry_gain: FloatParam::new(
+                "Dry Gain",
                 db_to_gain(0.0),
                 FloatRange::Skewed {
                     min: db_to_gain(-30.0),
@@ -105,10 +102,20 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_callback(param_update_callback(0, tx.clone(), state.clone())),
-            dry_wet: FloatParam::new("Dry/Wet", 0.5, FloatRange::Linear { min: 0.0, max: 1.0 })
-                .with_value_to_string(formatters::v2s_f32_percentage(2))
-                .with_unit("%")
-                .with_callback(param_update_callback(1, tx.clone(), state.clone())),
+
+            wet_gain: FloatParam::new(
+                "Wet Gain",
+                db_to_gain(0.0),
+                FloatRange::Skewed {
+                    min: db_to_gain(-40.0),
+                    max: db_to_gain(40.0),
+                    factor: FloatRange::gain_skew_factor(-40.0, 40.0),
+                },
+            )
+            .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
+            .with_string_to_value(formatters::s2v_f32_gain_to_db())
+            .with_unit(" dB")
+            .with_callback(param_update_callback(1, tx.clone(), state.clone())),
 
             lowpass_enabled: BoolParam::new("Lowpass Enabled", false)
                 .with_callback(param_update_callback(2, tx.clone(), state.clone())),
@@ -203,20 +210,6 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_callback(param_update_callback(11, tx.clone(), state.clone())),
-
-            wet_gain: FloatParam::new(
-                "Wet Gain",
-                db_to_gain(0.0),
-                FloatRange::Skewed {
-                    min: db_to_gain(-30.0),
-                    max: db_to_gain(30.0),
-                    factor: FloatRange::gain_skew_factor(-30.0, 30.0),
-                },
-            )
-            .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
-            .with_string_to_value(formatters::s2v_f32_gain_to_db())
-            .with_unit(" dB")
-            .with_callback(param_update_callback(12, tx.clone(), state.clone())),
 
             // EXTRA GOODIES
             rx,
