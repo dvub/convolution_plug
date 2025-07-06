@@ -12,7 +12,7 @@ use crate::editor::ipc::IrData;
 // TODO: add smoothers to all params
 
 // TODO: figure out good defaults for filter frequencies
-// currently i've got it so that filters do nothing with their default frequencies even if they're enabled
+// currently i've got i t so that filters do nothing with their default frequencies even if they're enabled
 // but maybe it would be more intuitive if the default frequencies had some effect without being crazy
 
 const MIN_FREQ: f32 = 10.0;

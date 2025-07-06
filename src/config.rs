@@ -8,6 +8,7 @@ use std::{
     fs::{create_dir_all, read_to_string, File},
     io::Write,
 };
+// TODO: add config options for resampling
 
 // this seems insane and this feature probably doesn't properly work
 pub const DEFAULT_NORMALIZATION_LEVEL: f32 = -52.0;

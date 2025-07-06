@@ -14,6 +14,8 @@ use params::PluginParams;
 use std::sync::{Arc, Mutex};
 
 // TODO: make logging consistent and improve it in general
+
+// TODO: improve documentation for functions and modules across the board
 pub struct ConvolutionPlug {
     config: PluginConfig,
     params: Arc<PluginParams>,
