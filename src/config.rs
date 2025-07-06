@@ -11,14 +11,12 @@ use std::{
 
 // this seems insane and this feature probably doesn't properly work
 pub const DEFAULT_NORMALIZATION_LEVEL: f32 = -52.0;
-pub const DEFAULT_FADE_TIME: f64 = 1.0;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PluginConfig {
     pub default_ir_path: String,
     pub normalize_irs: bool,
     pub normalization_level: f32,
-    pub fade_time: f64,
 }
 
 #[allow(clippy::derivable_impls)]
@@ -28,14 +26,12 @@ impl Default for PluginConfig {
             default_ir_path: String::new(),
             normalize_irs: false,
             normalization_level: DEFAULT_NORMALIZATION_LEVEL,
-            fade_time: DEFAULT_FADE_TIME,
         }
     }
 }
 
 impl PluginConfig {
-    // TODO:
-    // write testing for this feature
+    // TODO: write testing for this feature
 
     pub fn get_config() -> anyhow::Result<PluginConfig> {
         let project_dir = ProjectDirs::from("com", "dvub", "convolution_plug")

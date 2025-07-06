@@ -20,6 +20,16 @@ pub struct ParameterUpdate {
     pub parameter_id: String,
     pub value: f32,
 }
+
+impl ParameterUpdate {
+    pub fn new(parameter_id: String, value: f32) -> Self {
+        Self {
+            parameter_id,
+            value,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, TS, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "../convolution-gui/bindings/")]

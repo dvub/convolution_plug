@@ -463,6 +463,7 @@ name = "convolution_plug"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "baseview",
  "convolution",
  "criterion",
  "crossbeam-channel",

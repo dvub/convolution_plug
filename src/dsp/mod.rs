@@ -1,6 +1,9 @@
 pub mod convolve;
+pub mod ir;
 pub mod param_nodes;
 pub mod switched;
+
+mod resample;
 
 use fundsp::hacker32::*;
 use std::sync::Arc;
@@ -9,20 +12,23 @@ use param_nodes::*;
 
 use crate::{
     config::PluginConfig,
-    dsp::{convolve::convolver, switched::switched_node},
+    dsp::{convolve::convolver, ir::load_ir, switched::switched_node},
     params::PluginParams,
 };
 
-// TODO: is it smart to have this function be here?
 pub fn build_graph(
     params: &Arc<PluginParams>,
     config: &PluginConfig,
+    sample_rate: f32,
 ) -> (Box<dyn AudioUnit>, Slot) {
     // 1. determine if and from where we should load an IR
-    let mut samples = params.ir_samples.lock().unwrap();
-    let slot_element: Box<dyn AudioUnit> = match &mut *samples {
+    let mut ir_data = params.ir_data.lock().unwrap();
+    let slot_element: Box<dyn AudioUnit> = match &mut *ir_data {
         // if an IR was previously loaded, we detect that here and use it again
-        Some(data) => Box::new(convolver(data) | convolver(data)),
+        Some(ir_data) => {
+            let samples = load_ir(ir_data, sample_rate, config);
+            Box::new(convolver(&samples) | convolver(&samples))
+        }
         None => {
             // if no IR was previously loaded, *then* we check if we should load anything
             // based on config

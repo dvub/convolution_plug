@@ -45,8 +45,7 @@ where
         if (self.control_fn)(control_value) {
             self.node.tick(actual_input, &mut output);
         } else {
-            // TODO:
-            // possibly optimize?
+            // TODO: possibly optimize?
             output.copy_from_slice(actual_input);
         }
 
@@ -75,8 +74,7 @@ where
     }
 }
 
-// TODO:
-// should new() return An<>, or this opcode?
+// TODO: should new() return An<>, or this opcode?
 pub fn switched_node<I, F>(
     node: An<impl AudioNode<Inputs = Sub1<I>, Outputs = Sub1<I>> + 'static>,
     control_fn: F,

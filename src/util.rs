@@ -1,7 +1,7 @@
 use nih_plug::util::db_to_gain;
 
 // TODO: return a result, because this can fail in a number of ways
-pub fn decode_samples(bytes: &[u8]) -> (Vec<f32>, u32) {
+pub fn decode_ir_samples(bytes: &[u8]) -> (Vec<f32>, u32) {
     let mut reader = hound::WavReader::new(bytes).unwrap();
 
     let bit_depth = reader.spec().bits_per_sample as u32;

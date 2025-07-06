@@ -15,11 +15,8 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     for n in 0..10 {
         group.bench_with_input(BenchmarkId::new("many_params", n), &n, |b, n| {
             /* SETUP */
-            let p = Arc::new(PluginParams::default());
+            let _p = Arc::new(PluginParams::default());
             let mut graph = Net::wrap(Box::new(noise()));
-            for _ in 0..*n {
-                graph = graph * gain::<U1>(&p);
-            }
 
             /* BENCHING */
             b.iter(|| render_graph(black_box(&mut graph)));

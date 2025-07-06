@@ -90,7 +90,7 @@ impl Plugin for ConvolutionPlug {
             nih_log!("There was an issue with reading the plugin config; Falling back to default for now.\n Error: {e}");
             PluginConfig::default()
         });
-        let (mut graph, slot) = build_graph(&self.params, &config);
+        let (mut graph, slot) = build_graph(&self.params, &config, buffer_config.sample_rate);
         graph.set_sample_rate(buffer_config.sample_rate as f64);
 
         // it is very important that we update the existing slot rather than simply overwriting it

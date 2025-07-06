@@ -31,9 +31,6 @@ pub struct PluginParams {
     #[persist = "ir_data"]
     pub ir_data: Mutex<Option<IrData>>,
 
-    #[persist = "ir_samples"]
-    pub ir_samples: Mutex<Option<Vec<f32>>>,
-
     // --- actual param stuff ---
     #[id = "dry_gain"]
     pub dry_gain: FloatParam,
@@ -225,7 +222,6 @@ impl Default for PluginParams {
             rx,
             editor_state: state,
             ir_data: Mutex::new(None),
-            ir_samples: Mutex::new(None),
         }
     }
 }
@@ -239,8 +235,8 @@ where
 {
     Arc::new(move |_| {
         if state.is_open() {
-            // TODO: shoud we handle errors?
-            let _ = tx.try_send(parameter_index);
+            tx.try_send(parameter_index)
+                .expect("the channel should not be full or try sending if disconnected");
         }
     })
 }
