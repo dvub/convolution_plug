@@ -7,8 +7,8 @@ const GAIN_KNOB_SIZE = 80;
 
 export default function GainControls() {
 	return (
-		<div className='w-full h-full bg-zinc-700 rounded-sm p-1'>
-			<div className='bg-zinc-500 rounded-sm p-10 flex flex-col gap-5 w-full h-full'>
+		<div className='w-full h-full secondary rounded-sm p-1'>
+			<div className='rounded-sm p-10 flex flex-col gap-5 w-full h-full'>
 				<Knob
 					parameter='dry_gain'
 					label='Dry Gain'

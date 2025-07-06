@@ -19,6 +19,7 @@ import { sendToPlugin } from '@/lib';
 import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
 import { NumericRange, RangeType } from '@/lib/range';
 import { Parameter } from '@/lib/parameters';
+import { DISABLED_OPACITY } from '@/app/page';
 
 // TODO: make this a parameter-only knob
 // create a separate component for setting-related knobs if desired
@@ -41,6 +42,7 @@ export type KnobProps = {
 	// stepLargerFn: (valueRaw: number) => number;
 
 	valueRawDisplayFn: (valueRaw: number) => string;
+	enabled?: boolean;
 };
 
 export function Knob(props: KnobProps) {
@@ -50,13 +52,13 @@ export function Knob(props: KnobProps) {
 	const {
 		label,
 		defaultValue: cosmeticDefaultValue,
-
 		size,
 		parameter,
 		range: cosmeticRange,
 		onChangeCallback,
 		value,
 		valueRawDisplayFn,
+		enabled,
 	} = props;
 	// this value can be tweaked to adjust the feel of the knob
 	const dragSensitivity = 0.006;
@@ -138,8 +140,18 @@ export function Knob(props: KnobProps) {
 	};
 
 	return (
-		<div className='flex flex-col items-center text-xs'>
-			<KnobHeadlessLabel id={labelId}>{label}</KnobHeadlessLabel>
+		<div
+			className='flex flex-col items-center text-xs'
+			style={{
+				opacity:
+					enabled === true || enabled === undefined
+						? 1
+						: DISABLED_OPACITY,
+			}}
+		>
+			<KnobHeadlessLabel id={labelId} className='text-sm'>
+				{label}
+			</KnobHeadlessLabel>
 			<KnobHeadless
 				id={knobId}
 				aria-labelledby={labelId}
@@ -162,7 +174,7 @@ export function Knob(props: KnobProps) {
 			</KnobHeadless>
 
 			<div>
-				<KnobHeadlessOutput htmlFor={''}>
+				<KnobHeadlessOutput htmlFor={''} className='text-xs'>
 					{valueRawDisplayFn(cosmeticRange.unnormalize(valueRaw))}
 				</KnobHeadlessOutput>
 			</div>

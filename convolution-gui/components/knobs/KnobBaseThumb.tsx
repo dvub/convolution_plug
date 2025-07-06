@@ -28,7 +28,7 @@ export function KnobBaseThumb(props: KnobBaseThumbProps) {
 	const angle = mapFrom01Linear(value01, angleMin, angleMax);
 	return (
 		<div
-			className='absolute h-full w-full rounded-full bg-gradient-to-t from-slate-600 to-slate-500 cursor-ns-resize border-[1px] border-black'
+			className='absolute h-full w-full rounded-full bg-gradient-to-t from-[#8b7f98] to-[#ecf0ef] cursor-ns-resize border-[1px] border-[#0d100f] shadow-lg shadow-[#0d100f]/50'
 			onClick={handleClick}
 		>
 			{/* Pointer line thingy - is it called a thumb ?? */}
@@ -36,7 +36,7 @@ export function KnobBaseThumb(props: KnobBaseThumbProps) {
 				className='absolute h-full w-full'
 				style={{ rotate: `${angle}deg` }}
 			>
-				<div className='absolute left-1/2 top-0 w-[5px] -translate-x-1/2 rounded-[1px] bg-stone-950 h-1/4' />
+				<div className='absolute left-1/2 top-0 w-[5%] -translate-x-1/2 rounded-b-lg bg-[#0d100f] h-1/4' />
 				{/*<p className='absolute top-[50%] text-center w-full -translate-y-1/2 font-black text-lg z-10 text-[#fcf3fc] opacity-25'></p>*/}
 			</div>
 		</div>

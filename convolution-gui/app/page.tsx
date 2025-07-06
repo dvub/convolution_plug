@@ -30,6 +30,8 @@ export const DEFAULT_Q_RANGE = new NumericRange(
 export const FILTER_KNOB_SIZE = 60;
 export const KNOB_DIGITS = 1;
 
+export const DISABLED_OPACITY = 0.25;
+
 export default function Home() {
 	const [messageBus] = useState(new MessageBus());
 	const [parameters, setParameters] = useState(initParameters());
@@ -63,7 +65,7 @@ export default function Home() {
 					<TopBar />
 					<IrLoader />
 					<div className='flex gap-1 py-1 h-[60vh]'>
-						<div className='w-[60%] h-full flex bg-zinc-700 rounded-sm p-1 gap-1 text-center'>
+						<div className='w-[60%] h-full flex secondary rounded-sm p-1 gap-1 text-center'>
 							<LowpassControls />
 							<BellControls />
 							<HighpassControls />

@@ -4,8 +4,9 @@ import { gainToDb } from './conversion';
 // thanks robbert
 
 export function gainFormatter(x: number, digits: number) {
-	const g = gainToDb(x).toFixed(digits);
-	return `${g} dB`;
+	const db = gainToDb(x);
+	const rounded = db.toFixed(digits);
+	return `${rounded} dB`;
 }
 
 export function hzThenKhz(x: number, digits: number) {

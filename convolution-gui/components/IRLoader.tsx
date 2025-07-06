@@ -17,7 +17,7 @@ export function IrLoader() {
 		const waveSurfer = WaveSurfer.create({
 			container: containerRef.current!,
 			height: 'auto',
-			waveColor: 'white',
+			waveColor: '#ecf0ef',
 			normalize: true,
 			cursorWidth: 0,
 			interact: false,
@@ -76,16 +76,15 @@ export function IrLoader() {
 		setFileName(fileName);
 	}
 	return (
-		<div className='w-full bg-zinc-700 rounded-sm h-[35vh]'>
+		<div className='w-full secondary rounded-sm h-[35vh]'>
 			<div className='h-[30vh] p-1'>
-				<div
-					ref={containerRef}
-					className='h-[30vh] bg-zinc-500 rounded-sm'
-				/>
+				<div className='h-full rounded-sm'>
+					<div ref={containerRef} className='h-full' />
+				</div>
 			</div>
 
-			<div className='p-1 my-1'>
-				<div className='flex items-center justify-between gap-2 text-sm bg-zinc-500 rounded-sm'>
+			<div className='h-[5vh] px-1 pb-1'>
+				<div className='h-full flex items-center justify-between gap-2 text-sm rounded-sm accent'>
 					<input
 						id='inp'
 						type='file'
