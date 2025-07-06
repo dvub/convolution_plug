@@ -1,7 +1,7 @@
 import { dbToGain, gainToDb } from '@/lib/conversion';
 import { NumericRange, gainSkewFactor, RangeType } from '@/lib/range';
 import { Knob } from './knobs/Knob';
-import { KNOB_DIGITS } from '@/app/page';
+import { KNOB_DIGITS } from '@/lib/constants';
 
 const GAIN_KNOB_SIZE = 80;
 

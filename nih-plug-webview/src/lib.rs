@@ -44,7 +44,7 @@ pub struct WebViewEditor {
 
 pub enum HTMLSource {
     String(&'static str),
-    URL(&'static str),
+    URL(String),
 }
 
 impl WebViewEditor {

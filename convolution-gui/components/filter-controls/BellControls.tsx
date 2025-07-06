@@ -3,7 +3,7 @@ import {
 	DEFAULT_Q_RANGE,
 	FILTER_KNOB_SIZE,
 	KNOB_DIGITS,
-} from '@/app/page';
+} from '@/lib/constants';
 import { dbToGain } from '@/lib/conversion';
 import { hzThenKhz, gainFormatter } from '@/lib/format';
 import { NumericRange, gainSkewFactor, RangeType } from '@/lib/range';

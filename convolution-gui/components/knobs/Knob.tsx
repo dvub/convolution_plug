@@ -19,7 +19,7 @@ import { sendToPlugin } from '@/lib';
 import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
 import { NumericRange, RangeType } from '@/lib/range';
 import { Parameter } from '@/lib/parameters';
-import { DISABLED_OPACITY } from '@/app/page';
+import { DISABLED_OPACITY } from '@/lib/constants';
 
 // TODO: make this a parameter-only knob
 // create a separate component for setting-related knobs if desired

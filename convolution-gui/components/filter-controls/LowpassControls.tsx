@@ -5,7 +5,7 @@ import {
 	DEFAULT_Q_RANGE,
 	FILTER_KNOB_SIZE,
 	KNOB_DIGITS,
-} from '@/app/page';
+} from '@/lib/constants';
 import FilterColumn from './FilterColumn';
 import ParameterToggle from '../Toggle';
 import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';

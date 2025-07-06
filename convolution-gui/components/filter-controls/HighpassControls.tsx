@@ -1,15 +1,15 @@
-import {
-	DEFAULT_FREQ_RANGE,
-	DEFAULT_Q_RANGE,
-	FILTER_KNOB_SIZE,
-	KNOB_DIGITS,
-} from '@/app/page';
 import { hzThenKhz } from '@/lib/format';
 import { Knob } from '../knobs/Knob';
 import FilterColumn from './FilterColumn';
 import ParameterToggle from '../Toggle';
 import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
 import { useContext } from 'react';
+import {
+	FILTER_KNOB_SIZE,
+	DEFAULT_FREQ_RANGE,
+	KNOB_DIGITS,
+	DEFAULT_Q_RANGE,
+} from '@/lib/constants';
 
 export default function HighpassControls() {
 	const { parameters } = useContext(GlobalParametersContext)!;

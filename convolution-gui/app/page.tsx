@@ -7,30 +7,12 @@ import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
 import { Message } from '@/bindings/Message';
 import { sendToPlugin } from '@/lib';
 import { IrLoader } from '@/components/IRLoader';
-import { NumericRange, skewFactor, RangeType } from '@/lib/range';
 import LowpassControls from '@/components/filter-controls/LowpassControls';
 import BellControls from '@/components/filter-controls/BellControls';
 import HighpassControls from '@/components/filter-controls/HighpassControls';
 import TopBar from '@/components/TopBar';
 import GainControls from '@/components/GainControls';
 import { initParameters } from '@/lib/parameters';
-
-export const DEFAULT_FREQ_RANGE = new NumericRange(
-	10,
-	22050,
-	skewFactor(-2.5),
-	RangeType.Skewed
-);
-export const DEFAULT_Q_RANGE = new NumericRange(
-	0.1,
-	18,
-	skewFactor(-2),
-	RangeType.Skewed
-);
-export const FILTER_KNOB_SIZE = 60;
-export const KNOB_DIGITS = 1;
-
-export const DISABLED_OPACITY = 0.25;
 
 export default function Home() {
 	const [messageBus] = useState(new MessageBus());

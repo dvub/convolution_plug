@@ -1,6 +1,7 @@
-import { DISABLED_OPACITY } from '@/app/page';
 import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
 import { sendToPlugin } from '@/lib';
+import { DISABLED_OPACITY } from '@/lib/constants';
+
 import { Parameter } from '@/lib/parameters';
 import { useContext } from 'react';
 

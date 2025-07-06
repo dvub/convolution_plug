@@ -42,13 +42,12 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
 
     // println!("PARAM MAP: {param_map:?}");
 
-    let src = HTMLSource::URL("http://localhost:3000");
+    let src = HTMLSource::URL("http://localhost:3000".to_owned());
 
     let mut editor =
         WebViewEditor::new(src, EDITOR_SIZE, params.editor_state.clone()).with_developer_mode(true);
 
-    /*
-    //#[cfg(not(debug_assertions))]
+    #[cfg(not(debug_assertions))]
     {
         use include_dir::include_dir;
         use nih_plug_webview::http::Response;
@@ -63,7 +62,7 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
             #[cfg(not(target_os = "windows"))]
             let url_scheme = format!("{}://localhost", protocol_name);
 
-            let src = HTMLSource::URL(&url_scheme);
+            let src = HTMLSource::URL(url_scheme);
             let mut editor = WebViewEditor::new(src, EDITOR_SIZE, params.editor_state.clone());
 
             editor = editor.with_custom_protocol(protocol_name.to_string(), move |req| {
@@ -93,7 +92,7 @@ pub fn create_editor(plugin: &mut ConvolutionPlug) -> WebViewEditor {
             });
             editor
         };
-    }*/
+    }
 
     editor = editor.with_event_loop(move |ctx, setter, _window| {
         let mut gui_updates = Vec::new();
