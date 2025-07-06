@@ -37,11 +37,7 @@ pub fn build_graph(
                 */
                 todo!()
             } else {
-                println!("Passing through");
-                // no IR is loaded.
-                // we don't even have to convolve by an empty IR, e.g. [1.0, 0.0, 0.0 ... ],
-                // we can simply pass the signal straight through for the best performance
-                Box::new(pass() | pass())
+                Box::new(multipass::<U2>() * 0.0)
             }
         }
     };
@@ -56,9 +52,7 @@ pub fn build_graph(
 
     let wet = eq_wet * wet_gain(params);
     let dry = multipass::<U2>() * dry_gain(params);
-    let mixed = wet & dry;
-
-    let graph = mixed * gain(params);
+    let graph = wet & dry;
 
     (Box::new(graph), slot_frontend)
 }

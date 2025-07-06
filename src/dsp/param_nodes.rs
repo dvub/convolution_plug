@@ -10,12 +10,6 @@ use np_fundsp_bridge::params::{Accessor, ParamNode};
 // NOTE:
 // if we want to do param smoothing stuff, its easy to implement in the accessor function
 
-pub fn gain<N: Size<f32>>(
-    p: &Arc<PluginParams>,
-) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
-    ParamNode::new(p, |p| p.dry_gain.value())
-}
-
 // wet EQ params
 
 pub fn lp_freq<N: Size<f32>>(

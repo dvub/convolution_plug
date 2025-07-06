@@ -19,6 +19,8 @@ export function IrLoader() {
 			height: 'auto',
 			waveColor: 'white',
 			normalize: true,
+			cursorWidth: 0,
+			interact: false,
 		});
 
 		waveSurfer.on('init', () => {
@@ -74,29 +76,33 @@ export function IrLoader() {
 		setFileName(fileName);
 	}
 	return (
-		<div className='w-full bg-zinc-700 rounded-sm'>
-			<div
-				ref={containerRef}
-				className='h-[30vh] bg-zinc-500 rounded-sm '
-			/>
-
-			<div className='flex items-center justify-between gap-2 text-md h-[5vh]'>
-				<input
-					id='inp'
-					type='file'
-					onChange={onFileChange}
-					className='hidden'
+		<div className='w-full bg-zinc-700 rounded-sm h-[35vh]'>
+			<div className='h-[30vh] p-1'>
+				<div
+					ref={containerRef}
+					className='h-[30vh] bg-zinc-500 rounded-sm'
 				/>
-				<label htmlFor='inp' className='p-1 hover:cursor-pointer'>
-					<UploadIcon />
-				</label>
-				<div className='w-full'>
-					<h1>{fileName}</h1>
-				</div>
+			</div>
 
-				<button className='p-1 hover:cursor-pointer'>
-					<GearIcon />
-				</button>
+			<div className='p-1 my-1'>
+				<div className='flex items-center justify-between gap-2 text-sm bg-zinc-500 rounded-sm'>
+					<input
+						id='inp'
+						type='file'
+						onChange={onFileChange}
+						className='hidden'
+					/>
+					<label htmlFor='inp' className='p-1 hover:cursor-pointer'>
+						<UploadIcon />
+					</label>
+					<div className='w-full'>
+						<h1>{fileName}</h1>
+					</div>
+
+					<button className='p-1 hover:cursor-pointer'>
+						<GearIcon />
+					</button>
+				</div>
 			</div>
 		</div>
 	);

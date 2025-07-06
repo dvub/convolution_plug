@@ -16,11 +16,9 @@ import {
 import { KnobBaseThumb } from './KnobBaseThumb';
 
 import { sendToPlugin } from '@/lib';
-import {
-	GlobalParametersContext,
-	Parameter,
-} from '@/contexts/GlobalParamsContext';
+import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
 import { NumericRange, RangeType } from '@/lib/range';
+import { Parameter } from '@/lib/parameters';
 
 // TODO: make this a parameter-only knob
 // create a separate component for setting-related knobs if desired
@@ -140,10 +138,8 @@ export function Knob(props: KnobProps) {
 	};
 
 	return (
-		<div className='flex flex-col items-center'>
-			<KnobHeadlessLabel id={labelId} className='text-md'>
-				{label}
-			</KnobHeadlessLabel>
+		<div className='flex flex-col items-center text-xs'>
+			<KnobHeadlessLabel id={labelId}>{label}</KnobHeadlessLabel>
 			<KnobHeadless
 				id={knobId}
 				aria-labelledby={labelId}
