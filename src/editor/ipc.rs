@@ -37,4 +37,7 @@ impl ParameterUpdate {
 pub struct IrData {
     pub name: String,
     pub raw_bytes: Vec<u8>,
+    pub length_seconds: f32,
+    pub num_channels: u16,
+    pub sample_rate: f32,
 }

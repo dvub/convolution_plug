@@ -18,9 +18,7 @@ export default function BellControls() {
 
 	return (
 		<FilterColumn>
-			<div className='flex flex-col items-center gap-2'>
-				<ParameterToggle parameter='bell_enabled' label='Bell' />
-			</div>
+			<ParameterToggle parameter='bell_enabled' label='Bell' />
 
 			<Knob
 				parameter='bell_freq'

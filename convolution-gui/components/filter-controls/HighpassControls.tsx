@@ -16,12 +16,8 @@ export default function HighpassControls() {
 
 	return (
 		<FilterColumn>
-			<div className='flex flex-col items-center gap-2'>
-				<ParameterToggle
-					parameter='highpass_enabled'
-					label='Highpass'
-				/>
-			</div>
+			<ParameterToggle parameter='highpass_enabled' label='Lowcut' />
+
 			<Knob
 				parameter='highpass_freq'
 				label='Freq'

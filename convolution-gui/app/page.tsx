@@ -48,9 +48,9 @@ export default function Home() {
 					<IrLoader />
 					<div className='flex gap-1 py-1 h-[60vh]'>
 						<div className='w-[60%] h-full flex secondary rounded-sm p-1 gap-1 text-center'>
-							<LowpassControls />
-							<BellControls />
 							<HighpassControls />
+							<BellControls />
+							<LowpassControls />
 						</div>
 						<div className='w-[40%] h-full'>
 							<GainControls />

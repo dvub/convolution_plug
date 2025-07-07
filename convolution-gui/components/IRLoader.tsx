@@ -1,7 +1,9 @@
+import { IrData } from '@/bindings/IrData';
 import { Message } from '@/bindings/Message';
 import { MessageBusContext } from '@/contexts/MessageBusContext';
 import { sendToPlugin } from '@/lib';
-import { GearIcon, UploadIcon } from '@radix-ui/react-icons';
+import { UploadIcon } from '@radix-ui/react-icons';
+import { parseBuffer } from 'music-metadata';
 
 import { ChangeEvent, useContext, useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
@@ -11,7 +13,7 @@ export function IrLoader() {
 	const containerRef = useRef(null);
 
 	const messageBus = useContext(MessageBusContext)!;
-	const [fileName, setFileName] = useState('...');
+	const [fileInfo, setFileInfo] = useState<IrData | undefined>(undefined);
 
 	useEffect(() => {
 		const waveSurfer = WaveSurfer.create({
@@ -33,7 +35,7 @@ export function IrLoader() {
 					type: 'wav',
 				});
 				waveSurfer.loadBlob(blob);
-				setFileName(event.data.name);
+				setFileInfo(event.data);
 			}
 		};
 
@@ -50,18 +52,29 @@ export function IrLoader() {
 		}
 		const fileName = event.target.files[0].name;
 
-		// first, configure the reader & behavior
+		// TODO: fix nested code
 		const reader = new FileReader();
 		reader.onload = () => {
 			const arrayBuffer = reader.result as ArrayBuffer;
 			const bytes = new Uint8Array(arrayBuffer);
+			parseBuffer(bytes).then((x) => {
+				const info = x.format;
 
-			sendToPlugin({
-				type: 'irUpdate',
-				data: {
+				const irData: IrData = {
 					name: fileName,
 					rawBytes: [...bytes],
-				},
+					// TODO: handle if these are undefined!
+					lengthSeconds: info.duration!,
+					numChannels: info.numberOfChannels!,
+					sampleRate: info.sampleRate!,
+				};
+
+				setFileInfo(irData);
+
+				sendToPlugin({
+					type: 'irUpdate',
+					data: irData,
+				});
 			});
 		};
 		// now pass the file into the reader
@@ -72,35 +85,52 @@ export function IrLoader() {
 
 		// finally, visualization
 		waveSurferRef.current?.loadBlob(input);
-
-		setFileName(fileName);
 	}
 	return (
 		<div className='w-full secondary rounded-sm h-[35vh]'>
-			<div className='h-[30vh] p-1'>
-				<div className='h-full rounded-sm'>
+			<div className='h-[35vh] p-1 flex gap-1'>
+				<div className='w-[50%] h-full rounded-sm'>
 					<div ref={containerRef} className='h-full' />
 				</div>
-			</div>
-
-			<div className='h-[5vh] px-1 pb-1'>
-				<div className='h-full flex items-center justify-between gap-2 text-sm rounded-sm accent'>
-					<input
-						id='inp'
-						type='file'
-						onChange={onFileChange}
-						className='hidden'
-					/>
-					<label htmlFor='inp' className='p-1 hover:cursor-pointer'>
-						<UploadIcon />
-					</label>
-					<div className='w-full'>
-						<h1>{fileName}</h1>
+				<div className='w-[50%] flex flex-col gap-1'>
+					<div className='h-[50%] bg-zinc-500 rounded-sm p-1'>
+						{fileInfo ? (
+							<div>
+								<h1 className='text-sm'>{fileInfo?.name}</h1>
+								<h1 className='text-xs'>
+									Len: {fileInfo?.lengthSeconds}s
+								</h1>
+								<h1 className='text-xs'>
+									Channels: {fileInfo?.numChannels}
+								</h1>
+								<h1 className='text-xs'>
+									SR: {fileInfo?.sampleRate} Hz
+								</h1>
+							</div>
+						) : (
+							<h1>...</h1>
+						)}
 					</div>
+					<div className='h-[50%] bg-zinc-500 rounded-sm p-1'>
+						<h1>Normalize | Off | ... </h1>
+						<h1>Resample | Off | Current SR</h1>
 
-					<button className='p-1 hover:cursor-pointer'>
-						<GearIcon />
-					</button>
+						<div className='flex gap-5 items-center'>
+							<input
+								id='inp'
+								type='file'
+								onChange={onFileChange}
+								className='hidden'
+							/>
+							<label
+								htmlFor='inp'
+								className='hover:cursor-pointer'
+							>
+								<UploadIcon />
+							</label>
+							<h1>Refresh</h1>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

@@ -6,6 +6,10 @@
 	--primary: #b2c0bc;
 	--secondary: #474555;
 	--accent: #8b7f98;
+
+	-webkit-user-select: none; /* TODO: probably not needed */
+	-ms-user-select: none; /* IE 10 and IE 11 */
+	user-select: none; /* Standard syntax */
 }
 /*
 @theme inline {

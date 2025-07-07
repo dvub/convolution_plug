@@ -7,7 +7,7 @@ use crossbeam_channel::{Receiver, Sender};
 use nih_plug::{prelude::*, util::db_to_gain};
 use nih_plug_webview::state::WebviewState;
 
-use crate::editor::ipc::IrData;
+use crate::{config::PluginConfig, editor::ipc::IrData};
 
 // TODO: add smoothers to all params
 
@@ -29,6 +29,9 @@ pub struct PluginParams {
     // non param stuff
     pub rx: Receiver<usize>,
     pub editor_state: Arc<WebviewState>,
+
+    #[persist = "config"]
+    pub config: Mutex<PluginConfig>,
 
     #[persist = "ir_data"]
     pub ir_data: Mutex<Option<IrData>>,
@@ -224,6 +227,7 @@ impl Default for PluginParams {
             rx,
             editor_state: state,
             ir_data: Mutex::new(None),
+            config: Mutex::new(PluginConfig::default()),
         }
     }
 }

@@ -29,23 +29,7 @@ pub fn build_graph(
             let samples = load_ir(ir_data, sample_rate, config);
             Box::new(convolver(&samples) | convolver(&samples))
         }
-        None => {
-            // if no IR was previously loaded, *then* we check if we should load anything
-            // based on config
-            if !config.default_ir_path.is_empty() {
-                /*
-                let mut samples = read_samples_from_file(&config.default_ir_path);
-                if config.normalize_irs {
-                    rms_normalize(&mut samples, config.normalization_level);
-                }
-
-                Box::new(convolver(&samples) | convolver(&samples))
-                */
-                todo!()
-            } else {
-                Box::new(multipass::<U2>() * 0.0)
-            }
-        }
+        None => Box::new(multipass::<U2>() * 0.0),
     };
     // we want to update the IR/convolver dynamically, so we put it in a Slot
     let convolver_slot = Slot::new(slot_element);

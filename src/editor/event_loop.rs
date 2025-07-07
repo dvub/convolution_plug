@@ -27,9 +27,11 @@ pub fn build_event_loop_handler(
     let params = plugin.params.clone();
     let param_map = params.param_map();
     let param_update_rx = params.rx.clone();
-    let config = plugin.config.clone();
+
     let sample_rate = plugin.sample_rate;
     let slot = plugin.slot.clone();
+
+    let config = params.config.lock().unwrap().clone();
 
     // event loop handler
     move |ctx: &WindowHandler, setter, _window| {
