@@ -14,8 +14,11 @@ use params::PluginParams;
 use std::sync::{Arc, Mutex};
 
 // TODO: make logging consistent and improve it in general
+// TODO: make sure to log to a file
 
 // TODO: improve documentation for functions and modules across the board
+// TODO: improve variable naming
+// TODO: fix any magic numbers
 pub struct ConvolutionPlug {
     params: Arc<PluginParams>,
     dsp: PluginDspProcessor<U2>,
@@ -23,6 +26,8 @@ pub struct ConvolutionPlug {
     // this is used for updating the convolver
     slot: Arc<Mutex<Slot>>,
 }
+
+const DEFAULT_SAMPLE_RATE: f32 = 44_100.0;
 impl Default for ConvolutionPlug {
     fn default() -> Self {
         Self {
@@ -30,7 +35,7 @@ impl Default for ConvolutionPlug {
             dsp: PluginDspProcessor::default(),
 
             slot: Arc::new(Mutex::new(Slot::new(Box::new(sink())).0)),
-            sample_rate: 44100.0,
+            sample_rate: DEFAULT_SAMPLE_RATE,
         }
     }
 }

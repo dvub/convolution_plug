@@ -17,7 +17,8 @@ pub fn create_bundled_editor(editor: &mut WebViewEditor, params: &Arc<PluginPara
     let url_scheme = format!("{}://localhost", protocol_name);
 
     let src = HTMLSource::URL(url_scheme);
-    let new_editor = WebViewEditor::new(src, EDITOR_SIZE, params.editor_state.clone());
+    let new_editor = WebViewEditor::new(src, EDITOR_SIZE, params.editor_state.clone())
+        .with_developer_mode(false);
 
     *editor = new_editor.with_custom_protocol(protocol_name.to_string(), move |req| {
         let path = req.uri().path();

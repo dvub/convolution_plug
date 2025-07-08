@@ -9,8 +9,6 @@ use nih_plug_webview::state::WebviewState;
 
 use crate::{config::PluginConfig, editor::ipc::IrData};
 
-// TODO: add smoothers to all params
-
 // TODO: figure out good defaults for filter frequencies
 // currently i've got i t so that filters do nothing with their default frequencies even if they're enabled
 // but maybe it would be more intuitive if the default frequencies had some effect without being crazy
@@ -23,6 +21,8 @@ const MAX_FREQ: f32 = 22_050.0;
 const DEFAULT_Q: f32 = 0.1;
 const MIN_Q: f32 = 0.1;
 const MAX_Q: f32 = 18.0;
+
+const SMOOTHER: SmoothingStyle = SmoothingStyle::Linear(0.5);
 
 #[derive(Params, Debug)]
 pub struct PluginParams {
@@ -113,6 +113,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
+            .with_smoother(SMOOTHER)
             .with_callback(param_update_callback(0, tx.clone(), state.clone())),
 
             wet_gain: FloatParam::new(
@@ -127,6 +128,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
+            .with_smoother(SMOOTHER)
             .with_callback(param_update_callback(1, tx.clone(), state.clone())),
 
             lowpass_enabled: BoolParam::new("Lowpass Enabled", false)
@@ -143,6 +145,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
+            .with_smoother(SMOOTHER)
             .with_callback(param_update_callback(3, tx.clone(), state.clone())),
 
             lowpass_q: FloatParam::new(
@@ -155,6 +158,7 @@ impl Default for PluginParams {
                 },
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
+            .with_smoother(SMOOTHER)
             .with_callback(param_update_callback(4, tx.clone(), state.clone())),
 
             highpass_enabled: BoolParam::new("Highpass Enabled", false)
@@ -170,6 +174,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
+            .with_smoother(SMOOTHER)
             .with_callback(param_update_callback(6, tx.clone(), state.clone())),
             highpass_q: FloatParam::new(
                 "Highpass Q",
@@ -181,6 +186,7 @@ impl Default for PluginParams {
                 },
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
+            .with_smoother(SMOOTHER)
             .with_callback(param_update_callback(7, tx.clone(), state.clone())),
 
             bell_enabled: BoolParam::new("Bell Enabled", false)
@@ -197,6 +203,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
+            .with_smoother(SMOOTHER)
             .with_callback(param_update_callback(9, tx.clone(), state.clone())),
             bell_q: FloatParam::new(
                 "Bell Q",
@@ -208,6 +215,7 @@ impl Default for PluginParams {
                 },
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
+            .with_smoother(SMOOTHER)
             .with_callback(param_update_callback(10, tx.clone(), state.clone())),
             bell_gain: FloatParam::new(
                 "Bell Gain",
@@ -221,6 +229,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
+            .with_smoother(SMOOTHER)
             .with_callback(param_update_callback(11, tx.clone(), state.clone())),
 
             // EXTRA GOODIES

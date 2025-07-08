@@ -33,7 +33,6 @@ where
     type Outputs = Sub1<I>;
 
     fn tick(&mut self, input: &Frame<f32, Self::Inputs>) -> Frame<f32, Self::Outputs> {
-        // TODO: is default incorrect?
         let mut output = Frame::default();
 
         // here we split apart the input
@@ -45,7 +44,6 @@ where
         if (self.control_fn)(control_value) {
             self.node.tick(actual_input, &mut output);
         } else {
-            // TODO: possibly optimize?
             output.copy_from_slice(actual_input);
         }
 
@@ -74,7 +72,6 @@ where
     }
 }
 
-// TODO: should new() return An<>, or this opcode?
 pub fn switched_node<I, F>(
     node: An<impl AudioNode<Inputs = Sub1<I>, Outputs = Sub1<I>> + 'static>,
     control_fn: F,
