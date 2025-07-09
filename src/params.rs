@@ -9,7 +9,7 @@ use nih_plug_webview::state::WebviewState;
 
 use crate::{config::PluginConfig, editor::ipc::IrData};
 
-// TODO: figure out good defaults for filter frequencies
+// should we use different default filter frequencies?
 // currently i've got i t so that filters do nothing with their default frequencies even if they're enabled
 // but maybe it would be more intuitive if the default frequencies had some effect without being crazy
 
@@ -23,6 +23,9 @@ const MIN_Q: f32 = 0.1;
 const MAX_Q: f32 = 18.0;
 
 const SMOOTHER: SmoothingStyle = SmoothingStyle::Linear(0.5);
+
+const DEFAULT_WET_GAIN: f32 = -15.0;
+const DEFAULT_DRY_GAIN: f32 = -10.0;
 
 #[derive(Params, Debug)]
 pub struct PluginParams {
@@ -95,7 +98,7 @@ impl Default for PluginParams {
             // as decibels is easier to work with, but requires a conversion for every sample.
             dry_gain: FloatParam::new(
                 "Dry Gain",
-                db_to_gain(0.0),
+                db_to_gain(DEFAULT_DRY_GAIN),
                 FloatRange::Skewed {
                     min: db_to_gain(-30.0),
                     max: db_to_gain(30.0),
@@ -114,11 +117,15 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(0, tx.clone(), state.clone())),
+            .with_callback(param_update_callback(
+                Param::Index(0),
+                tx.clone(),
+                state.clone(),
+            )),
 
             wet_gain: FloatParam::new(
                 "Wet Gain",
-                db_to_gain(0.0),
+                db_to_gain(DEFAULT_WET_GAIN),
                 FloatRange::Skewed {
                     min: db_to_gain(-40.0),
                     max: db_to_gain(40.0),
@@ -129,10 +136,15 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(1, tx.clone(), state.clone())),
+            .with_callback(param_update_callback(
+                Param::Index(1),
+                tx.clone(),
+                state.clone(),
+            )),
 
-            lowpass_enabled: BoolParam::new("Lowpass Enabled", false)
-                .with_callback(param_update_callback(2, tx.clone(), state.clone())),
+            lowpass_enabled: BoolParam::new("Lowpass Enabled", false).with_callback(
+                param_update_callback(Param::Index(2), tx.clone(), state.clone()),
+            ),
 
             lowpass_freq: FloatParam::new(
                 "Lowpass Frequency",
@@ -146,7 +158,11 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(3, tx.clone(), state.clone())),
+            .with_callback(param_update_callback(
+                Param::Index(3),
+                tx.clone(),
+                state.clone(),
+            )),
 
             lowpass_q: FloatParam::new(
                 "Lowpass Q",
@@ -159,10 +175,15 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(4, tx.clone(), state.clone())),
+            .with_callback(param_update_callback(
+                Param::Index(4),
+                tx.clone(),
+                state.clone(),
+            )),
 
-            highpass_enabled: BoolParam::new("Highpass Enabled", false)
-                .with_callback(param_update_callback(5, tx.clone(), state.clone())),
+            highpass_enabled: BoolParam::new("Highpass Enabled", false).with_callback(
+                param_update_callback(Param::Index(5), tx.clone(), state.clone()),
+            ),
             highpass_freq: FloatParam::new(
                 "Highpass Frequency",
                 MIN_FREQ,
@@ -175,7 +196,11 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(6, tx.clone(), state.clone())),
+            .with_callback(param_update_callback(
+                Param::Index(6),
+                tx.clone(),
+                state.clone(),
+            )),
             highpass_q: FloatParam::new(
                 "Highpass Q",
                 DEFAULT_Q,
@@ -187,10 +212,15 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(7, tx.clone(), state.clone())),
+            .with_callback(param_update_callback(
+                Param::Index(7),
+                tx.clone(),
+                state.clone(),
+            )),
 
-            bell_enabled: BoolParam::new("Bell Enabled", false)
-                .with_callback(param_update_callback(8, tx.clone(), state.clone())),
+            bell_enabled: BoolParam::new("Bell Enabled", false).with_callback(
+                param_update_callback(Param::Index(8), tx.clone(), state.clone()),
+            ),
 
             bell_freq: FloatParam::new(
                 "Bell Frequency",
@@ -204,7 +234,11 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(9, tx.clone(), state.clone())),
+            .with_callback(param_update_callback(
+                Param::Index(9),
+                tx.clone(),
+                state.clone(),
+            )),
             bell_q: FloatParam::new(
                 "Bell Q",
                 DEFAULT_Q,
@@ -216,7 +250,11 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(10, tx.clone(), state.clone())),
+            .with_callback(param_update_callback(
+                Param::Index(10),
+                tx.clone(),
+                state.clone(),
+            )),
             bell_gain: FloatParam::new(
                 "Bell Gain",
                 db_to_gain(0.0),
@@ -230,7 +268,11 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(11, tx.clone(), state.clone())),
+            .with_callback(param_update_callback(
+                Param::Index(11),
+                tx.clone(),
+                state.clone(),
+            )),
 
             // EXTRA GOODIES
             rx,
@@ -242,16 +284,22 @@ impl Default for PluginParams {
 }
 
 fn param_update_callback<T>(
-    parameter_index: usize,
+    parameter: Param,
     tx: Sender<usize>,
     state: Arc<WebviewState>,
-) -> Arc<impl Fn(T)>
-where
-{
+) -> Arc<impl Fn(T)> {
     Arc::new(move |_| {
-        if state.is_open() {
-            tx.try_send(parameter_index)
-                .expect("the channel should not be full or try sending if disconnected");
+        if !state.is_open() {
+            return;
         }
+        let Param::Index(actual_index) = parameter;
+        tx.try_send(actual_index)
+            .expect("the channel should not be full or try sending if disconnected");
     })
+}
+
+// in the future we might want to support more ways of internally identifying params
+// for example by IDs
+enum Param {
+    Index(usize),
 }

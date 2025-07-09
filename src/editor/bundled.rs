@@ -33,7 +33,7 @@ pub fn create_bundled_editor(editor: &mut WebViewEditor, params: &Arc<PluginPara
         // mime guess is awesome!
         let mime_type =
             mime_guess::from_ext(Path::new(file).extension().unwrap().to_str().unwrap())
-                .first_or_text_plain() // TODO: fix _or_...
+                .first_or_text_plain()
                 .to_string();
         if let Some(result_file) = dir.get_file(file) {
             Response::builder()

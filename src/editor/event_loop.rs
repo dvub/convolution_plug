@@ -46,7 +46,8 @@ pub fn build_event_loop_handler(
                     handle_parameter_update(&update, &setter, &param_map, &mut gui_updates);
                 },
                 Message::IrUpdate(ir_data) => {
-                    handle_ir_update(&params, &config, &ir_slot, &ir_data, sample_rate)
+                    // TODO: fix unwrap
+                    handle_ir_update(&params, &config, &ir_slot, &ir_data, sample_rate).unwrap()
                 }
 
                 Message::Resize { .. } => todo!(),
@@ -101,13 +102,15 @@ fn handle_ir_update(
     slot: &Arc<Mutex<Slot>>,
     ir_data: &IrData,
     sample_rate: f32,
-) {
-    let ir_samples = load_ir(ir_data, sample_rate, config);
+) -> anyhow::Result<()> {
+    let ir_samples = load_ir(ir_data, sample_rate, config)?;
 
     let convolvers = Box::new(convolver(&ir_samples) | convolver(&ir_samples));
 
     slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
     *params.ir_data.lock().unwrap() = Some(ir_data.clone());
+
+    Ok(())
 }
 
 unsafe fn handle_parameter_update(

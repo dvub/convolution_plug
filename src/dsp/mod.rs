@@ -20,13 +20,13 @@ pub fn build_graph(
     params: &Arc<PluginParams>,
     config: &PluginConfig,
     sample_rate: f32,
-) -> (Box<dyn AudioUnit>, Slot) {
+) -> anyhow::Result<(Box<dyn AudioUnit>, Slot)> {
     // 1. determine if and from where we should load an IR
     let mut ir_data = params.ir_data.lock().unwrap();
     let slot_element: Box<dyn AudioUnit> = match &mut *ir_data {
         // if an IR was previously loaded, we detect that here and use it again
         Some(ir_data) => {
-            let samples = load_ir(ir_data, sample_rate, config);
+            let samples = load_ir(ir_data, sample_rate, config)?;
             Box::new(convolver(&samples) | convolver(&samples))
         }
         None => Box::new(multipass::<U2>() * 0.0),
@@ -44,7 +44,7 @@ pub fn build_graph(
     let dry = multipass::<U2>() * dry_gain(params);
     let graph = wet & dry;
 
-    (Box::new(graph), slot_frontend)
+    Ok((Box::new(graph), slot_frontend))
 }
 
 fn lp_with_params(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U1, Outputs = U1>> {

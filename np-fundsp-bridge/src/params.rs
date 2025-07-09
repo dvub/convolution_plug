@@ -49,8 +49,9 @@ where
         let value = (self.accessor)(&self.params);
         Frame::splat(value)
     }
-    // TODO: fix
-    const ID: u64 = 0;
+
+    // i have chosen this number completely randomly
+    const ID: u64 = 1202;
 
     type Inputs = U0;
     type Outputs = N;

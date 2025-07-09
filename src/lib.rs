@@ -17,8 +17,7 @@ use std::sync::{Arc, Mutex};
 // TODO: make sure to log to a file
 
 // TODO: improve documentation for functions and modules across the board
-// TODO: improve variable naming
-// TODO: fix any magic numbers
+
 pub struct ConvolutionPlug {
     params: Arc<PluginParams>,
     dsp: PluginDspProcessor<U2>,
@@ -91,13 +90,12 @@ impl Plugin for ConvolutionPlug {
         nih_log!("Building DSP graph..");
 
         let config = self.params.config.lock().unwrap().clone();
-        let (mut graph, slot) = build_graph(&self.params, &config, buffer_config.sample_rate);
+
+        // TODO: figure out what to do with unwrap
+        let (mut graph, slot) =
+            build_graph(&self.params, &config, buffer_config.sample_rate).unwrap();
         graph.set_sample_rate(buffer_config.sample_rate as f64);
 
-        // it is very important that we update the existing slot rather than simply overwriting it
-        // (e.g. DO NOT DO: self.slot = Arc::new(Mutex::new(slot)))
-
-        // when we update the existing slot, that will also make sure to update what our GUI thread is pointing to
         let mut slot_lock = self.slot.lock().unwrap();
         *slot_lock = slot;
 

@@ -11,8 +11,7 @@ pub struct Convolver {
 }
 
 impl AudioNode for Convolver {
-    // TODO: fix this
-    const ID: u64 = 0;
+    const ID: u64 = 1203;
 
     type Inputs = U1;
     type Outputs = U1;
