@@ -22,7 +22,7 @@ use nih_plug_webview::WindowHandler;
 use serde_json::json;
 use std::sync::{Arc, Mutex};
 
-pub fn build_event_loop_handler(
+pub fn build_event_loop(
     plugin: &ConvolutionPlug,
 ) -> impl Fn(&WindowHandler, ParamSetter, &mut baseview::Window) + 'static + Send + Sync {
     let params = plugin.params.clone();

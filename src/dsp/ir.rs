@@ -4,7 +4,7 @@ use crate::{
     config::PluginConfig,
     dsp::resample::init_resampler,
     editor::ipc::IrData,
-    util::{decode_ir_samples, rms_normalize},
+    util::{decode_samples, rms_normalize},
 };
 
 pub fn load_ir(
@@ -12,9 +12,11 @@ pub fn load_ir(
     sample_rate: f32,
     config: &PluginConfig,
 ) -> anyhow::Result<Vec<f32>> {
-    let (ir_samples, ir_sample_rate) = decode_ir_samples(&ir_data.raw_bytes)?;
+    let (decoded_channels, ir_sample_rate) = decode_samples(&ir_data.raw_bytes)?;
 
-    let mut resampler = init_resampler(&ir_samples, ir_sample_rate as f64, sample_rate as f64);
+    let ir_samples = &decoded_channels[0];
+
+    let mut resampler = init_resampler(ir_samples, ir_sample_rate as f64, sample_rate as f64)?;
 
     let resampled_output = &mut resampler.process(&[ir_samples], None)?[0];
 

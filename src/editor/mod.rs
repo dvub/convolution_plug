@@ -3,7 +3,7 @@ mod event_loop;
 pub mod ipc;
 
 use crate::ConvolutionPlug;
-use event_loop::build_event_loop_handler;
+use event_loop::build_event_loop;
 
 use nih_plug_webview::{HTMLSource, WebViewEditor};
 
@@ -23,5 +23,5 @@ pub fn create_editor(plugin: &ConvolutionPlug) -> WebViewEditor {
     bundled::create_bundled_editor(&mut editor, &params);
     */
 
-    editor.with_event_loop(build_event_loop_handler(plugin))
+    editor.with_event_loop(build_event_loop(plugin))
 }

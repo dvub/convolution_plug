@@ -84,4 +84,32 @@ where
     SwitchedNode::new(node, control_fn)
 }
 
-// TODO: implement testing
+#[cfg(test)]
+mod tests {
+    use crate::dsp::switched::switched_node;
+    use fundsp::{hacker32::*, numeric_array::NumericArray, typenum::Unsigned};
+
+    #[test]
+    fn mono() {
+        let control = 0.5;
+        let expected = 0.0;
+
+        let mut graph =
+            (dc(1.0) | dc(control)) >> switched_node(pass() * expected, |x| x == control);
+        let output = graph.tick(&NumericArray::default());
+        assert_eq!(output.as_slice(), [expected]);
+    }
+
+    #[test]
+    fn multi_channel() {
+        let control = 0.5;
+        let expected = 0.0;
+
+        type NumChannels = U5;
+
+        let mut graph = (stacki::<NumChannels, _, _>(|_| dc(1.0)) | dc(control))
+            >> switched_node(multipass::<NumChannels>() * expected, |x| x == control);
+        let output = graph.tick(&NumericArray::default());
+        assert_eq!(output.as_slice(), [expected; NumChannels::USIZE]);
+    }
+}

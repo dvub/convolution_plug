@@ -1,4 +1,4 @@
-// opcodes for all params.
+// opcodes for all params
 
 use std::sync::Arc;
 
@@ -6,11 +6,6 @@ use fundsp::hacker32::*;
 
 use crate::params::PluginParams;
 use np_fundsp_bridge::params::{Accessor, ParamNode};
-
-// NOTE:
-// if we want to do param smoothing stuff, its easy to implement in the accessor function
-
-// wet EQ params
 
 pub fn lp_freq<N: Size<f32>>(
     p: &Arc<PluginParams>,

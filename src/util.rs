@@ -1,36 +1,47 @@
 use hound::SampleFormat;
 use nih_plug::util::db_to_gain;
 
-// TODO: handle stereo signals
-pub fn decode_ir_samples(bytes: &[u8]) -> anyhow::Result<(Vec<f32>, f32)> {
+pub fn decode_samples(bytes: &[u8]) -> anyhow::Result<(Vec<Vec<f32>>, f32)> {
     let mut reader = hound::WavReader::new(bytes)?;
 
     let spec = reader.spec();
     let sample_rate = spec.sample_rate as f32;
 
-    let samples: anyhow::Result<Vec<f32>> = match spec.sample_format {
+    // TODO: is this cast a bad idea?
+    let num_channels = spec.channels as usize;
+
+    let samples = match spec.sample_format {
         // this format is fairly rare but we might encounter it,
         // so we need to support it
 
         // TODO: this might be totally wrong,
         // possibly refer to:
         // https://searchfox.org/mozilla-central/source/dom/media/AudioSampleFormat.h#68-221
-        SampleFormat::Float => reader.samples::<f32>().map(|x| Ok(x?)).collect(),
+        SampleFormat::Float => {
+            let mut channels = vec![Vec::new(); num_channels];
+
+            for (i, sample) in reader.samples::<f32>().enumerate() {
+                let channel_index = i % num_channels;
+                channels[channel_index].push(sample?);
+            }
+            channels
+        }
 
         // more commonly we will see this
         SampleFormat::Int => {
-            let bit_depth = spec.bits_per_sample;
+            let scale_factor = max_value_from_bits(spec.bits_per_sample) as f32;
 
-            let scale_factor = max_value_from_bits(bit_depth) as f32;
+            let mut channels = vec![Vec::new(); num_channels];
 
-            reader
-                .samples::<i32>()
-                .map(|x| Ok(x? as f32 / scale_factor))
-                .collect()
+            for (i, sample) in reader.samples::<i32>().enumerate() {
+                let channel_index = i % num_channels;
+                channels[channel_index].push(sample? as f32 / scale_factor);
+            }
+            channels
         }
     };
 
-    Ok((samples?, sample_rate))
+    Ok((samples, sample_rate))
 }
 
 // TODO: switch to something else (LUFS, maybe)
@@ -54,11 +65,11 @@ fn max_value_from_bits(bit_depth: u16) -> i64 {
 #[cfg(test)]
 mod tests {
     use float_cmp::approx_eq;
-    use hound::WavSpec;
+    use hound::{Sample, WavSpec};
     use std::{f32::consts::PI, fs::read, path};
     use tempdir::TempDir;
 
-    use crate::util::{decode_ir_samples, max_value_from_bits};
+    use crate::util::{decode_samples, max_value_from_bits};
 
     #[test]
     fn samples_16_bit() -> anyhow::Result<()> {
@@ -83,45 +94,119 @@ mod tests {
     fn decode_samples_f32() -> anyhow::Result<()> {
         let temp_dir = TempDir::new("wav_testing")?;
         let file_name = temp_dir.path().join("test_sine.wav");
-        let original_samples = write_test_file_f32(&file_name, 100)?;
 
+        // write
+        let spec = hound::WavSpec {
+            channels: 1,
+            sample_rate: 44100,
+            bits_per_sample: 32,
+            sample_format: hound::SampleFormat::Float,
+        };
+        let mut samples = Vec::new();
+        let len = 100;
+        for t in (0..len).map(|x| x as f32 / (len as f32)) {
+            let sample = (t * 440.0 * 2.0 * PI).sin();
+            samples.push(sample);
+        }
+        write_samples(&file_name, spec, &samples)?;
+
+        // read
         let buf = read(&file_name)?;
-        let (result_samples, _) = decode_ir_samples(&buf).unwrap();
+        let (result_samples, _) = decode_samples(&buf)?;
+        assert_eq!(samples, result_samples[0]);
 
-        assert_eq!(original_samples, result_samples);
+        temp_dir.close()?;
+        Ok(())
+    }
+
+    #[test]
+    fn decode_multi_channel() -> anyhow::Result<()> {
+        let temp_dir = TempDir::new("wav_testing")?;
+        let file_name = temp_dir.path().join("multi_channel.wav");
+
+        let spec = WavSpec {
+            channels: 2,
+            sample_rate: 44100,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+
+        let len = 100;
+        let mut samples_to_write = Vec::new();
+        let mut cmp_samples = Vec::new();
+
+        for t in (0..len).map(|x| x as f32 / (len as f32)) {
+            let sample = (t * 440.0 * 2.0 * PI).sin();
+            let scale_factor = max_value_from_bits(spec.bits_per_sample) as f32;
+
+            samples_to_write.push((sample * scale_factor) as i32);
+            samples_to_write.push(0);
+
+            cmp_samples.push(sample);
+        }
+
+        write_samples(&file_name, spec, &samples_to_write)?;
+
+        // decode
+        let file_bytes = read(&file_name)?;
+        let res = decode_samples(&file_bytes)?.0;
+        let result_samples = &res[0];
+        let zero_samples = &res[1];
+
+        for (original_sample, res_sample) in cmp_samples.iter().zip(result_samples) {
+            // println!("{original_sample}, {res_sample}");
+            assert!(approx_eq!(
+                f32,
+                *original_sample,
+                *res_sample,
+                epsilon = (max_value_from_bits(16) as f32).recip()
+            ))
+        }
+        assert_eq!(*zero_samples, vec![0.0f32; result_samples.len()]);
 
         temp_dir.close()?;
         Ok(())
     }
 
     fn write_then_decode_with_bits(bit_depth: u16) -> anyhow::Result<()> {
+        // write
         let temp_dir = TempDir::new("wav_testing")?;
         let file_name = temp_dir.path().join("test_sine.wav");
 
-        let num_samples = 100;
+        let spec = WavSpec {
+            channels: 1,
+            sample_rate: 44100,
+            bits_per_sample: bit_depth,
+            sample_format: hound::SampleFormat::Int,
+        };
 
-        // write
-        let original_samples = write_samples_to_file(
-            &file_name,
-            num_samples,
-            WavSpec {
-                channels: 1,
-                sample_rate: 44100,
-                bits_per_sample: bit_depth,
-                sample_format: hound::SampleFormat::Int,
-            },
-        )?;
+        let len = 100;
+        let mut samples_to_write = Vec::new();
+        let mut cmp_samples = Vec::new();
 
-        let file_bytes = read(&file_name)?;
+        for t in (0..len).map(|x| x as f32 / (len as f32)) {
+            let sample = (t * 440.0 * 2.0 * PI).sin();
+            let scale_factor = max_value_from_bits(spec.bits_per_sample) as f32;
+
+            samples_to_write.push((sample * scale_factor) as i32);
+            cmp_samples.push(sample);
+        }
+
+        write_samples(&file_name, spec, &samples_to_write)?;
 
         // decode
-        let (result_samples, _) = decode_ir_samples(&file_bytes).unwrap();
-        for (original_sample, res_sample) in original_samples.iter().zip(result_samples) {
+        let file_bytes = read(&file_name)?;
+        let decode_result = decode_samples(&file_bytes)?.0;
+        let res_samples = &decode_result[0];
+
+        assert!(decode_result.len() == 1);
+
+        for (original_sample, res_sample) in cmp_samples.iter().zip(res_samples) {
             // println!("{original_sample}, {res_sample}");
             assert!(approx_eq!(
                 f32,
                 *original_sample,
-                res_sample,
+                *res_sample,
                 epsilon = (max_value_from_bits(bit_depth) as f32).recip()
             ))
         }
@@ -130,53 +215,16 @@ mod tests {
         Ok(())
     }
 
-    fn write_samples_to_file<P>(
-        name: P,
-        num_samples: usize,
-        spec: WavSpec,
-    ) -> anyhow::Result<Vec<f32>>
+    fn write_samples<P, T>(name: P, spec: WavSpec, samples: &Vec<T>) -> anyhow::Result<()>
     where
         P: AsRef<path::Path>,
+        T: Sample + Clone,
     {
-        let len = num_samples;
-
         let mut writer = hound::WavWriter::create(name, spec)?;
-        let mut samples = Vec::new();
-
-        for t in (0..len).map(|x| x as f32 / (len as f32)) {
-            let sample = (t * 440.0 * 2.0 * PI).sin();
-            samples.push(sample);
-
-            let scale_factor = max_value_from_bits(spec.bits_per_sample) as f32;
-
-            writer.write_sample((sample * scale_factor) as i32)?;
+        for s in samples {
+            writer.write_sample(s.clone())?;
         }
         writer.finalize()?;
-
-        Ok(samples)
-    }
-    // TODO: it might be possible to refactor these functions to be more similar
-    fn write_test_file_f32<P>(name: P, len: usize) -> anyhow::Result<Vec<f32>>
-    where
-        P: AsRef<path::Path>,
-    {
-        let spec = hound::WavSpec {
-            channels: 1,
-            sample_rate: 44100,
-            bits_per_sample: 32,
-            sample_format: hound::SampleFormat::Float,
-        };
-
-        let mut writer = hound::WavWriter::create(name, spec).unwrap();
-        let mut samples = Vec::new();
-
-        for t in (0..len).map(|x| x as f32 / (len as f32)) {
-            let sample = (t * 440.0 * 2.0 * PI).sin();
-            samples.push(sample);
-            writer.write_sample(sample).unwrap();
-        }
-        writer.finalize().unwrap();
-
-        Ok(samples)
+        Ok(())
     }
 }
