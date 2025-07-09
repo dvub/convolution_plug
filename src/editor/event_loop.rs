@@ -159,15 +159,17 @@ mod tests {
     use crate::editor::event_loop::get_unique_messages;
 
     #[test]
-    fn make_update_unique() {
+    fn make_update_unique() -> anyhow::Result<()> {
         let (tx, rx) = crossbeam_channel::unbounded::<usize>();
 
-        tx.send(1).unwrap();
-        tx.send(2).unwrap();
-        tx.send(1).unwrap();
+        tx.send(1)?;
+        tx.send(2)?;
+        tx.send(1)?;
 
         let res: Vec<usize> = get_unique_messages(&rx).collect();
 
-        assert_eq!(res, [1, 2])
+        assert_eq!(res, [1, 2]);
+
+        Ok(())
     }
 }

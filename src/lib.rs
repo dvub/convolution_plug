@@ -1,4 +1,5 @@
-// #![deny(clippy::unwrap_used)]
+#![warn(clippy::unwrap_used)]
+#![warn(clippy::expect_used)]
 pub mod dsp;
 pub mod params;
 
@@ -89,23 +90,23 @@ impl Plugin for ConvolutionPlug {
     ) -> bool {
         nih_log!("Building DSP graph..");
 
-        let config = self.params.config.lock().unwrap().clone();
+        let config = self.params.config.lock().unwrap();
 
-        // TODO: initialize() should return false if anything fails, including locking the slot mutex
-        let (mut graph, slot) = build_graph(&self.params, &config, buffer_config.sample_rate)
-            .expect("There was an issue building the graph");
+        match build_graph(&self.params, &config, buffer_config.sample_rate) {
+            Ok((mut graph, slot)) => {
+                graph.set_sample_rate(buffer_config.sample_rate as f64);
 
-        graph.set_sample_rate(buffer_config.sample_rate as f64);
+                let mut slot_lock = self.slot.lock().unwrap();
+                *slot_lock = slot;
 
-        let mut slot_lock = self.slot.lock().unwrap();
-        *slot_lock = slot;
+                self.dsp.graph = graph;
+                self.sample_rate = buffer_config.sample_rate;
 
-        self.dsp.graph = graph;
-        self.sample_rate = buffer_config.sample_rate;
-
-        nih_log!("Initialized Convolution.");
-
-        true
+                nih_log!("Initialized Convolution.");
+                true
+            }
+            Err(_) => false,
+        }
     }
 
     fn reset(&mut self) {

@@ -13,7 +13,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("micro_params");
 
     for n in 0..10 {
-        group.bench_with_input(BenchmarkId::new("many_params", n), &n, |b, n| {
+        group.bench_with_input(BenchmarkId::new("many_params", n), &n, |b, _n| {
             /* SETUP */
             let _p = Arc::new(PluginParams::default());
             let mut graph = Net::wrap(Box::new(noise()));
