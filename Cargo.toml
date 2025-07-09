@@ -36,6 +36,7 @@ fundsp = "0.20.0"
 anyhow = "1.0.98"
 rubato = "0.16.2"
 float-cmp = "0.10.0"
+tempdir = "0.3.7"
 
 # Uncomment the below line to disable the on-by-default VST3 feature to remove
 # the GPL compatibility requirement
