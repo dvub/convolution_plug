@@ -65,18 +65,15 @@ mod tests {
 
     #[test]
     fn samples_16_bit() -> anyhow::Result<()> {
-        decode_samples_with_bits(16)?;
-        Ok(())
+        decode_samples_with_bits(16)
     }
     #[test]
     fn samples_24_bit() -> anyhow::Result<()> {
-        decode_samples_with_bits(24)?;
-        Ok(())
+        decode_samples_with_bits(24)
     }
     #[test]
     fn samples_32_bit() -> anyhow::Result<()> {
-        decode_samples_with_bits(32)?;
-        Ok(())
+        decode_samples_with_bits(32)
     }
 
     #[test]
