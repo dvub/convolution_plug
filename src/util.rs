@@ -1,7 +1,7 @@
 use hound::SampleFormat;
 use nih_plug::util::db_to_gain;
 
-// NOTE: right now this only handles mono
+// TODO: handle stereo signals
 pub fn decode_ir_samples(bytes: &[u8]) -> anyhow::Result<(Vec<f32>, f32)> {
     let mut reader = hound::WavReader::new(bytes)?;
 
@@ -33,9 +33,8 @@ pub fn decode_ir_samples(bytes: &[u8]) -> anyhow::Result<(Vec<f32>, f32)> {
     Ok((samples?, sample_rate))
 }
 
-// first attempt was peak normalization, didn't work very well for a variety of irs
+// TODO: switch to something else (LUFS, maybe)
 // https://hackaudio.com/tutorial-courses/learn-audio-programming-table-of-contents/digital-signal-processing/amplitude/rms-normalization/
-
 pub fn rms_normalize(input_signal: &mut [f32], desired_level_db: f32) {
     let input_len = input_signal.len() as f32;
     let desired_level_gain = db_to_gain(desired_level_db);
@@ -54,26 +53,30 @@ fn max_value_from_bits(bit_depth: u16) -> i64 {
 
 #[cfg(test)]
 mod tests {
-    use std::{f32::consts::PI, fs::read, path};
-
     use float_cmp::approx_eq;
-
     use hound::WavSpec;
+    use std::{f32::consts::PI, fs::read, path};
     use tempdir::TempDir;
 
     use crate::util::{decode_ir_samples, max_value_from_bits};
 
     #[test]
     fn samples_16_bit() -> anyhow::Result<()> {
-        decode_samples_with_bits(16)
+        write_then_decode_with_bits(16)
     }
     #[test]
     fn samples_24_bit() -> anyhow::Result<()> {
-        decode_samples_with_bits(24)
+        write_then_decode_with_bits(24)
     }
     #[test]
     fn samples_32_bit() -> anyhow::Result<()> {
-        decode_samples_with_bits(32)
+        write_then_decode_with_bits(32)
+    }
+    #[test]
+    fn sanity() {
+        assert_eq!((max_value_from_bits(8) - 1) as i8, i8::MAX);
+        assert_eq!((max_value_from_bits(16) - 1) as i16, i16::MAX);
+        assert_eq!((max_value_from_bits(32) - 1) as i32, i32::MAX);
     }
 
     #[test]
@@ -91,34 +94,14 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn sanity() {
-        assert_eq!((max_value_from_bits(8) - 1) as i8, i8::MAX);
-        assert_eq!((max_value_from_bits(16) - 1) as i16, i16::MAX);
-        assert_eq!((max_value_from_bits(32) - 1) as i32, i32::MAX);
-    }
-
-    // TODO: make this stupid test pass
-    /*
-    #[test]
-    fn test_normalize() {
-        let mut samples = read_samples_from_file("test_irs\\vsmall.wav");
-
-        let desired_rms = -18.0f32;
-        rms_normalize(&mut samples, desired_rms);
-
-        let n = samples.len() as f32;
-        let new_rms = (samples.iter().map(|x| x.powi(2)).sum::<f32>() / n).sqrt();
-
-        assert_eq!(gain_to_db(new_rms), desired_rms);
-    }*/
-
-    fn decode_samples_with_bits(bit_depth: u16) -> anyhow::Result<()> {
+    fn write_then_decode_with_bits(bit_depth: u16) -> anyhow::Result<()> {
         let temp_dir = TempDir::new("wav_testing")?;
         let file_name = temp_dir.path().join("test_sine.wav");
+
         let num_samples = 100;
 
-        let original_samples = write_test_file(
+        // write
+        let original_samples = write_samples_to_file(
             &file_name,
             num_samples,
             WavSpec {
@@ -129,12 +112,12 @@ mod tests {
             },
         )?;
 
-        let buf = read(&file_name)?;
-        let (result_samples, _) = decode_ir_samples(&buf).unwrap();
+        let file_bytes = read(&file_name)?;
 
+        // decode
+        let (result_samples, _) = decode_ir_samples(&file_bytes).unwrap();
         for (original_sample, res_sample) in original_samples.iter().zip(result_samples) {
             // println!("{original_sample}, {res_sample}");
-
             assert!(approx_eq!(
                 f32,
                 *original_sample,
@@ -147,7 +130,11 @@ mod tests {
         Ok(())
     }
 
-    fn write_test_file<P>(name: P, num_samples: usize, spec: WavSpec) -> anyhow::Result<Vec<f32>>
+    fn write_samples_to_file<P>(
+        name: P,
+        num_samples: usize,
+        spec: WavSpec,
+    ) -> anyhow::Result<Vec<f32>>
     where
         P: AsRef<path::Path>,
     {

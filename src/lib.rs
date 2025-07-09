@@ -80,7 +80,6 @@ impl Plugin for ConvolutionPlug {
         self.params.clone()
     }
 
-    // DO EXPENSIVE STUFF HERE
     fn initialize(
         &mut self,
         _audio_io_layout: &AudioIOLayout,
@@ -91,9 +90,10 @@ impl Plugin for ConvolutionPlug {
 
         let config = self.params.config.lock().unwrap().clone();
 
-        // TODO: figure out what to do with unwrap
-        let (mut graph, slot) =
-            build_graph(&self.params, &config, buffer_config.sample_rate).unwrap();
+        // TODO: initialize() should return false if anything fails, including locking the slot mutex
+        let (mut graph, slot) = build_graph(&self.params, &config, buffer_config.sample_rate)
+            .expect("There was an issue building the graph");
+
         graph.set_sample_rate(buffer_config.sample_rate as f64);
 
         let mut slot_lock = self.slot.lock().unwrap();
