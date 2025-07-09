@@ -6,7 +6,6 @@ pub fn decode_ir_samples(bytes: &[u8]) -> anyhow::Result<(Vec<f32>, f32)> {
     let mut reader = hound::WavReader::new(bytes)?;
 
     let spec = reader.spec();
-
     let sample_rate = spec.sample_rate as f32;
 
     let samples: anyhow::Result<Vec<f32>> = match spec.sample_format {
@@ -17,6 +16,8 @@ pub fn decode_ir_samples(bytes: &[u8]) -> anyhow::Result<(Vec<f32>, f32)> {
         // possibly refer to:
         // https://searchfox.org/mozilla-central/source/dom/media/AudioSampleFormat.h#68-221
         SampleFormat::Float => reader.samples::<f32>().map(|x| Ok(x?)).collect(),
+
+        // more commonly we will see this
         SampleFormat::Int => {
             let bit_depth = spec.bits_per_sample;
 
@@ -79,13 +80,6 @@ mod tests {
     }
 
     #[test]
-    fn sanity() {
-        assert_eq!((max_value_from_bits(8) - 1) as i8, i8::MAX);
-        assert_eq!((max_value_from_bits(16) - 1) as i16, i16::MAX);
-        assert_eq!((max_value_from_bits(32) - 1) as i32, i32::MAX);
-    }
-
-    #[test]
     fn decode_samples_f32() -> anyhow::Result<()> {
         let temp_dir = TempDir::new("wav_testing")?;
         let file_name = temp_dir.path().join("test_sine.wav");
@@ -98,6 +92,13 @@ mod tests {
 
         temp_dir.close()?;
         Ok(())
+    }
+
+    #[test]
+    fn sanity() {
+        assert_eq!((max_value_from_bits(8) - 1) as i8, i8::MAX);
+        assert_eq!((max_value_from_bits(16) - 1) as i16, i16::MAX);
+        assert_eq!((max_value_from_bits(32) - 1) as i32, i32::MAX);
     }
 
     // TODO: make this stupid test pass
@@ -135,7 +136,7 @@ mod tests {
         let (result_samples, _) = decode_ir_samples(&buf).unwrap();
 
         for (original_sample, res_sample) in original_samples.iter().zip(result_samples) {
-            println!("{original_sample}, {res_sample}");
+            // println!("{original_sample}, {res_sample}");
 
             assert!(approx_eq!(
                 f32,
@@ -162,9 +163,9 @@ mod tests {
             let sample = (t * 440.0 * 2.0 * PI).sin();
             samples.push(sample);
 
-            let amplitude = (1 << (spec.bits_per_sample - 1)) as f32;
+            let scale_factor = max_value_from_bits(spec.bits_per_sample) as f32;
 
-            writer.write_sample((sample * amplitude) as i32)?;
+            writer.write_sample((sample * scale_factor) as i32)?;
         }
         writer.finalize()?;
 
