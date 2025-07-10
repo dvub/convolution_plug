@@ -7,14 +7,14 @@ use nih_plug::buffer::Buffer;
 /// intended to make things more convenient when used with nih-plug.
 /// This struct contains a main graph, as well as input and output buffers used for block processing.
 ///
-/// This struct uses generic FunDSP buffers which supports mono or stereo plugins (or more, I guess).
-pub struct PluginDspProcessor<N: Size<f32>> {
+/// Mostly copied from: https://github.com/SamiPerttu/fundsp/blob/a4f126bcbb5c6b93c4cd65662035655913e1e830/src/audiounit.rs#L483
+pub struct DspAdapter<N: Size<f32>> {
     pub graph: Box<dyn AudioUnit>,
     input_buffer: BufferArray<N>,
     output_buffer: BufferArray<N>,
 }
 
-impl<N> Default for PluginDspProcessor<N>
+impl<N> Default for DspAdapter<N>
 where
     N: Size<f32>,
 {
@@ -29,48 +29,33 @@ where
     }
 }
 
-impl<N> PluginDspProcessor<N>
+impl<N> DspAdapter<N>
 where
     N: Size<f32>,
 {
-    // TODO: support passing in other nih-plug process() arguments
-
-    /// Process an nih-plug Buffer. This function does 3 things:
-    /// 1. Copy samples into FunDSP's buffers.
-    /// 2. Perform block processing
-    /// 3. Write samples from FunDSP's output buffer, back into the nih-plug buffer.
-    ///
-    /// In your nih-plug `process()`, call this function first,
-    /// then do anything else you might want to do with your plugin afterwards.
     pub fn process(&mut self, buffer: &mut Buffer) {
-        for (_offset, mut block) in buffer.iter_blocks(MAX_BUFFER_SIZE) {
-            // write into input buffer
-            for (sample_index, mut channel_samples) in block.iter_samples().enumerate() {
-                for channel_index in 0..N::USIZE {
-                    // get our input sample
-                    let input_sample = *channel_samples.get_mut(channel_index).unwrap();
-
-                    self.input_buffer.buffer_mut().set_f32(
-                        channel_index,
-                        sample_index,
-                        input_sample,
-                    );
+        let size = buffer.samples();
+        let mut i = 0;
+        while i < size {
+            let n = min(size - i, MAX_BUFFER_SIZE);
+            for input_i in 0..self.input_buffer.channels() {
+                for j in 0..n {
+                    self.input_buffer
+                        .set_f32(input_i, j, buffer.as_slice()[input_i][i + j]);
                 }
             }
-
             self.graph.process(
-                block.samples(),
+                n,
                 &self.input_buffer.buffer_ref(),
                 &mut self.output_buffer.buffer_mut(),
             );
 
-            // write from output buffer
-            for (index, mut channel_samples) in block.iter_samples().enumerate() {
-                for n in 0..N::USIZE {
-                    *channel_samples.get_mut(n).unwrap() =
-                        self.output_buffer.buffer_ref().at_f32(n, index);
+            for output_i in 0..self.output_buffer.channels() {
+                for j in 0..n {
+                    buffer.as_slice()[output_i][i + j] = self.output_buffer.at_f32(output_i, j);
                 }
             }
+            i += n;
         }
     }
     /// Call this function (or directly update the `graph` field) during your plugin's initialization.

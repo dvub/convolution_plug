@@ -11,7 +11,7 @@ use crate::{dsp::build_graph, editor::create_editor};
 
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
-use np_fundsp_bridge::PluginDspProcessor;
+use np_fundsp_bridge::DspAdapter;
 use params::PluginParams;
 use std::sync::{Arc, Mutex};
 
@@ -22,7 +22,7 @@ use std::sync::{Arc, Mutex};
 
 pub struct ConvolutionPlug {
     params: Arc<PluginParams>,
-    dsp: PluginDspProcessor<U2>,
+    dsp: DspAdapter<U2>,
     sample_rate: f32,
     // this is used for updating the convolver
     slot: Arc<Mutex<Slot>>,
@@ -33,7 +33,7 @@ impl Default for ConvolutionPlug {
     fn default() -> Self {
         Self {
             params: Arc::new(PluginParams::default()),
-            dsp: PluginDspProcessor::default(),
+            dsp: DspAdapter::default(),
 
             slot: Arc::new(Mutex::new(Slot::new(Box::new(sink())).0)),
             sample_rate: DEFAULT_SAMPLE_RATE,
