@@ -17,5 +17,5 @@ Note to self:
 - decay / speed (something..) - maybe check convology
 - reverse (for fun LOL)
 - add visual EQ controls (spline type thing)
-- support stereo/quad/whatever IRs as well as multiple formats
+- support stereo/quad/whatever IRs as well as multiple formats - somewhat supported, but no parameters
 - general optimizations

@@ -12,7 +12,7 @@ use param_nodes::*;
 
 use crate::{
     config::PluginConfig,
-    dsp::{convolve::convolver, ir::load_ir, switched::switched_node},
+    dsp::{convolve::convolver, ir::init_ir, switched::switched_node},
     params::PluginParams,
 };
 
@@ -26,8 +26,8 @@ pub fn build_graph(
     let slot_element: Box<dyn AudioUnit> = match &mut *ir_data {
         // if an IR was previously loaded, we detect that here and use it again
         Some(ir_data) => {
-            let samples = load_ir(ir_data, sample_rate, config)?;
-            Box::new(convolver(&samples) | convolver(&samples))
+            let samples = init_ir(ir_data, sample_rate, config)?;
+            Box::new(convolver(&samples[0]) | convolver(&samples[1]))
         }
         None => Box::new(multipass::<U2>() * 0.0),
     };

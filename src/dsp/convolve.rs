@@ -25,7 +25,7 @@ impl AudioNode for Convolver {
 
 // opcode
 pub fn convolver(samples: &[f32]) -> An<Convolver> {
-    let convolver = FFTConvolver::init(samples, MAX_BUFFER_SIZE, samples.len());
+    let convolver = FFTConvolver::init(samples, 256, samples.len());
 
     An(Convolver { convolver })
 }

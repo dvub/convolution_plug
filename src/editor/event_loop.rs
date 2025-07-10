@@ -1,7 +1,7 @@
 use super::ipc::{Message, ParameterUpdate};
 use crate::{
     config::PluginConfig,
-    dsp::{convolve::convolver, ir::load_ir},
+    dsp::{convolve::convolver, ir::init_ir},
     editor::ipc::IrData,
     params::PluginParams,
     ConvolutionPlug,
@@ -103,9 +103,9 @@ fn handle_ir_update(
     ir_data: &IrData,
     sample_rate: f32,
 ) -> anyhow::Result<()> {
-    let ir_samples = load_ir(ir_data, sample_rate, config)?;
+    let ir_samples = init_ir(ir_data, sample_rate, config)?;
 
-    let convolvers = Box::new(convolver(&ir_samples) | convolver(&ir_samples));
+    let convolvers = Box::new(convolver(&ir_samples[0]) | convolver(&ir_samples[1]));
 
     slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
     *params.ir_data.lock().unwrap() = Some(ir_data.clone());

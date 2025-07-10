@@ -7,7 +7,6 @@ pub fn decode_samples(bytes: &[u8]) -> anyhow::Result<(Vec<Vec<f32>>, f32)> {
     let spec = reader.spec();
     let sample_rate = spec.sample_rate as f32;
 
-    // TODO: is this cast a bad idea?
     let num_channels = spec.channels as usize;
 
     let samples = match spec.sample_format {
