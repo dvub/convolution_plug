@@ -1,8 +1,7 @@
 use rubato::{SincFixedIn, SincInterpolationParameters, SincInterpolationType, WindowFunction};
 
-const RESAMPLING_CHANNELS: usize = 2;
-
 pub fn init_resampler(
+    num_channels: usize,
     len: usize,
     ir_sample_rate: f64,
     desired_sample_rate: f64,
@@ -21,6 +20,6 @@ pub fn init_resampler(
         1.0, // we're not changing the ratio so this doesn't matter right now
         resampling_params,
         len,
-        RESAMPLING_CHANNELS,
+        num_channels,
     )?)
 }
