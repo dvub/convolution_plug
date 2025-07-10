@@ -4,8 +4,10 @@ use std::sync::Arc;
 
 use fundsp::hacker32::*;
 
-use crate::params::PluginParams;
-use np_fundsp_bridge::params::{Accessor, ParamNode};
+use crate::{
+    dsp::params::{Accessor, ParamNode},
+    params::PluginParams,
+};
 
 pub fn lp_freq<N: Size<f32>>(
     p: &Arc<PluginParams>,

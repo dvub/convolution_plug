@@ -11,7 +11,7 @@ use crate::{dsp::build_graph, editor::create_editor};
 
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
-use np_fundsp_bridge::DspAdapter;
+
 use params::PluginParams;
 use std::sync::{Arc, Mutex};
 
@@ -22,7 +22,7 @@ use std::sync::{Arc, Mutex};
 
 pub struct ConvolutionPlug {
     params: Arc<PluginParams>,
-    dsp: DspAdapter<U2>,
+    graph: BigBlockAdapter,
     sample_rate: f32,
     // this is used for updating the convolver
     slot: Arc<Mutex<Slot>>,
@@ -33,8 +33,7 @@ impl Default for ConvolutionPlug {
     fn default() -> Self {
         Self {
             params: Arc::new(PluginParams::default()),
-            dsp: DspAdapter::default(),
-
+            graph: BigBlockAdapter::new(Box::new(sink())),
             slot: Arc::new(Mutex::new(Slot::new(Box::new(sink())).0)),
             sample_rate: DEFAULT_SAMPLE_RATE,
         }
@@ -99,7 +98,7 @@ impl Plugin for ConvolutionPlug {
                 let mut slot_lock = self.slot.lock().unwrap();
                 *slot_lock = slot;
 
-                self.dsp.graph = graph;
+                self.graph = BigBlockAdapter::new(graph);
                 self.sample_rate = buffer_config.sample_rate;
 
                 nih_log!("Initialized Convolution.");
@@ -124,7 +123,15 @@ impl Plugin for ConvolutionPlug {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        self.dsp.process(buffer);
+        let input = buffer
+            .as_slice_immutable()
+            .iter()
+            .map(|x| x.to_vec())
+            .collect::<Vec<Vec<f32>>>();
+
+        self.graph
+            .process_big(buffer.samples(), &input, buffer.as_slice());
+
         ProcessStatus::Normal
     }
 }

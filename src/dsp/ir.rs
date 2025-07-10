@@ -16,7 +16,7 @@ pub fn init_ir(
 
     let mut out = if config.resample && sample_rate > ir_sample_rate {
         let mut resampler = init_resampler(
-            // TODO: ...
+            // TODO: problem?
             decoded_channels[0].len(),
             ir_sample_rate as f64,
             sample_rate as f64,

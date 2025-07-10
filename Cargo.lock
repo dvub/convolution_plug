@@ -476,7 +476,6 @@ dependencies = [
  "mime_guess",
  "nih-plug-webview",
  "nih_plug",
- "np-fundsp-bridge",
  "rubato",
  "serde",
  "serde_json",
@@ -900,8 +899,7 @@ checksum = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
 [[package]]
 name = "fundsp"
 version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fec70d22aa69e70c0e1e461b8a4f3392fa85e1d7421c773c1537dff44a3f74b"
+source = "git+https://github.com/dvub/fundsp.git#c045a3eb6ddb3c0741d505350b50cc9ae1e962a2"
 dependencies = [
  "dyn-clone",
  "funutd",
@@ -1968,14 +1966,6 @@ name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
-
-[[package]]
-name = "np-fundsp-bridge"
-version = "0.1.0"
-dependencies = [
- "fundsp",
- "nih_plug",
-]
 
 [[package]]
 name = "num-complex"

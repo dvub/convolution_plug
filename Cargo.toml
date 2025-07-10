@@ -8,14 +8,14 @@ homepage = "todo"
 description = "todo"
 
 [workspace]
-members = ["xtask", "nih-plug-webview", "np-fundsp-bridge"]
+members = ["xtask", "nih-plug-webview"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
 nih-plug-webview = { path = "nih-plug-webview" }
-np-fundsp-bridge = { path = "np-fundsp-bridge" }
+
 hound = "3.5.1"
 # Remove the `assert_process_allocs` feature to allow allocations on the audio
 # thread in debug builds.
@@ -32,7 +32,7 @@ ts-rs = "11.0.1"
 crossbeam-channel = "0.5.15"
 itertools = "0.14.0"
 directories = "6.0.0"
-fundsp = "0.20.0"
+fundsp = { git = "https://github.com/dvub/fundsp.git" }
 anyhow = "1.0.98"
 rubato = "0.16.2"
 float-cmp = "0.10.0"

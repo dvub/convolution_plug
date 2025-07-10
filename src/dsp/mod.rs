@@ -3,6 +3,8 @@ pub mod ir;
 pub mod param_nodes;
 pub mod switched;
 
+mod params;
+
 mod resample;
 
 use fundsp::hacker32::*;
