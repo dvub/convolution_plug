@@ -20,6 +20,7 @@ import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
 import { NumericRange, RangeType } from '@/lib/range';
 import { Parameter } from '@/lib/parameters';
 import { DISABLED_OPACITY } from '@/lib/constants';
+import { KnobGesture } from '@/bindings/KnobGesture';
 
 // TODO: make this a parameter-only knob
 // create a separate component for setting-related knobs if desired
@@ -139,6 +140,15 @@ export function Knob(props: KnobProps) {
 		resetValue: resetValue,
 	};
 
+	const handlePointer = (gesture: KnobGesture) =>
+		sendToPlugin({
+			type: 'knobGesture',
+			data: {
+				parameter_id: parameter!,
+				gesture,
+			},
+		});
+
 	return (
 		<div
 			className='flex flex-col items-center text-xs'
@@ -165,6 +175,9 @@ export function Knob(props: KnobProps) {
 				valueMin={internalMinValue}
 				valueMax={internalMaxValue}
 				valueRawDisplayFn={valueRawDisplayFn}
+				// TODO: we probably need more here to make sure that every type of event is handled
+				onPointerDown={() => handlePointer('startDrag')}
+				onPointerUp={() => handlePointer('stopDrag')}
 				// TODO:
 				// what am i doing
 				valueRawRoundFn={() => 0.0}

@@ -7,9 +7,24 @@ use ts_rs::TS;
 #[ts(export)]
 pub enum Message {
     Init,
-    Resize { width: u32, height: u32 },
+    Resize {
+        width: u32,
+        height: u32,
+    },
     ParameterUpdate(ParameterUpdate),
     IrUpdate(IrData),
+    KnobGesture {
+        parameter_id: String,
+        gesture: KnobGesture,
+    },
+}
+#[derive(Serialize, Deserialize, TS, Debug)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "../convolution-gui/bindings/")]
+#[ts(export)]
+pub enum KnobGesture {
+    StartDrag,
+    StopDrag,
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]

@@ -1,6 +1,9 @@
 use super::ipc::{Message, ParameterUpdate};
 use crate::{
-    config::PluginConfig, dsp::ir::init_convolvers, editor::ipc::IrData, params::PluginParams,
+    config::PluginConfig,
+    dsp::ir::init_convolvers,
+    editor::ipc::{IrData, KnobGesture},
+    params::PluginParams,
     ConvolutionPlug,
 };
 
@@ -46,8 +49,11 @@ pub fn build_event_loop(
                     // TODO: fix unwrap
                     handle_ir_update(&params, &config, &ir_slot, &ir_data, sample_rate).unwrap()
                 }
-
                 Message::Resize { .. } => todo!(),
+                Message::KnobGesture { gesture, .. } => match gesture {
+                    KnobGesture::StartDrag => println!("Detected drag start"),
+                    KnobGesture::StopDrag => println!("Detected drag ended"),
+                },
             }
         }
         // BACKEND -> GUI
