@@ -26,6 +26,7 @@ pub struct ConvolutionPlug {
     sample_rate: f32,
     // this is used for updating the convolver
     slot: Arc<Mutex<Slot>>,
+    buffers: Vec<Vec<f32>>,
 }
 
 const DEFAULT_SAMPLE_RATE: f32 = 44_100.0;
@@ -36,6 +37,7 @@ impl Default for ConvolutionPlug {
             graph: BigBlockAdapter::new(Box::new(sink())),
             slot: Arc::new(Mutex::new(Slot::new(Box::new(sink())).0)),
             sample_rate: DEFAULT_SAMPLE_RATE,
+            buffers: Vec::new(),
         }
     }
 }
@@ -90,16 +92,17 @@ impl Plugin for ConvolutionPlug {
         nih_log!("Building DSP graph..");
 
         let config = self.params.config.lock().unwrap();
+        self.sample_rate = buffer_config.sample_rate;
+        self.buffers = vec![vec![0.0; buffer_config.max_buffer_size as usize]; 2];
 
         match build_graph(&self.params, &config, buffer_config.sample_rate) {
-            Ok((mut graph, slot)) => {
-                graph.set_sample_rate(buffer_config.sample_rate as f64);
-
+            Ok((graph, slot)) => {
                 let mut slot_lock = self.slot.lock().unwrap();
                 *slot_lock = slot;
 
                 self.graph = BigBlockAdapter::new(graph);
-                self.sample_rate = buffer_config.sample_rate;
+                self.graph.set_sample_rate(buffer_config.sample_rate as f64);
+                self.graph.allocate();
 
                 nih_log!("Initialized Convolution.");
                 true
@@ -123,14 +126,12 @@ impl Plugin for ConvolutionPlug {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        let input = buffer
-            .as_slice_immutable()
-            .iter()
-            .map(|x| x.to_vec())
-            .collect::<Vec<Vec<f32>>>();
+        for (i, chan) in buffer.as_slice_immutable().iter().enumerate() {
+            self.buffers[i][..buffer.samples()].copy_from_slice(chan);
+        }
 
         self.graph
-            .process_big(buffer.samples(), &input, buffer.as_slice());
+            .process_big(buffer.samples(), &self.buffers, buffer.as_slice());
 
         ProcessStatus::Normal
     }
