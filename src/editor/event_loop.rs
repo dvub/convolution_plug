@@ -34,8 +34,10 @@ pub fn build_event_loop(
 
     let config = params.config.lock().unwrap().clone();
 
+    let dragged_params = Mutex::new(vec![false; param_map.len()]);
     move |ctx: &WindowHandler, setter, _window| {
-        let mut gui_updates = Vec::new();
+        let mut dragged_params = dragged_params.lock().unwrap();
+
         // GUI -> BACKEND
         while let Ok(json_message) = ctx.next_event() {
             let message = serde_json::from_value::<Message>(json_message)
@@ -43,17 +45,26 @@ pub fn build_event_loop(
             match message {
                 Message::Init => handle_init(ctx, &params),
                 Message::ParameterUpdate(update) => unsafe {
-                    handle_parameter_update(&update, &setter, &param_map, &mut gui_updates);
+                    handle_parameter_update(&update, &setter, &param_map);
                 },
                 Message::IrUpdate(ir_data) => {
                     // TODO: fix unwrap
                     handle_ir_update(&params, &config, &ir_slot, &ir_data, sample_rate).unwrap()
                 }
                 Message::Resize { .. } => todo!(),
-                Message::KnobGesture { gesture, .. } => match gesture {
-                    KnobGesture::StartDrag => println!("Detected drag start"),
-                    KnobGesture::StopDrag => println!("Detected drag ended"),
-                },
+                Message::KnobGesture {
+                    gesture,
+                    parameter_id,
+                } => {
+                    let index = param_map
+                        .iter()
+                        .position(|(id, _, _)| *id == parameter_id)
+                        .unwrap();
+                    match gesture {
+                        KnobGesture::StartDrag => dragged_params[index] = true,
+                        KnobGesture::StopDrag => dragged_params[index] = false,
+                    }
+                }
             }
         }
         // BACKEND -> GUI
@@ -61,11 +72,12 @@ pub fn build_event_loop(
         for param_index in get_unique_messages(&param_update_rx) {
             let param_id = &param_map[param_index].0;
 
-            // if a parameter update comes from GUI,
-            // we don't want to send an old version of the same parameter to the GUI
-            if gui_updates.contains(param_id) {
+            if dragged_params[param_index] {
                 continue;
             }
+
+            // println!("SENDING");
+
             // now we know we REALLY want to send this parameter update to the GUI
             // TODO: these string clones and whatnot might be expensive
             unsafe {
@@ -118,7 +130,6 @@ unsafe fn handle_parameter_update(
     param_update: &ParameterUpdate,
     param_setter: &ParamSetter,
     param_map: &ParamMap,
-    gui_updates: &mut Vec<String>,
 ) {
     let normalize_new_value = param_update.value;
 
@@ -131,8 +142,6 @@ unsafe fn handle_parameter_update(
         .raw_context
         .raw_set_parameter_normalized(param_ptr, normalize_new_value);
     param_setter.raw_context.raw_end_set_parameter(param_ptr);
-
-    gui_updates.push(param_update.parameter_id.clone())
 }
 
 unsafe fn get_normalized_param_value(param_id: String, param_map: &ParamMap) -> f32 {
