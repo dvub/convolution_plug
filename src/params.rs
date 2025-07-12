@@ -1,6 +1,10 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
 
 use crossbeam_channel::{Receiver, Sender};
+use fundsp::shared::Atomic;
 use nih_plug::{prelude::*, util::db_to_gain};
 use nih_plug_webview::state::WebviewState;
 
@@ -29,6 +33,7 @@ pub struct PluginParams {
     // non param stuff
     pub rx: Receiver<usize>,
     pub editor_state: Arc<WebviewState>,
+    pub are_params_dragging: Vec<Arc<AtomicBool>>,
 
     #[persist = "config"]
     pub config: Mutex<PluginConfig>,
@@ -79,7 +84,7 @@ pub struct PluginParams {
 
 impl Default for PluginParams {
     fn default() -> Self {
-        let mut cbg = CallbackGenerator::default();
+        let mut cbg = CallbackHandler::default();
 
         Self {
             // This gain is stored as linear gain. NIH-plug comes with useful conversion functions
@@ -229,43 +234,52 @@ impl Default for PluginParams {
             editor_state: cbg.state,
             ir_data: Mutex::new(None),
             config: Mutex::new(PluginConfig::default()),
+            are_params_dragging: cbg.are_params_dragging,
         }
     }
 }
 
-struct CallbackGenerator {
+struct CallbackHandler {
     counter: usize,
     state: Arc<WebviewState>,
     tx: Sender<usize>,
     rx: Receiver<usize>,
+    are_params_dragging: Vec<Arc<AtomicBool>>,
 }
-impl Default for CallbackGenerator {
+impl Default for CallbackHandler {
     fn default() -> Self {
         // TODO: figure out proper size
         let (tx, rx) = crossbeam_channel::bounded::<usize>(128);
         let state = WebviewState::new();
+        let params_dragging = Vec::new();
 
         Self {
             counter: 0,
             state,
             tx,
             rx,
+            are_params_dragging: params_dragging,
         }
     }
 }
 
-impl CallbackGenerator {
+impl CallbackHandler {
     pub fn create_callback<T>(&mut self) -> Arc<impl Fn(T)> {
         let state = self.state.clone();
         let tx = self.tx.clone();
         let parameter_index = self.counter;
 
+        let is_param_dragging = Arc::new(AtomicBool::new(false));
+
+        self.are_params_dragging.push(is_param_dragging.clone());
+
         self.counter += 1;
 
         Arc::new(move |_| {
-            if !state.is_open() {
+            if !state.is_open() || is_param_dragging.load(Ordering::Relaxed) {
                 return;
             }
+            println!("Sending");
 
             tx.try_send(parameter_index)
                 .expect("the channel should not be full or try sending if disconnected");

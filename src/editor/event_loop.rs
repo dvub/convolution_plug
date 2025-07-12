@@ -20,7 +20,7 @@ use nih_plug::{
 };
 use nih_plug_webview::WindowHandler;
 use serde_json::json;
-use std::sync::{Arc, Mutex};
+use std::sync::{atomic::Ordering, Arc, Mutex};
 
 pub fn build_event_loop(
     plugin: &ConvolutionPlug,
@@ -29,15 +29,14 @@ pub fn build_event_loop(
     let param_map = params.param_map();
     let param_update_rx = params.rx.clone();
 
+    let dragging_params = params.are_params_dragging.to_vec();
+
     let sample_rate = plugin.sample_rate;
     let ir_slot = plugin.slot.clone();
 
     let config = params.config.lock().unwrap().clone();
 
-    let dragged_params = Mutex::new(vec![false; param_map.len()]);
     move |ctx: &WindowHandler, setter, _window| {
-        let mut dragged_params = dragged_params.lock().unwrap();
-
         // GUI -> BACKEND
         while let Ok(json_message) = ctx.next_event() {
             let message = serde_json::from_value::<Message>(json_message)
@@ -61,8 +60,12 @@ pub fn build_event_loop(
                         .position(|(id, _, _)| *id == parameter_id)
                         .unwrap();
                     match gesture {
-                        KnobGesture::StartDrag => dragged_params[index] = true,
-                        KnobGesture::StopDrag => dragged_params[index] = false,
+                        KnobGesture::StartDrag => {
+                            dragging_params[index].store(true, Ordering::Relaxed)
+                        }
+                        KnobGesture::StopDrag => {
+                            dragging_params[index].store(false, Ordering::Relaxed)
+                        }
                     }
                 }
             }
@@ -71,10 +74,6 @@ pub fn build_event_loop(
 
         for param_index in get_unique_messages(&param_update_rx) {
             let param_id = &param_map[param_index].0;
-
-            if dragged_params[param_index] {
-                continue;
-            }
 
             // println!("SENDING");
 
