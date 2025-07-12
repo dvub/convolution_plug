@@ -1,7 +1,4 @@
-use std::{
-    fmt::Display,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
 use crossbeam_channel::{Receiver, Sender};
 use nih_plug::{prelude::*, util::db_to_gain};
@@ -80,15 +77,9 @@ pub struct PluginParams {
     pub highpass_q: FloatParam,
 }
 
-impl Display for PluginParams {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.dry_gain.value())
-    }
-}
-
 impl Default for PluginParams {
     fn default() -> Self {
-        // FIGURE OUT CORRECT LENGTH??
+        // TODO: FIGURE OUT CORRECT LENGTH??
         let (tx, rx) = crossbeam_channel::bounded::<usize>(100);
         let state = WebviewState::new();
 
