@@ -79,9 +79,7 @@ pub struct PluginParams {
 
 impl Default for PluginParams {
     fn default() -> Self {
-        // TODO: FIGURE OUT CORRECT LENGTH??
-        let (tx, rx) = crossbeam_channel::bounded::<usize>(100);
-        let state = WebviewState::new();
+        let mut cbg = CallbackGenerator::default();
 
         Self {
             // This gain is stored as linear gain. NIH-plug comes with useful conversion functions
@@ -108,11 +106,7 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(
-                Param::Index(0),
-                tx.clone(),
-                state.clone(),
-            )),
+            .with_callback(cbg.create_callback()),
 
             wet_gain: FloatParam::new(
                 "Wet Gain",
@@ -127,15 +121,10 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(
-                Param::Index(1),
-                tx.clone(),
-                state.clone(),
-            )),
+            .with_callback(cbg.create_callback()),
 
-            lowpass_enabled: BoolParam::new("Lowpass Enabled", false).with_callback(
-                param_update_callback(Param::Index(2), tx.clone(), state.clone()),
-            ),
+            lowpass_enabled: BoolParam::new("Lowpass Enabled", false)
+                .with_callback(cbg.create_callback()),
 
             lowpass_freq: FloatParam::new(
                 "Lowpass Frequency",
@@ -149,11 +138,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(
-                Param::Index(3),
-                tx.clone(),
-                state.clone(),
-            )),
+            .with_callback(cbg.create_callback()),
 
             lowpass_q: FloatParam::new(
                 "Lowpass Q",
@@ -166,15 +151,10 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(
-                Param::Index(4),
-                tx.clone(),
-                state.clone(),
-            )),
+            .with_callback(cbg.create_callback()),
 
-            highpass_enabled: BoolParam::new("Highpass Enabled", false).with_callback(
-                param_update_callback(Param::Index(5), tx.clone(), state.clone()),
-            ),
+            highpass_enabled: BoolParam::new("Highpass Enabled", false)
+                .with_callback(cbg.create_callback()),
             highpass_freq: FloatParam::new(
                 "Highpass Frequency",
                 MIN_FREQ,
@@ -187,11 +167,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(
-                Param::Index(6),
-                tx.clone(),
-                state.clone(),
-            )),
+            .with_callback(cbg.create_callback()),
             highpass_q: FloatParam::new(
                 "Highpass Q",
                 DEFAULT_Q,
@@ -203,15 +179,10 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(
-                Param::Index(7),
-                tx.clone(),
-                state.clone(),
-            )),
+            .with_callback(cbg.create_callback()),
 
-            bell_enabled: BoolParam::new("Bell Enabled", false).with_callback(
-                param_update_callback(Param::Index(8), tx.clone(), state.clone()),
-            ),
+            bell_enabled: BoolParam::new("Bell Enabled", false)
+                .with_callback(cbg.create_callback()),
 
             bell_freq: FloatParam::new(
                 "Bell Frequency",
@@ -225,11 +196,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(
-                Param::Index(9),
-                tx.clone(),
-                state.clone(),
-            )),
+            .with_callback(cbg.create_callback()),
             bell_q: FloatParam::new(
                 "Bell Q",
                 DEFAULT_Q,
@@ -241,11 +208,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(
-                Param::Index(10),
-                tx.clone(),
-                state.clone(),
-            )),
+            .with_callback(cbg.create_callback()),
             bell_gain: FloatParam::new(
                 "Bell Gain",
                 db_to_gain(0.0),
@@ -259,38 +222,53 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_smoother(SMOOTHER)
-            .with_callback(param_update_callback(
-                Param::Index(11),
-                tx.clone(),
-                state.clone(),
-            )),
+            .with_callback(cbg.create_callback()),
 
             // EXTRA GOODIES
-            rx,
-            editor_state: state,
+            rx: cbg.rx,
+            editor_state: cbg.state,
             ir_data: Mutex::new(None),
             config: Mutex::new(PluginConfig::default()),
         }
     }
 }
 
-fn param_update_callback<T>(
-    parameter: Param,
-    tx: Sender<usize>,
+struct CallbackGenerator {
+    counter: usize,
     state: Arc<WebviewState>,
-) -> Arc<impl Fn(T)> {
-    Arc::new(move |_| {
-        if !state.is_open() {
-            return;
+    tx: Sender<usize>,
+    rx: Receiver<usize>,
+}
+impl Default for CallbackGenerator {
+    fn default() -> Self {
+        // TODO: figure out proper size
+        let (tx, rx) = crossbeam_channel::bounded::<usize>(128);
+        let state = WebviewState::new();
+
+        Self {
+            counter: 0,
+            state,
+            tx,
+            rx,
         }
-        let Param::Index(actual_index) = parameter;
-        tx.try_send(actual_index)
-            .expect("the channel should not be full or try sending if disconnected");
-    })
+    }
 }
 
-// in the future we might want to support more ways of internally identifying params
-// for example by IDs
-enum Param {
-    Index(usize),
+impl CallbackGenerator {
+    pub fn create_callback<T>(&mut self) -> Arc<impl Fn(T)> {
+        let state = self.state.clone();
+        let tx = self.tx.clone();
+        let parameter_index = self.counter;
+
+        self.counter += 1;
+
+        Arc::new(move |_| {
+            if !state.is_open() {
+                return;
+            }
+
+            tx.try_send(parameter_index)
+                .expect("the channel should not be full or try sending if disconnected");
+        })
+    }
 }
