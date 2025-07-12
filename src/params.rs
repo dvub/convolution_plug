@@ -279,7 +279,6 @@ impl CallbackHandler {
             if !state.is_open() || is_param_dragging.load(Ordering::Relaxed) {
                 return;
             }
-            println!("Sending");
 
             tx.try_send(parameter_index)
                 .expect("the channel should not be full or try sending if disconnected");
