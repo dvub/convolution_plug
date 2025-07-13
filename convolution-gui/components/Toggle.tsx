@@ -2,7 +2,7 @@ import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
 import { sendToPlugin } from '@/lib';
 import { DISABLED_OPACITY } from '@/lib/constants';
 
-import { Parameter } from '@/lib/parameters';
+import { getParameterIndex, Parameter } from '@/lib/parameters';
 import { useContext } from 'react';
 
 export default function ParameterToggle(props: {
@@ -10,15 +10,21 @@ export default function ParameterToggle(props: {
 	label: string;
 }) {
 	const { parameter, label } = props;
-	const { parameters, setParameters } = useContext(GlobalParametersContext)!;
+	const { parameters, setParameters, paramMap } = useContext(
+		GlobalParametersContext
+	)!;
 	const enabled = parameters[parameter];
 
 	function handleClick() {
 		const newValue = Number(!enabled);
+		const index = getParameterIndex(parameter, paramMap);
+		if (index === undefined) {
+			return;
+		}
 		sendToPlugin({
 			type: 'parameterUpdate',
 			data: {
-				parameterId: props.parameter,
+				parameterIndex: index,
 				value: newValue,
 			},
 		});

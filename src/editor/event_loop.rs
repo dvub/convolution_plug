@@ -2,7 +2,7 @@ use super::ipc::{Message, ParameterUpdate};
 use crate::{
     config::PluginConfig,
     dsp::ir::init_convolvers,
-    editor::ipc::{IrData, KnobGesture},
+    editor::ipc::{InitResponse, IrData, KnobGesture},
     params::PluginParams,
     ConvolutionPlug,
 };
@@ -11,9 +11,8 @@ type ParamMap = Vec<(String, ParamPtr, String)>;
 const FADE_TIME: f64 = 1.0;
 const FADE_TYPE: Fade = Fade::Smooth;
 
-use crossbeam_channel::{Receiver, TryIter};
 use fundsp::hacker32::*;
-use itertools::{Itertools, Unique};
+use itertools::Itertools;
 use nih_plug::{
     params::Params,
     prelude::{ParamPtr, ParamSetter},
@@ -50,7 +49,7 @@ pub fn build_event_loop(
                     // TODO: fix unwrap
                     handle_ir_update(&params, &config, &ir_slot, &ir_data, sample_rate).unwrap()
                 }
-                Message::Resize { .. } => todo!(),
+                // TODO: clean this up and refactor
                 Message::KnobGesture {
                     gesture,
                     parameter_id,
@@ -70,21 +69,19 @@ pub fn build_event_loop(
                         }
                     }
                 }
+                // TODO: panic? log? not sure what to do in this case
+                Message::InitResponse(..) => todo!(),
             }
         }
         // BACKEND -> GUI
 
-        for param_index in get_unique_messages(&param_update_rx) {
-            let param_id = &param_map[param_index].0;
-
+        for param_index in param_update_rx.try_iter().unique() {
             // println!("SENDING");
 
-            // now we know we REALLY want to send this parameter update to the GUI
-            // TODO: these string clones and whatnot might be expensive
             unsafe {
                 let message = Message::ParameterUpdate(ParameterUpdate::new(
-                    param_id.clone(),
-                    get_normalized_param_value(param_id.clone(), &param_map),
+                    param_index,
+                    param_map[param_index].1.modulated_normalized_value(),
                 ));
                 ctx.send_json(json!(message));
             }
@@ -94,21 +91,25 @@ pub fn build_event_loop(
 
 fn handle_init(ctx: &WindowHandler, params: &Arc<PluginParams>) {
     let param_map = params.param_map();
+
+    let minimized_map: Vec<_> = param_map.iter().map(|(id, _, _)| id.clone()).collect();
+
     let ir_data_lock = params.ir_data.lock().unwrap();
-
-    // TODO: figure out clone
-    if let Some(ir_data) = ir_data_lock.as_ref() {
-        ctx.send_json(json!(Message::IrUpdate(ir_data.clone())));
-    }
-
+    // TODO: is this usage of unsafe correct?
+    // should the whole function be unsafe?
     unsafe {
-        for param_ptr in param_map {
-            let message = Message::ParameterUpdate(ParameterUpdate::new(
-                param_ptr.0.clone(),
-                param_ptr.1.modulated_normalized_value(),
-            ));
-            ctx.send_json(json!(message));
-        }
+        let init_params: Vec<_> = param_map
+            .iter()
+            .enumerate()
+            .map(|(i, (_, ptr, _))| ParameterUpdate::new(i, ptr.modulated_normalized_value()))
+            .collect();
+
+        let message = Message::InitResponse(InitResponse {
+            param_map: minimized_map,
+            init_params,
+            ir_data: ir_data_lock.clone(),
+        });
+        ctx.send_json(json!(message));
     }
 }
 
@@ -120,10 +121,8 @@ fn handle_ir_update(
     sample_rate: f32,
 ) -> anyhow::Result<()> {
     let convolvers = init_convolvers(ir_data, sample_rate, config)?;
-
     slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
     *params.ir_data.lock().unwrap() = Some(ir_data.clone());
-
     Ok(())
 }
 
@@ -134,53 +133,12 @@ unsafe fn handle_parameter_update(
 ) {
     let normalize_new_value = param_update.value;
 
-    // TODO: fix these fucking clone calls
-    let param_id = &param_update.parameter_id;
-    let param_ptr = get_param_ptr(param_id.clone(), param_map);
+    let idx = param_update.parameter_index;
+    let param_ptr = param_map[idx].1;
 
     param_setter.raw_context.raw_begin_set_parameter(param_ptr);
     param_setter
         .raw_context
         .raw_set_parameter_normalized(param_ptr, normalize_new_value);
     param_setter.raw_context.raw_end_set_parameter(param_ptr);
-}
-
-unsafe fn get_normalized_param_value(param_id: String, param_map: &ParamMap) -> f32 {
-    let param_ptr = get_param_ptr(param_id, param_map);
-    param_ptr.modulated_normalized_value()
-}
-
-/// Get a `ParamPtr` given a parameter id and a param map.
-fn get_param_ptr(id: String, map: &ParamMap) -> ParamPtr {
-    map.iter()
-        .find(|(param_id, _, _)| id == *param_id)
-        .unwrap_or_else(|| panic!("Couldn't find a parameter with ID {id}"))
-        .1
-}
-
-fn get_unique_messages<T>(recv: &Receiver<T>) -> Unique<TryIter<'_, T>>
-where
-    T: Clone + std::hash::Hash + Eq,
-{
-    recv.try_iter().unique()
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::editor::event_loop::get_unique_messages;
-
-    #[test]
-    fn make_update_unique() -> anyhow::Result<()> {
-        let (tx, rx) = crossbeam_channel::unbounded::<usize>();
-
-        tx.send(1)?;
-        tx.send(2)?;
-        tx.send(1)?;
-
-        let res: Vec<usize> = get_unique_messages(&rx).collect();
-
-        assert_eq!(res, [1, 2]);
-
-        Ok(())
-    }
 }

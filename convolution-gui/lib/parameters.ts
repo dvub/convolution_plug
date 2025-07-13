@@ -32,4 +32,16 @@ export function initParameters(): GlobalParameters {
 	};
 }
 
+// TODO: not sure where to put this
+// TODO: might want to have better typing on paramMap
+export function getParameterIndex(parameter: Parameter, paramMap: string[]) {
+	const paramIndex = paramMap.indexOf(parameter);
+	if (paramIndex === -1) {
+		// TODO: should we throw an error or just log?
+		console.log('INVALID PARAMETER (not found in map)');
+		return;
+	}
+	return paramIndex;
+}
+
 export type Parameter = keyof GlobalParameters;

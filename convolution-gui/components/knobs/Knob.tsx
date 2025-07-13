@@ -18,7 +18,7 @@ import { KnobBaseThumb } from './KnobBaseThumb';
 import { sendToPlugin } from '@/lib';
 import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
 import { NumericRange, RangeType } from '@/lib/range';
-import { Parameter } from '@/lib/parameters';
+import { getParameterIndex, Parameter } from '@/lib/parameters';
 import { DISABLED_OPACITY } from '@/lib/constants';
 import { KnobGesture } from '@/bindings/KnobGesture';
 
@@ -64,7 +64,9 @@ export function Knob(props: KnobProps) {
 	// this value can be tweaked to adjust the feel of the knob
 	const dragSensitivity = 0.006;
 
-	const { parameters, setParameters } = useContext(GlobalParametersContext)!;
+	const { parameters, setParameters, paramMap } = useContext(
+		GlobalParametersContext
+	)!;
 
 	// internally this is
 	const internalMinValue = 0;
@@ -124,10 +126,18 @@ export function Knob(props: KnobProps) {
 			[parameter]: valueRaw,
 		});
 
+		const index = getParameterIndex(parameter, paramMap);
+		if (index === undefined) {
+			return;
+		}
+		console.log('SENDING');
 		// !!!!
 		sendToPlugin({
 			type: 'parameterUpdate',
-			data: { parameterId: parameter, value: valueRaw },
+			data: {
+				parameterIndex: index,
+				value: valueRaw,
+			},
 		});
 	}
 

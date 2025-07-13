@@ -1,4 +1,4 @@
-#![warn(clippy::unwrap_used)]
+// #![warn(clippy::unwrap_used)]
 // #![warn(clippy::expect_used)]
 pub mod dsp;
 pub mod params;

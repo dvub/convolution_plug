@@ -1,16 +1,16 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+// TODO: should structs have a new() method or not?
+// currently this is not consistent
+
 #[derive(Serialize, Deserialize, TS, Debug)]
 #[serde(rename_all = "camelCase", tag = "type", content = "data")]
 #[ts(export_to = "../convolution-gui/bindings/")]
 #[ts(export)]
 pub enum Message {
     Init,
-    Resize {
-        width: u32,
-        height: u32,
-    },
+    InitResponse(InitResponse),
     ParameterUpdate(ParameterUpdate),
     IrUpdate(IrData),
     KnobGesture {
@@ -18,6 +18,17 @@ pub enum Message {
         gesture: KnobGesture,
     },
 }
+
+#[derive(Serialize, Deserialize, TS, Debug)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "../convolution-gui/bindings/")]
+#[ts(export)]
+pub struct InitResponse {
+    pub param_map: Vec<String>,
+    pub init_params: Vec<ParameterUpdate>,
+    pub ir_data: Option<IrData>,
+}
+
 #[derive(Serialize, Deserialize, TS, Debug)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "../convolution-gui/bindings/")]
@@ -32,14 +43,14 @@ pub enum KnobGesture {
 #[ts(export_to = "../convolution-gui/bindings/")]
 #[ts(export)]
 pub struct ParameterUpdate {
-    pub parameter_id: String,
+    pub parameter_index: usize,
     pub value: f32,
 }
 
 impl ParameterUpdate {
-    pub fn new(parameter_id: String, value: f32) -> Self {
+    pub fn new(parameter_index: usize, value: f32) -> Self {
         Self {
-            parameter_id,
+            parameter_index,
             value,
         }
     }

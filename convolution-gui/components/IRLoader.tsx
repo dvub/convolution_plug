@@ -29,14 +29,23 @@ export function IrLoader() {
 			waveSurferRef.current = waveSurfer;
 		});
 
+		// TODO: should this logic go at the top level where we handle init response?
+		// in that case we might need more useContexts or something..
 		const handlePluginMessage = (event: Message) => {
-			if (event.type === 'irUpdate') {
-				const blob = new Blob([new Uint8Array(event.data.rawBytes)], {
-					type: 'wav',
-				});
-				waveSurfer.loadBlob(blob);
-				setFileInfo(event.data);
+			if (event.type !== 'initResponse') {
+				return;
 			}
+
+			const irData = event.data.irData;
+			if (!irData) {
+				return;
+			}
+
+			const blob = new Blob([new Uint8Array(irData.rawBytes)], {
+				type: 'wav',
+			});
+			waveSurfer.loadBlob(blob);
+			setFileInfo(irData);
 		};
 
 		const unsubscribe = messageBus.subscribe(handlePluginMessage);
@@ -94,11 +103,18 @@ export function IrLoader() {
 				</div>
 				<div className='w-[50%] flex flex-col gap-1'>
 					<div className='h-[50%] bg-zinc-500 rounded-sm p-1'>
+						{/* TODO: probably should refactor all of this */}
 						{fileInfo ? (
 							<div>
-								<h1 className='text-sm'>{fileInfo?.name}</h1>
+								<h1 className='text-sm'>
+									{/* https://stackoverflow.com/questions/1199352/smart-way-to-truncate-long-strings*/}
+									{fileInfo?.name.replace(
+										/(.{20})..+/,
+										'$1…'
+									)}
+								</h1>
 								<h1 className='text-xs'>
-									Len: {fileInfo?.lengthSeconds}s
+									Len: {fileInfo?.lengthSeconds.toFixed(3)}s
 								</h1>
 								<h1 className='text-xs'>
 									Channels: {fileInfo?.numChannels}

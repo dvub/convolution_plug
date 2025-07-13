@@ -17,18 +17,30 @@ import { initParameters } from '@/lib/parameters';
 export default function Home() {
 	const [messageBus] = useState(new MessageBus());
 	const [parameters, setParameters] = useState(initParameters());
+	const [paramMap, setParamMap] = useState<string[]>([]);
 
 	useEventDispatcher(messageBus);
-	// TODO: refactor
+
 	useEffect(() => {
 		sendToPlugin({ type: 'init' });
+		// TODO: could probably put this in a hook tbh
 		const handlePluginMessage = (event: Message) => {
-			if (event.type === 'parameterUpdate') {
-				setParameters((prevState) => {
-					return {
-						...prevState,
-						[event.data.parameterId]: event.data.value,
-					};
+			if (event.type === 'initResponse') {
+				const map = event.data.paramMap;
+
+				setParamMap(map);
+
+				event.data.initParams.forEach((p) => {
+					// TODO: refactor this, very similar to below code
+					setParameters((prevState) => {
+						const param = map[p.parameterIndex];
+						const value = p.value;
+
+						return {
+							...prevState,
+							[param]: value,
+						};
+					});
 				});
 			}
 		};
@@ -38,10 +50,28 @@ export default function Home() {
 		};
 	}, [messageBus]);
 
+	useEffect(() => {
+		const handlePluginMessage = (event: Message) => {
+			if (event.type === 'parameterUpdate') {
+				setParameters((prevState) => {
+					const param = paramMap[event.data.parameterIndex];
+					return {
+						...prevState,
+						[param]: event.data.value,
+					};
+				});
+			}
+		};
+		const unsubscribe = messageBus.subscribe(handlePluginMessage);
+		return () => {
+			unsubscribe();
+		};
+	}, [messageBus, paramMap]);
+
 	return (
 		<MessageBusContext.Provider value={messageBus}>
 			<GlobalParametersContext.Provider
-				value={{ parameters, setParameters }}
+				value={{ parameters, setParameters, paramMap }}
 			>
 				<div className='flex-col h-[100vh] w-[100vw] px-1'>
 					<TopBar />
