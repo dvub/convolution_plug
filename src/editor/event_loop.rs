@@ -59,6 +59,8 @@ pub fn build_event_loop(
                         .iter()
                         .position(|(id, _, _)| *id == parameter_id)
                         .unwrap();
+
+                    // TODO: could we use begin_set_parameter() here?
                     match gesture {
                         KnobGesture::StartDrag => {
                             dragging_params[index].store(true, Ordering::Relaxed)

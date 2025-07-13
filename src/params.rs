@@ -84,7 +84,7 @@ pub struct PluginParams {
 
 impl Default for PluginParams {
     fn default() -> Self {
-        let mut cbg = CallbackHandler::default();
+        let mut callback_handler = CallbackHandler::default();
 
         Self {
             // This gain is stored as linear gain. NIH-plug comes with useful conversion functions
@@ -111,7 +111,7 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_smoother(SMOOTHER)
-            .with_callback(cbg.create_callback()),
+            .with_callback(callback_handler.create_callback()),
 
             wet_gain: FloatParam::new(
                 "Wet Gain",
@@ -126,10 +126,10 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_smoother(SMOOTHER)
-            .with_callback(cbg.create_callback()),
+            .with_callback(callback_handler.create_callback()),
 
             lowpass_enabled: BoolParam::new("Lowpass Enabled", false)
-                .with_callback(cbg.create_callback()),
+                .with_callback(callback_handler.create_callback()),
 
             lowpass_freq: FloatParam::new(
                 "Lowpass Frequency",
@@ -143,7 +143,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_smoother(SMOOTHER)
-            .with_callback(cbg.create_callback()),
+            .with_callback(callback_handler.create_callback()),
 
             lowpass_q: FloatParam::new(
                 "Lowpass Q",
@@ -156,10 +156,10 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_smoother(SMOOTHER)
-            .with_callback(cbg.create_callback()),
+            .with_callback(callback_handler.create_callback()),
 
             highpass_enabled: BoolParam::new("Highpass Enabled", false)
-                .with_callback(cbg.create_callback()),
+                .with_callback(callback_handler.create_callback()),
             highpass_freq: FloatParam::new(
                 "Highpass Frequency",
                 MIN_FREQ,
@@ -172,7 +172,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_smoother(SMOOTHER)
-            .with_callback(cbg.create_callback()),
+            .with_callback(callback_handler.create_callback()),
             highpass_q: FloatParam::new(
                 "Highpass Q",
                 DEFAULT_Q,
@@ -184,10 +184,10 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_smoother(SMOOTHER)
-            .with_callback(cbg.create_callback()),
+            .with_callback(callback_handler.create_callback()),
 
             bell_enabled: BoolParam::new("Bell Enabled", false)
-                .with_callback(cbg.create_callback()),
+                .with_callback(callback_handler.create_callback()),
 
             bell_freq: FloatParam::new(
                 "Bell Frequency",
@@ -201,7 +201,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_smoother(SMOOTHER)
-            .with_callback(cbg.create_callback()),
+            .with_callback(callback_handler.create_callback()),
             bell_q: FloatParam::new(
                 "Bell Q",
                 DEFAULT_Q,
@@ -213,7 +213,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_smoother(SMOOTHER)
-            .with_callback(cbg.create_callback()),
+            .with_callback(callback_handler.create_callback()),
             bell_gain: FloatParam::new(
                 "Bell Gain",
                 db_to_gain(0.0),
@@ -227,14 +227,17 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_smoother(SMOOTHER)
-            .with_callback(cbg.create_callback()),
+            .with_callback(callback_handler.create_callback()),
 
             // EXTRA GOODIES
-            rx: cbg.rx,
-            editor_state: cbg.state,
+            // TODO: should we just have one callback_handler field?
+            rx: callback_handler.rx,
+            editor_state: callback_handler.state,
+            are_params_dragging: callback_handler.are_params_dragging,
+
+            // persistent
             ir_data: Mutex::new(None),
             config: Mutex::new(PluginConfig::default()),
-            are_params_dragging: cbg.are_params_dragging,
         }
     }
 }
