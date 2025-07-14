@@ -2,13 +2,25 @@ import { Message } from '@/bindings/Message';
 import { MessageBusContext } from '@/contexts/MessageBusContext';
 import { sendToPlugin } from '@/lib';
 import { Parameter } from '@/lib/parameters';
-import { useContext, useState, useEffect } from 'react';
+import {
+	useContext,
+	useState,
+	useEffect,
+	Dispatch,
+	SetStateAction,
+} from 'react';
 
-export function useParameter(parameter: Parameter) {
+// TODO: this can probably be improved
+
+export function useParameter(
+	parameter: Parameter
+): [number, (valueRaw: number) => void, Dispatch<SetStateAction<boolean>>] {
 	const messageBus = useContext(MessageBusContext)!;
 
 	const [paramMap, setParamMap] = useState<string[]>([]);
 	const [value, setValue] = useState(0);
+	// TODO: maybe something like isBlocked?
+	// there might be other reasons other than dragging to block updates
 	const [isDragging, setIsDragging] = useState(false);
 	const [index, setIndex] = useState(0);
 
@@ -36,7 +48,7 @@ export function useParameter(parameter: Parameter) {
 				if (index !== event.data.parameterIndex) {
 					return;
 				}
-				console.log("NEW VAL:", event.data.value);
+				console.log('NEW VAL:', event.data.value);
 
 				setValue(event.data.value);
 			}
@@ -59,5 +71,5 @@ export function useParameter(parameter: Parameter) {
 		});
 	}
 
-	return { value, updateVal, setIsDragging };
+	return [value, updateVal, setIsDragging];
 }

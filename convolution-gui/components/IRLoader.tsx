@@ -28,9 +28,6 @@ export function IrLoader() {
 		waveSurfer.on('init', () => {
 			waveSurferRef.current = waveSurfer;
 		});
-
-		// TODO: should this logic go at the top level where we handle init response?
-		// in that case we might need more useContexts or something..
 		const handlePluginMessage = (event: Message) => {
 			if (event.type !== 'initResponse') {
 				return;

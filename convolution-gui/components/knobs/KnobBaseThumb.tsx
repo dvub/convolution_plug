@@ -1,6 +1,3 @@
-// TODO:
-// allow user to type in values, maybe through some sort of form, i don't know
-
 /**
  * Modified knob thumb -
  * original source:

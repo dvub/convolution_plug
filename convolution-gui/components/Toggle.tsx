@@ -1,4 +1,4 @@
-import { DISABLED_OPACITY } from "@/lib/constants";
+import { DISABLED_OPACITY } from '@/lib/constants';
 
 // TODO: these props are not very clean, is there any other option?
 
@@ -6,25 +6,25 @@ import { DISABLED_OPACITY } from "@/lib/constants";
 // calling useParameter() in the column AND in this toggle separately results in a delay
 // e.g. user would click the toggle to disable highcut, and the knobs would become disabled after a delay
 export default function ParameterToggle(props: {
-  label: string;
-  enabled: number;
-  updateVal: (valueRaw: number) => void;
+	label: string;
+	enabled: number;
+	updateVal: (valueRaw: number) => void;
 }) {
-  const { label, enabled, updateVal } = props;
+	const { label, enabled, updateVal } = props;
 
-  function handleClick() {
-    const newValue = Number(!enabled);
-    updateVal(newValue);
-  }
+	function handleClick() {
+		const newValue = Number(!enabled);
+		updateVal(newValue);
+	}
 
-  return (
-    <button onClick={handleClick}>
-      <div
-        className="w-full h-full px-1 border-2 flex justify-center items-center shadow-lg shadow-[#0d100f]/50"
-        style={{ opacity: enabled === 1 ? 1 : DISABLED_OPACITY }}
-      >
-        <h1>{label}</h1>
-      </div>
-    </button>
-  );
+	return (
+		<button onClick={handleClick}>
+			<div
+				className='w-full h-full px-1 border-2 flex justify-center items-center shadow-lg shadow-[#0d100f]/50'
+				style={{ opacity: enabled === 1 ? 1 : DISABLED_OPACITY }}
+			>
+				<h1>{label}</h1>
+			</div>
+		</button>
+	);
 }

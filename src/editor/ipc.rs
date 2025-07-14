@@ -4,6 +4,8 @@ use ts_rs::TS;
 // TODO: should structs have a new() method or not?
 // currently this is not consistent
 
+// TODO: create specific GUI -> backend enum
+
 #[derive(Serialize, Deserialize, TS, Debug)]
 #[serde(rename_all = "camelCase", tag = "type", content = "data")]
 #[ts(export_to = "../convolution-gui/bindings/")]

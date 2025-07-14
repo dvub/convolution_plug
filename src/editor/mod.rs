@@ -18,10 +18,8 @@ pub fn create_editor(plugin: &ConvolutionPlug) -> WebViewEditor {
     let mut editor = WebViewEditor::new(dev_src, EDITOR_SIZE, params.editor_state.clone())
         .with_developer_mode(true);
 
-    
     #[cfg(not(debug_assertions))]
     bundled::create_bundled_editor(&mut editor, &params);
-    
 
     editor.with_event_loop(build_event_loop(plugin))
 }

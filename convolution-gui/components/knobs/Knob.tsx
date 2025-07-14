@@ -5,6 +5,8 @@
  * https://github.com/satelllte/react-knob-headless/blob/main/apps/docs/src/components/knobs/KnobBase.tsx
  */
 
+// TODO: allow user to type in values, maybe through some sort of form, i don't know
+
 import { useId } from 'react';
 import {
 	KnobHeadless,
@@ -36,7 +38,6 @@ export type KnobProps = {
 	parameter: Parameter;
 	// onChangeCallback?: (n: number) => void;
 
-	// TODO: make this work
 	// stepFn: (valueRaw: number) => number;
 	// stepLargerFn: (valueRaw: number) => number;
 
@@ -59,9 +60,9 @@ export function Knob(props: KnobProps) {
 	// this value can be tweaked to adjust the feel of the knob
 	const dragSensitivity = 0.006;
 
-	const { value, setIsDragging, updateVal } = useParameter(parameter);
+	const [value, updateVal, setIsDragging] = useParameter(parameter);
 
-	// TODO: rewrite
+	// TODO: rewrite internal range
 	const internalMinValue = 0;
 	const internalMaxValue = 1;
 	const internalRange = new NumericRange(0, 1, 0.5, RangeType.Linear);
@@ -72,8 +73,7 @@ export function Knob(props: KnobProps) {
 	const knobId = useId();
 	const labelId = useId();
 
-	// TODO:
-	// probably make this work
+	// TODO: probably make this work
 	const stepFn = () => 0;
 	const stepLargerFn = () => 0;
 
@@ -124,8 +124,7 @@ export function Knob(props: KnobProps) {
 				// TODO: we probably need more here to make sure that every type of event is handled
 				onPointerDown={() => setIsDragging(true)}
 				onPointerUp={() => setIsDragging(false)}
-				// TODO:
-				// what am i doing
+				// TODO: figure out what this does HAHA
 				valueRawRoundFn={() => 0.0}
 				{...keyboardControlHandlers}
 			>
