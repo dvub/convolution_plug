@@ -1,7 +1,4 @@
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc, Mutex,
-};
+use std::sync::{Arc, Mutex};
 
 use crossbeam_channel::{Receiver, Sender};
 
@@ -33,7 +30,6 @@ pub struct PluginParams {
     // non param stuff
     pub rx: Receiver<usize>,
     pub editor_state: Arc<WebviewState>,
-    pub are_params_dragging: Vec<Arc<AtomicBool>>,
 
     #[persist = "config"]
     pub config: Mutex<PluginConfig>,
@@ -111,7 +107,7 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()),
+            .with_callback(callback_handler.create_callback()), //0
 
             wet_gain: FloatParam::new(
                 "Wet Gain",
@@ -126,10 +122,10 @@ impl Default for PluginParams {
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
             .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()),
+            .with_callback(callback_handler.create_callback()), // 1
 
             lowpass_enabled: BoolParam::new("Lowpass Enabled", false)
-                .with_callback(callback_handler.create_callback()),
+                .with_callback(callback_handler.create_callback()), //  2
 
             lowpass_freq: FloatParam::new(
                 "Lowpass Frequency",
@@ -143,7 +139,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
             .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()),
+            .with_callback(callback_handler.create_callback()), // 3
 
             lowpass_q: FloatParam::new(
                 "Lowpass Q",
@@ -156,37 +152,9 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()),
+            .with_callback(callback_handler.create_callback()), // 4
 
-            highpass_enabled: BoolParam::new("Highpass Enabled", false)
-                .with_callback(callback_handler.create_callback()),
-            highpass_freq: FloatParam::new(
-                "Highpass Frequency",
-                MIN_FREQ,
-                FloatRange::Skewed {
-                    min: MIN_FREQ,
-                    max: MAX_FREQ,
-                    factor: FloatRange::skew_factor(-2.5),
-                },
-            )
-            .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
-            .with_string_to_value(formatters::s2v_f32_hz_then_khz())
-            .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()),
-            highpass_q: FloatParam::new(
-                "Highpass Q",
-                DEFAULT_Q,
-                FloatRange::Skewed {
-                    min: MIN_Q,
-                    max: MAX_Q,
-                    factor: FloatRange::skew_factor(-2.0),
-                },
-            )
-            .with_value_to_string(formatters::v2s_f32_rounded(2))
-            .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()),
-
-            bell_enabled: BoolParam::new("Bell Enabled", false)
+            bell_enabled: BoolParam::new("Bell Enabled", false) // 8
                 .with_callback(callback_handler.create_callback()),
 
             bell_freq: FloatParam::new(
@@ -229,11 +197,38 @@ impl Default for PluginParams {
             .with_smoother(SMOOTHER)
             .with_callback(callback_handler.create_callback()),
 
+            highpass_enabled: BoolParam::new("Highpass Enabled", false)
+                .with_callback(callback_handler.create_callback()), // 5
+            highpass_freq: FloatParam::new(
+                "Highpass Frequency",
+                MIN_FREQ,
+                FloatRange::Skewed {
+                    min: MIN_FREQ,
+                    max: MAX_FREQ,
+                    factor: FloatRange::skew_factor(-2.5),
+                },
+            )
+            .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
+            .with_string_to_value(formatters::s2v_f32_hz_then_khz())
+            .with_smoother(SMOOTHER)
+            .with_callback(callback_handler.create_callback()), // 6
+            highpass_q: FloatParam::new(
+                "Highpass Q",
+                DEFAULT_Q,
+                FloatRange::Skewed {
+                    min: MIN_Q,
+                    max: MAX_Q,
+                    factor: FloatRange::skew_factor(-2.0),
+                },
+            )
+            .with_value_to_string(formatters::v2s_f32_rounded(2))
+            .with_smoother(SMOOTHER)
+            .with_callback(callback_handler.create_callback()), // 7
+
             // EXTRA GOODIES
             // TODO: should we just have one callback_handler field?
             rx: callback_handler.rx,
             editor_state: callback_handler.state,
-            are_params_dragging: callback_handler.are_params_dragging,
 
             // persistent
             ir_data: Mutex::new(None),
@@ -242,26 +237,26 @@ impl Default for PluginParams {
     }
 }
 
+// TODO: due to the way that callback handler currently works,
+// parameters MUST be assigned (in default()) in the SAME ORDER they are defined
+// this is really shitty, and something i should probably fix
 struct CallbackHandler {
     counter: usize,
     state: Arc<WebviewState>,
     tx: Sender<usize>,
     rx: Receiver<usize>,
-    are_params_dragging: Vec<Arc<AtomicBool>>,
 }
 impl Default for CallbackHandler {
     fn default() -> Self {
         // TODO: figure out proper size
         let (tx, rx) = crossbeam_channel::bounded::<usize>(128);
         let state = WebviewState::new();
-        let params_dragging = Vec::new();
 
         Self {
             counter: 0,
             state,
             tx,
             rx,
-            are_params_dragging: params_dragging,
         }
     }
 }
@@ -272,14 +267,10 @@ impl CallbackHandler {
         let tx = self.tx.clone();
         let parameter_index = self.counter;
 
-        let is_param_dragging = Arc::new(AtomicBool::new(false));
-
-        self.are_params_dragging.push(is_param_dragging.clone());
-
         self.counter += 1;
 
         Arc::new(move |_| {
-            if !state.is_open() || is_param_dragging.load(Ordering::Relaxed) {
+            if !state.is_open() {
                 return;
             }
 

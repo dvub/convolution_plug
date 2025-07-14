@@ -19,7 +19,7 @@ use nih_plug::{
 };
 use nih_plug_webview::WindowHandler;
 use serde_json::json;
-use std::sync::{atomic::Ordering, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 
 pub fn build_event_loop(
     plugin: &ConvolutionPlug,
@@ -27,8 +27,6 @@ pub fn build_event_loop(
     let params = plugin.params.clone();
     let param_map = params.param_map();
     let param_update_rx = params.rx.clone();
-
-    let dragging_params = params.are_params_dragging.to_vec();
 
     let sample_rate = plugin.sample_rate;
     let ir_slot = plugin.slot.clone();
@@ -49,26 +47,7 @@ pub fn build_event_loop(
                     // TODO: fix unwrap
                     handle_ir_update(&params, &config, &ir_slot, &ir_data, sample_rate).unwrap()
                 }
-                // TODO: clean this up and refactor
-                Message::KnobGesture {
-                    gesture,
-                    parameter_id,
-                } => {
-                    let index = param_map
-                        .iter()
-                        .position(|(id, _, _)| *id == parameter_id)
-                        .unwrap();
 
-                    // TODO: could we use begin_set_parameter() here?
-                    match gesture {
-                        KnobGesture::StartDrag => {
-                            dragging_params[index].store(true, Ordering::Relaxed)
-                        }
-                        KnobGesture::StopDrag => {
-                            dragging_params[index].store(false, Ordering::Relaxed)
-                        }
-                    }
-                }
                 // TODO: panic? log? not sure what to do in this case
                 Message::InitResponse(..) => todo!(),
             }
@@ -77,11 +56,18 @@ pub fn build_event_loop(
 
         for param_index in param_update_rx.try_iter().unique() {
             // println!("SENDING");
+            let param_map = params.param_map();
 
             unsafe {
+                println!(
+                    "{}, {}",
+                    param_index,
+                    param_map[param_index].1.unmodulated_normalized_value()
+                );
+
                 let message = Message::ParameterUpdate(ParameterUpdate::new(
                     param_index,
-                    param_map[param_index].1.modulated_normalized_value(),
+                    param_map[param_index].1.unmodulated_normalized_value(),
                 ));
                 ctx.send_json(json!(message));
             }

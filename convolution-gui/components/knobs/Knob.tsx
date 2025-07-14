@@ -5,7 +5,7 @@
  * https://github.com/satelllte/react-knob-headless/blob/main/apps/docs/src/components/knobs/KnobBase.tsx
  */
 
-import { useContext, useId, useState } from 'react';
+import { useId } from 'react';
 import {
 	KnobHeadless,
 	KnobHeadlessLabel,
@@ -15,12 +15,12 @@ import {
 
 import { KnobBaseThumb } from './KnobBaseThumb';
 
-import { sendToPlugin } from '@/lib';
-import { GlobalParametersContext } from '@/contexts/GlobalParamsContext';
 import { NumericRange, RangeType } from '@/lib/range';
-import { getParameterIndex, Parameter } from '@/lib/parameters';
+
 import { DISABLED_OPACITY } from '@/lib/constants';
-import { KnobGesture } from '@/bindings/KnobGesture';
+
+import { useParameter } from '@/hooks/useParameter';
+import { Parameter } from '@/lib/parameters';
 
 // TODO: make this a parameter-only knob
 // create a separate component for setting-related knobs if desired
@@ -33,11 +33,9 @@ export type KnobProps = {
 	label: string;
 	size: number;
 	range: NumericRange;
+	parameter: Parameter;
+	// onChangeCallback?: (n: number) => void;
 
-	// optional because knobs dont have to be parameters
-	parameter?: Parameter;
-	onChangeCallback?: (n: number) => void;
-	value?: number;
 	// TODO: make this work
 	// stepFn: (valueRaw: number) => number;
 	// stepLargerFn: (valueRaw: number) => number;
@@ -47,51 +45,27 @@ export type KnobProps = {
 };
 
 export function Knob(props: KnobProps) {
-	const stepFn = () => 0;
-	const stepLargerFn = () => 0;
-
 	const {
 		label,
 		defaultValue: cosmeticDefaultValue,
 		size,
 		parameter,
 		range: cosmeticRange,
-		onChangeCallback,
-		value,
+
 		valueRawDisplayFn,
 		enabled,
 	} = props;
+
 	// this value can be tweaked to adjust the feel of the knob
 	const dragSensitivity = 0.006;
 
-	const { parameters, setParameters, paramMap } = useContext(
-		GlobalParametersContext
-	)!;
+	const { value, setIsDragging, updateVal } = useParameter(parameter);
 
-	// internally this is
+	// TODO: rewrite
 	const internalMinValue = 0;
 	const internalMaxValue = 1;
 	const internalRange = new NumericRange(0, 1, 0.5, RangeType.Linear);
 	const internalDefaultValue = cosmeticRange.normalize(cosmeticDefaultValue);
-
-	// NOTE:
-	// this is only important if we don't have a parameter supplied
-	// TODO: dont set 0 to be default
-	const [state, setState] = useState(0);
-
-	let valueRaw = 0;
-
-	if (parameter) {
-		// TODO:
-		// improve type safety here
-		valueRaw = parameters[parameter];
-		// console.log(valueRaw);
-	} else if (value) {
-		valueRaw = value;
-	} else {
-		valueRaw = state;
-	}
-
 	const mapTo01 = (x: number) => internalRange.normalize(x);
 	const mapFrom01 = (x: number) => internalRange.unnormalize(x);
 
@@ -100,64 +74,26 @@ export function Knob(props: KnobProps) {
 
 	// TODO:
 	// probably make this work
+	const stepFn = () => 0;
+	const stepLargerFn = () => 0;
+
 	const keyboardControlHandlers = useKnobKeyboardControls({
-		valueRaw: valueRaw,
+		valueRaw: value,
 		valueMin: internalMinValue,
 		valueMax: internalMaxValue,
-
 		step: stepFn(),
 		stepLarger: stepLargerFn(),
-		onValueRawChange: setVal,
+		onValueRawChange: updateVal,
 	});
 
-	function setVal(valueRaw: number) {
-		if (onChangeCallback) {
-			onChangeCallback(valueRaw);
-		}
-
-		// as previously mentioned, state is only used if a parameter isn't supplied
-		// (and consequently, we can't use the params context as state)
-		if (!parameter) {
-			setState(valueRaw);
-			return;
-		}
-		setParameters({
-			...parameters,
-			[parameter]: valueRaw,
-		});
-
-		const index = getParameterIndex(parameter, paramMap);
-		if (index === undefined) {
-			return;
-		}
-		console.log('SENDING');
-		// !!!!
-		sendToPlugin({
-			type: 'parameterUpdate',
-			data: {
-				parameterIndex: index,
-				value: valueRaw,
-			},
-		});
-	}
-
 	function resetValue() {
-		setVal(internalDefaultValue);
+		updateVal(internalDefaultValue);
 	}
 
 	const thumbProps = {
-		value01: mapTo01(valueRaw),
+		value01: mapTo01(value),
 		resetValue: resetValue,
 	};
-
-	const handlePointer = (gesture: KnobGesture) =>
-		sendToPlugin({
-			type: 'knobGesture',
-			data: {
-				parameter_id: parameter!,
-				gesture,
-			},
-		});
 
 	return (
 		<div
@@ -180,14 +116,14 @@ export function Knob(props: KnobProps) {
 				dragSensitivity={dragSensitivity}
 				mapTo01={mapTo01}
 				mapFrom01={mapFrom01}
-				onValueRawChange={setVal}
-				valueRaw={valueRaw}
+				onValueRawChange={updateVal}
+				valueRaw={value}
 				valueMin={internalMinValue}
 				valueMax={internalMaxValue}
 				valueRawDisplayFn={valueRawDisplayFn}
 				// TODO: we probably need more here to make sure that every type of event is handled
-				onPointerDown={() => handlePointer('startDrag')}
-				onPointerUp={() => handlePointer('stopDrag')}
+				onPointerDown={() => setIsDragging(true)}
+				onPointerUp={() => setIsDragging(false)}
 				// TODO:
 				// what am i doing
 				valueRawRoundFn={() => 0.0}
@@ -198,7 +134,7 @@ export function Knob(props: KnobProps) {
 
 			<div>
 				<KnobHeadlessOutput htmlFor={''} className='text-xs'>
-					{valueRawDisplayFn(cosmeticRange.unnormalize(valueRaw))}
+					{valueRawDisplayFn(cosmeticRange.unnormalize(value))}
 				</KnobHeadlessOutput>
 			</div>
 		</div>

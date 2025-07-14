@@ -13,10 +13,6 @@ pub enum Message {
     InitResponse(InitResponse),
     ParameterUpdate(ParameterUpdate),
     IrUpdate(IrData),
-    KnobGesture {
-        parameter_id: String,
-        gesture: KnobGesture,
-    },
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]
