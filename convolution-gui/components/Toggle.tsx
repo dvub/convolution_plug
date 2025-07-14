@@ -8,13 +8,13 @@ import { DISABLED_OPACITY } from '@/lib/constants';
 export default function ParameterToggle(props: {
 	label: string;
 	enabled: number;
-	updateVal: (valueRaw: number) => void;
+	setEnabled: (valueRaw: number) => void;
 }) {
-	const { label, enabled, updateVal } = props;
+	const { label, enabled, setEnabled } = props;
 
 	function handleClick() {
 		const newValue = Number(!enabled);
-		updateVal(newValue);
+		setEnabled(newValue);
 	}
 
 	return (

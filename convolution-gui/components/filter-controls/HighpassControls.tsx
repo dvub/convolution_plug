@@ -12,13 +12,14 @@ import {
 import { useParameter } from '@/hooks/useParameter';
 
 export default function HighpassControls() {
-	const [isHighpassEnabled, updateVal] = useParameter('highpass_enabled');
+	const [[isHighpassEnabled, setIsHighpassEnabled]] =
+		useParameter('highpass_enabled');
 
 	return (
 		<FilterColumn>
 			<ParameterToggle
 				enabled={isHighpassEnabled}
-				updateVal={updateVal}
+				setEnabled={setIsHighpassEnabled}
 				label='Lowcut'
 			/>
 

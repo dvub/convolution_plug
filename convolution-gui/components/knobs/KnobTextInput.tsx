@@ -1,16 +1,18 @@
-/*
 import { useState, useEffect } from 'react';
 // import { Input } from '../ui/input';
 import { KnobProps } from './Knob';
 
-type KnobTextInputProps = Pick<KnobProps, 'maxValue' | 'minValue'> & {
+type KnobTextInputProps = KnobProps & {
 	valueRaw: number;
 	setVal(valueRaw: number): void;
 	valueRawDisplayFn: (valueRaw: number) => string;
 };
 
 export function KnobTextInput(props: KnobTextInputProps) {
-	const { maxValue, minValue, valueRaw, setVal, valueRawDisplayFn } = props;
+	const maxValue = '1';
+	const minValue = '0';
+
+	const { valueRaw, setVal, valueRawDisplayFn } = props;
 
 	const [inputBuffer, setInputBuffer] = useState('');
 	const [hasFocus, setHasFocus] = useState(false);
@@ -86,4 +88,3 @@ export function KnobTextInput(props: KnobTextInputProps) {
 		/>
 	);
 }
-*/

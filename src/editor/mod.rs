@@ -16,7 +16,9 @@ pub fn create_editor(plugin: &ConvolutionPlug) -> WebViewEditor {
 
     #[allow(unused_mut)]
     let mut editor = WebViewEditor::new(dev_src, EDITOR_SIZE, params.editor_state.clone())
-        .with_developer_mode(true);
+        .with_developer_mode(true)
+        // FROM HEX: #0d100f
+        .with_background_color((13, 16, 15, 255));
 
     #[cfg(not(debug_assertions))]
     bundled::create_bundled_editor(&mut editor, &params);

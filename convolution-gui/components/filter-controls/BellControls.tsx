@@ -13,13 +13,13 @@ import ParameterToggle from '../Toggle';
 import { useParameter } from '@/hooks/useParameter';
 
 export default function BellControls() {
-	const [isBellEnabled, updateVal] = useParameter('bell_enabled');
+	const [[isBellEnabled, setIsBellEnabled]] = useParameter('bell_enabled');
 
 	return (
 		<FilterColumn>
 			<ParameterToggle
 				enabled={isBellEnabled}
-				updateVal={updateVal}
+				setEnabled={setIsBellEnabled}
 				label='Bell'
 			/>
 

@@ -6,6 +6,7 @@
  */
 
 // TODO: allow user to type in values, maybe through some sort of form, i don't know
+// TODO: create a separate component for settings knobs
 
 import { useId } from 'react';
 import {
@@ -24,23 +25,28 @@ import { DISABLED_OPACITY } from '@/lib/constants';
 import { useParameter } from '@/hooks/useParameter';
 import { Parameter } from '@/lib/parameters';
 
-// TODO: make this a parameter-only knob
-// create a separate component for setting-related knobs if desired
+// this value can be tweaked to adjust the feel of the knob
+const SENSITIVITY = 0.006;
 
-// TODO: fix this whole component tbh
+const NORMALIZED_MIN_VALUE = 0;
+const NORMALIZED_MAX_VALUE = 1;
+const NORMALIZED_CENTER = 0.5;
+const NORMALIZED_RANGE = new NumericRange(
+	NORMALIZED_MIN_VALUE,
+	NORMALIZED_MAX_VALUE,
+	NORMALIZED_CENTER,
+	RangeType.Linear
+);
+const SMALL_STEP = 0.01; // 1%
+const LARGE_STEP = 0.1; // 10%
 
+// should we expose step functions in props?
 export type KnobProps = {
 	defaultValue: number;
-	// visual stuff
 	label: string;
 	size: number;
 	range: NumericRange;
 	parameter: Parameter;
-	// onChangeCallback?: (n: number) => void;
-
-	// stepFn: (valueRaw: number) => number;
-	// stepLargerFn: (valueRaw: number) => number;
-
 	valueRawDisplayFn: (valueRaw: number) => string;
 	enabled?: boolean;
 };
@@ -48,46 +54,44 @@ export type KnobProps = {
 export function Knob(props: KnobProps) {
 	const {
 		label,
-		defaultValue: cosmeticDefaultValue,
 		size,
+		defaultValue,
+		range,
 		parameter,
-		range: cosmeticRange,
-
 		valueRawDisplayFn,
 		enabled,
 	} = props;
 
-	// this value can be tweaked to adjust the feel of the knob
-	const dragSensitivity = 0.006;
-
-	const [value, updateVal, setIsDragging] = useParameter(parameter);
-
-	// TODO: rewrite internal range
-	const internalMinValue = 0;
-	const internalMaxValue = 1;
-	const internalRange = new NumericRange(0, 1, 0.5, RangeType.Linear);
-	const internalDefaultValue = cosmeticRange.normalize(cosmeticDefaultValue);
-	const mapTo01 = (x: number) => internalRange.normalize(x);
-	const mapFrom01 = (x: number) => internalRange.unnormalize(x);
-
 	const knobId = useId();
 	const labelId = useId();
 
-	// TODO: probably make this work
-	const stepFn = () => 0;
-	const stepLargerFn = () => 0;
+	const [[value, setValue], [isDragging, setIsDragging]] =
+		useParameter(parameter);
 
+	const internalDefaultValue = range.normalize(defaultValue);
+	const mapTo01 = (x: number) => NORMALIZED_RANGE.normalize(x);
+	const mapFrom01 = (x: number) => NORMALIZED_RANGE.unnormalize(x);
+
+	function handleKeyboardValueChange(
+		newValueRaw: number,
+		event: React.KeyboardEvent
+	) {
+		setValue(newValueRaw);
+		if (event.type === 'keydown' && !isDragging) {
+			setIsDragging(true);
+		}
+	}
 	const keyboardControlHandlers = useKnobKeyboardControls({
 		valueRaw: value,
-		valueMin: internalMinValue,
-		valueMax: internalMaxValue,
-		step: stepFn(),
-		stepLarger: stepLargerFn(),
-		onValueRawChange: updateVal,
+		valueMin: NORMALIZED_MIN_VALUE,
+		valueMax: NORMALIZED_MAX_VALUE,
+		step: SMALL_STEP,
+		stepLarger: LARGE_STEP,
+		onValueRawChange: handleKeyboardValueChange,
 	});
 
 	function resetValue() {
-		updateVal(internalDefaultValue);
+		setValue(internalDefaultValue);
 	}
 
 	const thumbProps = {
@@ -95,16 +99,13 @@ export function Knob(props: KnobProps) {
 		resetValue: resetValue,
 	};
 
+	const style = {
+		opacity:
+			enabled === true || enabled === undefined ? 1 : DISABLED_OPACITY,
+	};
+
 	return (
-		<div
-			className='flex flex-col items-center text-xs'
-			style={{
-				opacity:
-					enabled === true || enabled === undefined
-						? 1
-						: DISABLED_OPACITY,
-			}}
-		>
+		<div className='flex flex-col items-center text-xs' style={style}>
 			<KnobHeadlessLabel id={labelId} className='text-sm'>
 				{label}
 			</KnobHeadlessLabel>
@@ -113,27 +114,26 @@ export function Knob(props: KnobProps) {
 				aria-labelledby={labelId}
 				className={`relative outline-none`}
 				style={{ width: `${size}px`, height: `${size}px` }}
-				dragSensitivity={dragSensitivity}
+				dragSensitivity={SENSITIVITY}
 				mapTo01={mapTo01}
 				mapFrom01={mapFrom01}
-				onValueRawChange={updateVal}
+				onValueRawChange={setValue}
 				valueRaw={value}
-				valueMin={internalMinValue}
-				valueMax={internalMaxValue}
+				valueMin={NORMALIZED_MIN_VALUE}
+				valueMax={NORMALIZED_MAX_VALUE}
 				valueRawDisplayFn={valueRawDisplayFn}
-				// TODO: we probably need more here to make sure that every type of event is handled
 				onPointerDown={() => setIsDragging(true)}
 				onPointerUp={() => setIsDragging(false)}
+				onKeyUp={() => setIsDragging(false)}
 				// TODO: figure out what this does HAHA
-				valueRawRoundFn={() => 0.0}
+				valueRawRoundFn={(x) => x}
 				{...keyboardControlHandlers}
 			>
 				<KnobBaseThumb {...thumbProps} />
 			</KnobHeadless>
-
 			<div>
 				<KnobHeadlessOutput htmlFor={''} className='text-xs'>
-					{valueRawDisplayFn(cosmeticRange.unnormalize(value))}
+					{valueRawDisplayFn(range.unnormalize(value))}
 				</KnobHeadlessOutput>
 			</div>
 		</div>

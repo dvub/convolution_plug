@@ -10,13 +10,17 @@ import {
 	SetStateAction,
 } from 'react';
 
-// TODO: this can probably be improved
-
+// TODO: improve return type
 export function useParameter(
 	parameter: Parameter
-): [number, (valueRaw: number) => void, Dispatch<SetStateAction<boolean>>] {
+): [
+	[number, (valueRaw: number) => void],
+	[boolean, Dispatch<SetStateAction<boolean>>]
+] {
 	const messageBus = useContext(MessageBusContext)!;
 
+	// TODO: is it necessary (or correct) for each instance to hold on to its own param map?
+	// alternatively, we could probably use context..?
 	const [paramMap, setParamMap] = useState<string[]>([]);
 	const [value, setValue] = useState(0);
 	// TODO: maybe something like isBlocked?
@@ -26,31 +30,29 @@ export function useParameter(
 
 	useEffect(() => {
 		// TODO: refactor
-		const handlePluginMessage = (event: Message) => {
-			if (event.type === 'initResponse') {
-				const map = event.data.paramMap;
+		const handlePluginMessage = (message: Message) => {
+			if (message.type === 'initResponse') {
+				const map = message.data.paramMap;
 				const newIndex = map.indexOf(parameter);
-				const newValue = event.data.initParams[newIndex].value;
+				const newValue = message.data.initParams[newIndex].value;
 
-				console.log('Initializing...', parameter, newIndex, map);
+				// console.log('Initializing...', parameter, newIndex, map);
 
 				setParamMap(map);
 				setIndex(newIndex);
 				setValue(newValue);
 			}
 
-			if (event.type === 'parameterUpdate') {
+			if (message.type === 'parameterUpdate') {
 				if (isDragging) {
 					return;
 				}
 
-				// console.log(index, event.data.parameterIndex);
-				if (index !== event.data.parameterIndex) {
+				if (index !== message.data.parameterIndex) {
 					return;
 				}
-				console.log('NEW VAL:', event.data.value);
 
-				setValue(event.data.value);
+				setValue(message.data.value);
 			}
 		};
 		const unsubscribe = messageBus.subscribe(handlePluginMessage);
@@ -71,5 +73,8 @@ export function useParameter(
 		});
 	}
 
-	return [value, updateVal, setIsDragging];
+	return [
+		[value, updateVal],
+		[isDragging, setIsDragging],
+	];
 }

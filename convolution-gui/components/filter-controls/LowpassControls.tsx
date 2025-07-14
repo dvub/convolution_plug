@@ -12,13 +12,14 @@ import ParameterToggle from '../Toggle';
 import { useParameter } from '@/hooks/useParameter';
 
 export default function LowpassControls() {
-	const [isLowpassEnabled, updateVal] = useParameter('lowpass_enabled');
+	const [[isLowpassEnabled, setIsLowpassEnabled]] =
+		useParameter('lowpass_enabled');
 
 	return (
 		<FilterColumn>
 			<ParameterToggle
 				enabled={isLowpassEnabled}
-				updateVal={updateVal}
+				setEnabled={setIsLowpassEnabled}
 				label='Highcut'
 			/>
 
