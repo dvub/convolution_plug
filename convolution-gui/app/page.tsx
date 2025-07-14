@@ -13,6 +13,9 @@ import TopBar from "@/components/TopBar";
 import GainControls from "@/components/GainControls";
 import { Message } from "@/bindings/Message";
 
+// TODO: simplify overall structure/styling where possible
+// usage of fragments may help
+
 export default function Home() {
   const [messageBus] = useState(new MessageBus());
   const [isLoading, setIsLoading] = useState(true);
