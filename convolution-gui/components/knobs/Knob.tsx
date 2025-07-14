@@ -24,6 +24,7 @@ import { DISABLED_OPACITY } from "@/lib/constants";
 
 import { useParameter } from "@/hooks/useParameter";
 import { Parameter } from "@/lib/parameters";
+import { KnobTextInput } from "./KnobTextInput";
 
 // this value can be tweaked to adjust the feel of the knob
 const SENSITIVITY = 0.006;
@@ -51,17 +52,15 @@ export type KnobProps = {
   enabled?: boolean;
 };
 
-export function Knob(props: KnobProps) {
-  const {
-    label,
-    size,
-    defaultValue,
-    range,
-    parameter,
-    valueRawDisplayFn,
-    enabled,
-  } = props;
-
+export function Knob({
+  label,
+  size,
+  defaultValue,
+  range,
+  parameter,
+  valueRawDisplayFn,
+  enabled,
+}: KnobProps) {
   const knobId = useId();
   const labelId = useId();
 
@@ -69,6 +68,8 @@ export function Knob(props: KnobProps) {
     useParameter(parameter);
 
   const internalDefaultValue = range.normalize(defaultValue);
+  const mapTo01 = (x: number) => NORMALIZED_RANGE.normalize(x);
+  const mapFrom01 = (x: number) => NORMALIZED_RANGE.unnormalize(x);
 
   function handleKeyboardValueChange(
     newValueRaw: number,
@@ -112,23 +113,22 @@ export function Knob(props: KnobProps) {
         className={`relative outline-none`}
         style={{ width: `${size}px`, height: `${size}px` }}
         dragSensitivity={SENSITIVITY}
-        mapTo01={NORMALIZED_RANGE.normalize}
-        mapFrom01={NORMALIZED_RANGE.unnormalize}
+        mapTo01={mapTo01}
+        mapFrom01={mapFrom01}
         onValueRawChange={setValue}
         valueRaw={value}
         valueMin={NORMALIZED_MIN_VALUE}
         valueMax={NORMALIZED_MAX_VALUE}
         valueRawDisplayFn={valueRawDisplayFn}
-        // TODO: figure out what this does HAHA
-        valueRawRoundFn={(x) => x}
-        // very important
         onPointerDown={() => setIsDragging(true)}
         onPointerUp={() => setIsDragging(false)}
         onKeyUp={() => setIsDragging(false)}
+        valueRawRoundFn={(x) => x}
         {...keyboardControlHandlers}
       >
         <KnobBaseThumb {...thumbProps} />
       </KnobHeadless>
+
       <div>
         <KnobHeadlessOutput htmlFor={""} className="text-xs">
           {valueRawDisplayFn(range.unnormalize(value))}
