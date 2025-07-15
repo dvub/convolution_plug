@@ -4,7 +4,7 @@ export default function FilterColumn({
 	children: React.ReactNode;
 }>) {
 	return (
-		<div className='w-[33%] h-full flex flex-col items-center rounded-sm'>
+		<div className='w-[33%] flex flex-col items-center rounded-sm'>
 			{children}
 		</div>
 	);

@@ -1,6 +1,6 @@
 use super::ipc::{Message, ParameterUpdate};
 use crate::{
-    config::PluginConfig,
+    config::IRConfig,
     dsp::ir::init_convolvers,
     editor::ipc::{InitResponse, IrData, KnobGesture},
     params::PluginParams,
@@ -31,8 +31,6 @@ pub fn build_event_loop(
     let sample_rate = plugin.sample_rate;
     let ir_slot = plugin.slot.clone();
 
-    let config = params.config.lock().unwrap().clone();
-
     move |ctx: &WindowHandler, setter, _window| {
         // GUI -> BACKEND
         while let Ok(json_message) = ctx.next_event() {
@@ -43,28 +41,42 @@ pub fn build_event_loop(
                 Message::ParameterUpdate(update) => unsafe {
                     handle_parameter_update(&update, &setter, &param_map);
                 },
-                Message::IrUpdate(ir_data) => {
-                    // TODO: fix unwrap
-                    handle_ir_update(&params, &config, &ir_slot, &ir_data, sample_rate).unwrap()
+                // TODO: it's probably time for another refactor
+                Message::IrUpdate(new_ir_data) => {
+                    // TODO: fix unwraps?
+                    let current_ir_config = params.ir_config.lock().unwrap().clone();
+                    handle_ir_update(
+                        &params,
+                        &current_ir_config,
+                        &ir_slot,
+                        &new_ir_data,
+                        sample_rate,
+                    )
+                    .unwrap();
                 }
+                Message::IrConfigUpdate(new_ir_config) => {
+                    // if an IR is already loaded, then we should reload it
+                    // but if NO IR is loaded, that's pointless
+                    if let Some(current_ir_data) = &*params.ir_data.lock().unwrap() {
+                        handle_ir_update(
+                            &params,
+                            &new_ir_config,
+                            &ir_slot,
+                            current_ir_data,
+                            sample_rate,
+                        )
+                        .unwrap();
+                    }
 
-                // TODO: panic? log? not sure what to do in this case
+                    *params.ir_config.lock().unwrap() = new_ir_config;
+                }
+                // we (the backend) should always be sending an init response, never receiving
                 Message::InitResponse(..) => todo!(),
             }
         }
         // BACKEND -> GUI
-
         for param_index in param_update_rx.try_iter().unique() {
-            // println!("SENDING");
-            let param_map = params.param_map();
-
             unsafe {
-                println!(
-                    "{}, {}",
-                    param_index,
-                    param_map[param_index].1.unmodulated_normalized_value()
-                );
-
                 let message = Message::ParameterUpdate(ParameterUpdate::new(
                     param_index,
                     param_map[param_index].1.unmodulated_normalized_value(),
@@ -101,7 +113,7 @@ fn handle_init(ctx: &WindowHandler, params: &Arc<PluginParams>) {
 
 fn handle_ir_update(
     params: &Arc<PluginParams>,
-    config: &PluginConfig,
+    config: &IRConfig,
     slot: &Arc<Mutex<Slot>>,
     ir_data: &IrData,
     sample_rate: f32,

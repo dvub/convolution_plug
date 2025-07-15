@@ -7,7 +7,7 @@ import {
 	KNOB_DIGITS,
 } from '@/lib/constants';
 import FilterColumn from './FilterColumn';
-import ParameterToggle from '../Toggle';
+import ParameterToggle from './Toggle';
 
 import { useParameter } from '@/hooks/useParameter';
 

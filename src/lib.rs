@@ -91,7 +91,7 @@ impl Plugin for ConvolutionPlug {
     ) -> bool {
         nih_log!("Building DSP graph..");
 
-        let config = self.params.config.lock().unwrap();
+        let config = self.params.ir_config.lock().unwrap();
         self.sample_rate = buffer_config.sample_rate;
         self.buffers = vec![vec![0.0; buffer_config.max_buffer_size as usize]; 2];
 

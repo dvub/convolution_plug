@@ -5,7 +5,7 @@ use crossbeam_channel::{Receiver, Sender};
 use nih_plug::{prelude::*, util::db_to_gain};
 use nih_plug_webview::state::WebviewState;
 
-use crate::{config::PluginConfig, editor::ipc::IrData};
+use crate::{config::IRConfig, editor::ipc::IrData};
 
 // should we use different default filter frequencies?
 // currently i've got i t so that filters do nothing with their default frequencies even if they're enabled
@@ -32,7 +32,7 @@ pub struct PluginParams {
     pub editor_state: Arc<WebviewState>,
 
     #[persist = "config"]
-    pub config: Mutex<PluginConfig>,
+    pub ir_config: Mutex<IRConfig>,
 
     #[persist = "ir_data"]
     pub ir_data: Mutex<Option<IrData>>,
@@ -232,7 +232,7 @@ impl Default for PluginParams {
 
             // persistent
             ir_data: Mutex::new(None),
-            config: Mutex::new(PluginConfig::default()),
+            ir_config: Mutex::new(IRConfig::default()),
         }
     }
 }

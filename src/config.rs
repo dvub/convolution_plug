@@ -1,22 +1,26 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 // this seems insane and this feature probably doesn't properly work
 pub const DEFAULT_NORMALIZATION_LEVEL: f32 = -52.0;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct PluginConfig {
+#[derive(Serialize, Deserialize, Clone, TS, Debug)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "../convolution-gui/bindings/")]
+#[ts(export)]
+pub struct IRConfig {
     pub normalize_irs: bool,
     pub resample: bool,
     pub normalization_level: f32,
 }
 
 #[allow(clippy::derivable_impls)]
-impl Default for PluginConfig {
+impl Default for IRConfig {
     fn default() -> Self {
         Self {
             normalize_irs: false,
             normalization_level: DEFAULT_NORMALIZATION_LEVEL,
-            resample: true,
+            resample: false,
         }
     }
 }

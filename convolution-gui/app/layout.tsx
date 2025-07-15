@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import { Azeret_Mono } from 'next/font/google';
 import './globals.css';
 
@@ -7,11 +6,6 @@ const azeret = Azeret_Mono({
 	subsets: ['latin'],
 });
 
-// TODO: is metadata needed?
-export const metadata: Metadata = {
-	title: 'CONVOLUTION UI',
-};
-
 export default function RootLayout({
 	children,
 }: Readonly<{
@@ -19,7 +13,7 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang='en'>
-			<body className={`${azeret.className} antialiased`}>
+			<body className={`${azeret.className} antialiased px-1`}>
 				{children}
 			</body>
 		</html>

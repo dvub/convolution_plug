@@ -9,7 +9,7 @@ import { hzThenKhz, gainFormatter } from '@/lib/format';
 import { NumericRange, gainSkewFactor, RangeType } from '@/lib/range';
 import { Knob } from '../knobs/Knob';
 import FilterColumn from './FilterColumn';
-import ParameterToggle from '../Toggle';
+import ParameterToggle from './Toggle';
 import { useParameter } from '@/hooks/useParameter';
 
 export default function BellControls() {

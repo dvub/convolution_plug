@@ -28,7 +28,7 @@ export function KnobBaseThumb(props: KnobBaseThumbProps) {
 			className='absolute h-full w-full rounded-full bg-gradient-to-t from-[#8b7f98] to-[#ecf0ef] cursor-ns-resize border-[1px] border-[#0d100f] shadow-lg shadow-[#0d100f]/50'
 			onClick={handleClick}
 		>
-			{/* Pointer line thingy - is it called a thumb ?? */}
+			{/* thumb */}
 			<div
 				className='absolute h-full w-full'
 				style={{ rotate: `${angle}deg` }}

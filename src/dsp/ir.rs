@@ -2,18 +2,14 @@ use fundsp::hacker::AudioUnit;
 use rubato::Resampler;
 
 use crate::{
-    config::PluginConfig,
+    config::IRConfig,
     dsp::{convolve::convolver, resample::init_resampler},
     editor::ipc::IrData,
     util::{decode_samples, rms_normalize},
 };
 
 // TODO: maybe use a more generic return type?
-fn init_ir(
-    ir_data: &IrData,
-    sample_rate: f32,
-    config: &PluginConfig,
-) -> anyhow::Result<Vec<Vec<f32>>> {
+fn init_ir(ir_data: &IrData, sample_rate: f32, config: &IRConfig) -> anyhow::Result<Vec<Vec<f32>>> {
     let (decoded_channels, ir_sample_rate) = decode_samples(&ir_data.raw_bytes)?;
 
     let mut output = if config.resample && sample_rate > ir_sample_rate {
@@ -42,10 +38,11 @@ fn init_ir(
 pub fn init_convolvers(
     ir_data: &IrData,
     sample_rate: f32,
-    config: &PluginConfig,
+    config: &IRConfig,
 ) -> anyhow::Result<Box<dyn AudioUnit>> {
     let ir_samples = init_ir(ir_data, sample_rate, config)?;
 
+    // TODO: probably refactor this
     Ok(match ir_samples.as_slice() {
         [mono] => Box::new(convolver(mono) | convolver(mono)),
         [left, right] => Box::new(convolver(left) | convolver(right)),

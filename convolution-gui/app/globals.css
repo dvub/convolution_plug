@@ -7,9 +7,10 @@
 	--secondary: #474555;
 	--accent: #8b7f98;
 
-	-webkit-user-select: none; /* TODO: probably not needed */
-	-ms-user-select: none; /* IE 10 and IE 11 */
-	user-select: none; /* Standard syntax */
+	/* probably not needed? */
+	/*-webkit-user-select: none; */
+	/* -ms-user-select: none; IE 10 and IE 11 */
+	user-select: none;
 }
 /*
 @theme inline {
@@ -27,6 +28,7 @@
 body {
 	background: var(--background);
 	color: var(--text);
+
 	/* is this going to be good (or bad?) */
 	font-family: Arial, Helvetica, sans-serif;
 }

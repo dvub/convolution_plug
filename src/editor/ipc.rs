@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use crate::config::IRConfig;
+
 // TODO: should structs have a new() method or not?
 // currently this is not consistent
 
@@ -12,9 +14,10 @@ use ts_rs::TS;
 #[ts(export)]
 pub enum Message {
     Init,
-    InitResponse(InitResponse),
     ParameterUpdate(ParameterUpdate),
     IrUpdate(IrData),
+    IrConfigUpdate(IRConfig),
+    InitResponse(InitResponse),
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]

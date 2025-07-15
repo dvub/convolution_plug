@@ -1,7 +1,7 @@
 import { hzThenKhz } from '@/lib/format';
 import { Knob } from '../knobs/Knob';
 import FilterColumn from './FilterColumn';
-import ParameterToggle from '../Toggle';
+import ParameterToggle from './Toggle';
 
 import {
 	FILTER_KNOB_SIZE,
