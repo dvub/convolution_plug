@@ -112,7 +112,7 @@ export function Knob({
 				id={knobId}
 				aria-labelledby={labelId}
 				className={`relative outline-none`}
-				style={{ width: `${size}px`, height: `${size}px` }}
+				style={{ width: `${size}vw`, height: `${size}vh` }}
 				dragSensitivity={SENSITIVITY}
 				mapTo01={mapTo01}
 				mapFrom01={mapFrom01}

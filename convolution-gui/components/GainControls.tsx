@@ -3,11 +3,11 @@ import { NumericRange, gainSkewFactor, RangeType } from '@/lib/range';
 import { Knob } from './knobs/Knob';
 import { KNOB_DIGITS } from '@/lib/constants';
 
-const GAIN_KNOB_SIZE = 80;
+const GAIN_KNOB_SIZE = 15;
 
 export default function GainControls() {
 	return (
-		<div className='w-[40%] h-full secondary rounded-sm p-11 flex flex-col gap-5'>
+		<div className='w-[40%] h-full secondary rounded-sm py-5 flex flex-col justify-between'>
 			<Knob
 				parameter='dry_gain'
 				label='Dry Gain'

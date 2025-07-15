@@ -1,24 +1,26 @@
-import { sendToPlugin } from "@/lib";
+import { sendToPlugin } from '@/lib';
 
 export function ResampleControls() {
-  function handleUpdate() {
-    sendToPlugin({
-      type: "irConfigUpdate",
-      data: {
-        normalizeIrs: false,
-        resample: true,
-        normalizationLevel: 0,
-      },
-    });
-  }
+	function handleUpdate() {
+		sendToPlugin({
+			type: 'irConfigUpdate',
+			data: {
+				normalizeIrs: false,
+				resample: true,
+				normalizationLevel: 0,
+			},
+		});
+	}
 
-  return (
-    <div className="flex w-full justify-between bg-zinc-500 p-1 rounded-sm">
-      <h1 className="w-[33%]">Resample:</h1>
-      <button className="w-[33%]">Off</button>
-      <button className="w-[33%]" onClick={handleUpdate}>
-        In. SR
-      </button>
-    </div>
-  );
+	return (
+		<div className='flex w-full items-center justify-between'>
+			<h1 className='w-[33%]'>Resample</h1>
+			<div className='flex w-[66%]'>
+				<h1 className='w-[50%] bg-zinc-500 rounded-l-sm py-1'>Off</h1>
+				<h1 className='w-[50%] bg-zinc-900 rounded-r-sm py-1'>
+					In. SR
+				</h1>
+			</div>
+		</div>
+	);
 }

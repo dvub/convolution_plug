@@ -63,7 +63,7 @@ export function IRInput(props: {
 			/>
 			<label
 				htmlFor='inp'
-				className='hover:cursor-pointer rounded-sm bg-zinc-500'
+				className='hover:cursor-pointer rounded-sm bg-zinc-500 p-1'
 			>
 				<h1>Load IR</h1>
 			</label>

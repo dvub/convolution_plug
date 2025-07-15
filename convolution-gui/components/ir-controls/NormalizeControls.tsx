@@ -1,9 +1,11 @@
 export function NormalizeControls() {
 	return (
-		<div className='flex w-full justify-between bg-zinc-500 p-1 rounded-sm'>
-			<h1 className='w-[33%]'>Normalize:</h1>
-			<h1 className='w-[33%]'>Off</h1>
-			<h1 className='w-[33%]'>_ db</h1>
+		<div className='flex w-full items-center justify-between'>
+			<h1 className='w-[33%]'>Normalize</h1>
+			<div className='flex w-[66%]'>
+				<h1 className='w-[50%] bg-zinc-900 rounded-l-sm py-1'>Off</h1>
+				<h1 className='w-[50%] bg-zinc-500 rounded-r-sm py-1'>_ db</h1>
+			</div>
 		</div>
 	);
 }

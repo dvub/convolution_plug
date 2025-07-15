@@ -50,8 +50,8 @@ export function IRManager() {
 				<div className='secondary rounded-sm p-1'>
 					{fileInfo ? IrInfoDisplay : defaultIrDisplay}
 				</div>
-				<div className='h-full secondary rounded-sm p-1 text-sm flex flex-col justify-between text-center'>
-					<div className='flex flex-col gap-2'>
+				<div className='h-full secondary rounded-sm p-1 text-xs flex flex-col justify-between text-center'>
+					<div className='flex flex-col gap-1'>
 						<NormalizeControls />
 						<ResampleControls />
 					</div>

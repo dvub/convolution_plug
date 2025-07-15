@@ -6,6 +6,13 @@ const azeret = Azeret_Mono({
 	subsets: ['latin'],
 });
 
+import type { Viewport } from 'next';
+
+export const viewport: Viewport = {
+	width: 'device-width',
+	initialScale: 1,
+};
+
 export default function RootLayout({
 	children,
 }: Readonly<{
@@ -13,7 +20,9 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang='en'>
-			<body className={`${azeret.className} antialiased px-1`}>
+			<body
+				className={`${azeret.className} antialiased px-1 h-full w-full overflow-hidden`}
+			>
 				{children}
 			</body>
 		</html>
