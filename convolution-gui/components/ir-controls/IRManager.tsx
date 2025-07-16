@@ -8,15 +8,19 @@ import { IRInput } from './IRInput';
 import { useRef, useState } from 'react';
 import { NormalizeControls } from './NormalizeControls';
 import { ResampleControls } from './ResampleControls';
-
+import { IRConfig } from '@/bindings/IRConfig';
 export function IRManager() {
 	const containerRef = useRef(null);
 	const waveSurferRef = useWaveform(containerRef);
 
-	const [fileInfo, setFileInfo] = useState<IrData | undefined>(undefined);
+	const [irData, setIrData] = useState<IrData | undefined>();
+	const [irConfig, setIrConfig] = useState<IRConfig | undefined>();
 	useMessageSubscriber((message: Message) => {
-		if (message.type === 'initResponse' && message.data.irData) {
-			setFileInfo(message.data.irData);
+		if (message.type !== 'initResponse') {
+			return;
+		}
+		if (message.data.irData) {
+			setIrData(message.data.irData);
 		}
 	});
 
@@ -25,14 +29,14 @@ export function IRManager() {
 		<>
 			<h1 className='text-sm'>
 				{/* https://stackoverflow.com/questions/1199352/smart-way-to-truncate-long-strings*/}
-				{fileInfo?.name.replace(/(.{20})..+/, '$1…')}
+				{irData?.name.replace(/(.{20})..+/, '$1…')}
 			</h1>
 			<p className='text-xs'>
-				Length: {fileInfo?.lengthSeconds.toFixed(3)}s
+				Length: {irData?.lengthSeconds.toFixed(3)}s
 				<br />
-				{fileInfo?.numChannels} Channels
+				{irData?.numChannels} Channels
 				<br />
-				{fileInfo?.sampleRate} Hz
+				{irData?.sampleRate} Hz
 				<br />
 			</p>
 		</>
@@ -48,17 +52,22 @@ export function IRManager() {
 
 			<div className='w-[50%] flex flex-col gap-1'>
 				<div className='secondary rounded-sm p-1'>
-					{fileInfo ? IrInfoDisplay : defaultIrDisplay}
+					{irData ? IrInfoDisplay : defaultIrDisplay}
 				</div>
 				<div className='h-full secondary rounded-sm p-1 text-xs flex flex-col justify-between text-center'>
 					<div className='flex flex-col gap-1'>
-						<NormalizeControls />
-						<ResampleControls />
+						<NormalizeControls
+							irConfig={irConfig!}
+							setIrConfig={setIrConfig}
+						/>
+						<ResampleControls
+							irConfig={irConfig!}
+							setIrConfig={setIrConfig}
+						/>
 					</div>
-
 					<IRInput
 						waveSurferRef={waveSurferRef}
-						setFileInfo={setFileInfo}
+						setFileInfo={setIrData}
 					/>
 				</div>
 			</div>

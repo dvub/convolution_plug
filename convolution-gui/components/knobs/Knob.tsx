@@ -89,6 +89,7 @@ export function Knob({
 	});
 
 	function resetValue() {
+		// TODO: reset to cosmetic initial value
 		setValue(internalDefaultValue);
 	}
 

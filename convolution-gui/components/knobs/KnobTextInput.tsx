@@ -29,6 +29,14 @@ export function KnobTextInput(props: KnobTextInputProps) {
 			setInputBuffer('0');
 		}
 	}
+			const handleBlur = () => {
+		handleInputFinish();
+		setHasFocus(false);
+	};
+
+	const handleFocus = () => {
+		setHasFocus(true);
+	};
 
 	const handleKeyDown = (event: { key: string }) => {
 		if (event.key == 'Enter') {
@@ -68,14 +76,6 @@ export function KnobTextInput(props: KnobTextInputProps) {
 		if (!isNaN(castInput)) {
 			setVal(castInput);
 		}
-	};
-	const handleBlur = () => {
-		handleInputFinish();
-		setHasFocus(false);
-	};
-
-	const handleFocus = () => {
-		setHasFocus(true);
 	};
 
 	return (

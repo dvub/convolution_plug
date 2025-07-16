@@ -2,7 +2,7 @@ use super::ipc::{Message, ParameterUpdate};
 use crate::{
     config::IRConfig,
     dsp::ir::init_convolvers,
-    editor::ipc::{InitResponse, IrData, KnobGesture},
+    editor::ipc::{InitResponse, IrData},
     params::PluginParams,
     ConvolutionPlug,
 };
@@ -54,21 +54,27 @@ pub fn build_event_loop(
                     )
                     .unwrap();
                 }
+                // TODO: this is weirdly expensive - figure out why
+                // if the decoding is the expensive part, we can store the samples somewhere and just repeatedly load them
+
+                // TODO refactor
                 Message::IrConfigUpdate(new_ir_config) => {
+                    println!("RECEIVING NEW UPDATE: {:?}", new_ir_config);
                     // if an IR is already loaded, then we should reload it
                     // but if NO IR is loaded, that's pointless
                     if let Some(current_ir_data) = &*params.ir_data.lock().unwrap() {
-                        handle_ir_update(
-                            &params,
-                            &new_ir_config,
-                            &ir_slot,
-                            current_ir_data,
-                            sample_rate,
-                        )
-                        .unwrap();
+                        // TODO: probably fix this unwrap
+                        let convolvers =
+                            init_convolvers(current_ir_data, sample_rate, &new_ir_config).unwrap();
+                        ir_slot
+                            .lock()
+                            .unwrap()
+                            .set(FADE_TYPE, FADE_TIME, convolvers);
                     }
 
+                    println!("oke");
                     *params.ir_config.lock().unwrap() = new_ir_config;
+                    println!("heya");
                 }
                 // we (the backend) should always be sending an init response, never receiving
                 Message::InitResponse(..) => todo!(),
@@ -92,6 +98,9 @@ fn handle_init(ctx: &WindowHandler, params: &Arc<PluginParams>) {
 
     let minimized_map: Vec<_> = param_map.iter().map(|(id, _, _)| id.clone()).collect();
 
+    // TODO: is there something to be done about clone()?
+    let config = params.ir_config.lock().unwrap().clone();
+
     let ir_data_lock = params.ir_data.lock().unwrap();
     // TODO: is this usage of unsafe correct?
     // should the whole function be unsafe?
@@ -106,6 +115,7 @@ fn handle_init(ctx: &WindowHandler, params: &Arc<PluginParams>) {
             param_map: minimized_map,
             init_params,
             ir_data: ir_data_lock.clone(),
+            config,
         });
         ctx.send_json(json!(message));
     }
@@ -119,8 +129,11 @@ fn handle_ir_update(
     sample_rate: f32,
 ) -> anyhow::Result<()> {
     let convolvers = init_convolvers(ir_data, sample_rate, config)?;
+
     slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
+
     *params.ir_data.lock().unwrap() = Some(ir_data.clone());
+
     Ok(())
 }
 

@@ -28,6 +28,7 @@ pub struct InitResponse {
     pub param_map: Vec<String>,
     pub init_params: Vec<ParameterUpdate>,
     pub ir_data: Option<IrData>,
+    pub config: IRConfig,
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]

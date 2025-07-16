@@ -2,7 +2,7 @@ use fundsp::hacker::AudioUnit;
 use rubato::Resampler;
 
 use crate::{
-    config::IRConfig,
+    config::{IRConfig, DEFAULT_NORMALIZATION_LEVEL},
     dsp::{convolve::convolver, resample::init_resampler},
     editor::ipc::IrData,
     util::{decode_samples, rms_normalize},
@@ -27,8 +27,7 @@ fn init_ir(ir_data: &IrData, sample_rate: f32, config: &IRConfig) -> anyhow::Res
     };
 
     if config.normalize_irs {
-        // TODO: make this function support stereo without this bullshit
-        rms_normalize(&mut output, config.normalization_level);
+        rms_normalize(&mut output, DEFAULT_NORMALIZATION_LEVEL);
     }
 
     Ok(output)
