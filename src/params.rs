@@ -20,7 +20,8 @@ const DEFAULT_Q: f32 = 0.1;
 const MIN_Q: f32 = 0.1;
 const MAX_Q: f32 = 18.0;
 
-const SMOOTHER: SmoothingStyle = SmoothingStyle::Linear(0.5);
+const SMOOTHER: SmoothingStyle = SmoothingStyle::Linear(50.0);
+const GAIN_SMOOTHER: SmoothingStyle = SmoothingStyle::Logarithmic(50.0);
 
 const DEFAULT_WET_GAIN: f32 = -15.0;
 const DEFAULT_DRY_GAIN: f32 = -10.0;
@@ -106,7 +107,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
-            .with_smoother(SMOOTHER)
+            .with_smoother(GAIN_SMOOTHER)
             .with_callback(callback_handler.create_callback()), //0
 
             wet_gain: FloatParam::new(
@@ -121,7 +122,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
-            .with_smoother(SMOOTHER)
+            .with_smoother(GAIN_SMOOTHER)
             .with_callback(callback_handler.create_callback()), // 1
 
             lowpass_enabled: BoolParam::new("Lowpass Enabled", false)

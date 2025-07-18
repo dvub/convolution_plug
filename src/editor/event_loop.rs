@@ -59,7 +59,7 @@ pub fn build_event_loop(
 
                 // TODO refactor
                 Message::IrConfigUpdate(new_ir_config) => {
-                    println!("RECEIVING NEW UPDATE: {:?}", new_ir_config);
+                    println!("RECEIVING NEW CONFIG: {:?}", new_ir_config);
                     // if an IR is already loaded, then we should reload it
                     // but if NO IR is loaded, that's pointless
                     if let Some(current_ir_data) = &*params.ir_data.lock().unwrap() {
@@ -71,10 +71,7 @@ pub fn build_event_loop(
                             .unwrap()
                             .set(FADE_TYPE, FADE_TIME, convolvers);
                     }
-
-                    println!("oke");
                     *params.ir_config.lock().unwrap() = new_ir_config;
-                    println!("heya");
                 }
                 // we (the backend) should always be sending an init response, never receiving
                 Message::InitResponse(..) => todo!(),
