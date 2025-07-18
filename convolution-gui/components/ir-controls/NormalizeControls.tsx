@@ -16,22 +16,19 @@ export function NormalizeControls(props: {
 			setIrConfig(message.data.config);
 		}
 	});
-	const handleDisableClick = () => {
-		const newConfig: IRConfig = { ...irConfig!, normalizeIrs: false };
+
+	const handleSwitchClick = () => {
+		const newConfig: IRConfig = {
+			...irConfig!,
+			normalizeIrs: !irConfig.normalizeIrs,
+		};
 		setIrConfig(newConfig);
 		sendToPlugin({
 			type: 'irConfigUpdate',
 			data: newConfig,
 		});
 	};
-	const handleEnableClick = () => {
-		const newConfig: IRConfig = { ...irConfig!, normalizeIrs: true };
-		setIrConfig(newConfig);
-		sendToPlugin({
-			type: 'irConfigUpdate',
-			data: newConfig,
-		});
-	};
+
 	return (
 		<div className='flex w-full items-center justify-between'>
 			<h1 className='w-[33%] text-left'>Normalize</h1>
@@ -41,7 +38,7 @@ export function NormalizeControls(props: {
 					style={{
 						opacity: irConfig?.normalizeIrs ? '0.25' : '1',
 					}}
-					onClick={handleDisableClick}
+					onClick={handleSwitchClick}
 				>
 					Off
 				</button>
@@ -50,7 +47,7 @@ export function NormalizeControls(props: {
 					style={{
 						opacity: irConfig?.normalizeIrs ? '1' : '0.25',
 					}}
-					onClick={handleEnableClick}
+					onClick={handleSwitchClick}
 				>
 					RMS
 				</button>

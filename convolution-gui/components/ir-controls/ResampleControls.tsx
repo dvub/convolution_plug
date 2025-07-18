@@ -15,34 +15,19 @@ export function ResampleControls(props: {
 			setIrConfig(message.data.config);
 		}
 	});
-	/*
-	function handleUpdate() {
-		sendToPlugin({
-			type: 'irConfigUpdate',
-			data: {
-				normalizeIrs: false,
-				resample: true,
-				normalizationLevel: 0,
-			},
-		});
-	}
-		*/
-	const handleDisableClick = () => {
-		const newConfig = { ...irConfig!, resample: false };
+
+	const handleSwitchClick = () => {
+		const newConfig: IRConfig = {
+			...irConfig!,
+			resample: !irConfig.resample,
+		};
 		setIrConfig(newConfig);
 		sendToPlugin({
 			type: 'irConfigUpdate',
 			data: newConfig,
 		});
 	};
-	const handleEnableClick = () => {
-		const newConfig = { ...irConfig!, resample: true };
-		setIrConfig(newConfig);
-		sendToPlugin({
-			type: 'irConfigUpdate',
-			data: newConfig,
-		});
-	};
+
 	return (
 		<div className='flex w-full items-center justify-between'>
 			<h1 className='w-[33%] text-left'>Resample</h1>
@@ -52,7 +37,7 @@ export function ResampleControls(props: {
 					style={{
 						opacity: irConfig?.resample ? '0.25' : '1',
 					}}
-					onClick={handleDisableClick}
+					onClick={handleSwitchClick}
 				>
 					Off
 				</button>
@@ -61,7 +46,7 @@ export function ResampleControls(props: {
 					style={{
 						opacity: irConfig?.resample ? '1' : '0.25',
 					}}
-					onClick={handleEnableClick}
+					onClick={handleSwitchClick}
 				>
 					In. SR
 				</button>
