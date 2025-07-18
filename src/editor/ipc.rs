@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::config::IRConfig;
+use crate::config::IrConfig;
 
 // TODO: should structs have a new() method or not?
 // currently this is not consistent
@@ -16,7 +16,7 @@ pub enum Message {
     Init,
     ParameterUpdate(ParameterUpdate),
     IrUpdate(IrData),
-    IrConfigUpdate(IRConfig),
+    IrConfigUpdate(IrConfig),
     InitResponse(InitResponse),
 }
 
@@ -28,7 +28,7 @@ pub struct InitResponse {
     pub param_map: Vec<String>,
     pub init_params: Vec<ParameterUpdate>,
     pub ir_data: Option<IrData>,
-    pub config: IRConfig,
+    pub config: IrConfig,
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]

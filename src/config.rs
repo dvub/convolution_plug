@@ -8,17 +8,16 @@ pub const DEFAULT_NORMALIZATION_LEVEL: f32 = -46.0;
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "../convolution-gui/bindings/")]
 #[ts(export)]
-pub struct IRConfig {
-    pub normalize_irs: bool,
+pub struct IrConfig {
+    pub normalize: bool,
     pub resample: bool,
 }
 
 #[allow(clippy::derivable_impls)]
-impl Default for IRConfig {
+impl Default for IrConfig {
     fn default() -> Self {
         Self {
-            normalize_irs: false,
-
+            normalize: false,
             resample: false,
         }
     }

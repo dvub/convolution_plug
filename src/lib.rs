@@ -8,7 +8,7 @@ pub mod editor;
 mod util;
 
 use crate::{
-    config::IRConfig,
+    config::IrConfig,
     dsp::{build_graph, ir::init_convolvers},
     editor::{
         create_editor,
@@ -51,7 +51,7 @@ impl Default for ConvolutionPlug {
 }
 
 pub enum Task {
-    UpdateIrConfig(IRConfig),
+    UpdateIrConfig(IrConfig),
     UpdateIr(IrData),
 }
 

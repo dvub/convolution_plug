@@ -13,14 +13,14 @@ use std::sync::Arc;
 use param_nodes::*;
 
 use crate::{
-    config::IRConfig,
+    config::IrConfig,
     dsp::{ir::init_convolvers, switched::switched_node},
     params::PluginParams,
 };
 
 pub fn build_graph(
     params: &Arc<PluginParams>,
-    config: &IRConfig,
+    config: &IrConfig,
     sample_rate: f32,
 ) -> anyhow::Result<(Box<dyn AudioUnit>, Slot)> {
     // 1. determine if and from where we should load an IR

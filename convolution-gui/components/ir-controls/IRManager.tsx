@@ -8,13 +8,13 @@ import { IRInput } from './IRInput';
 import { useRef, useState } from 'react';
 import { NormalizeControls } from './NormalizeControls';
 import { ResampleControls } from './ResampleControls';
-import { IRConfig } from '@/bindings/IRConfig';
+import { IrConfig } from '@/bindings/IrConfig';
 export function IRManager() {
 	const containerRef = useRef(null);
 	const waveSurferRef = useWaveform(containerRef);
 
 	const [irData, setIrData] = useState<IrData | undefined>();
-	const [irConfig, setIrConfig] = useState<IRConfig | undefined>();
+	const [irConfig, setIrConfig] = useState<IrConfig | undefined>();
 	useMessageSubscriber((message: Message) => {
 		if (message.type !== 'initResponse') {
 			return;

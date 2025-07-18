@@ -1,4 +1,4 @@
-import { IRConfig } from '@/bindings/IRConfig';
+import { IrConfig } from '@/bindings/IrConfig';
 import { Message } from '@/bindings/Message';
 import { useMessageSubscriber } from '@/hooks/useMessageSubscriber';
 import { sendToPlugin } from '@/lib';
@@ -6,8 +6,8 @@ import { Dispatch, SetStateAction } from 'react';
 
 // TODO: refactor into specific numeric input component
 export function NormalizeControls(props: {
-	irConfig: IRConfig;
-	setIrConfig: Dispatch<SetStateAction<IRConfig | undefined>>;
+	irConfig: IrConfig;
+	setIrConfig: Dispatch<SetStateAction<IrConfig | undefined>>;
 }) {
 	const { irConfig, setIrConfig } = props;
 
@@ -18,9 +18,9 @@ export function NormalizeControls(props: {
 	});
 
 	const handleSwitchClick = () => {
-		const newConfig: IRConfig = {
+		const newConfig: IrConfig = {
 			...irConfig!,
-			normalizeIrs: !irConfig.normalizeIrs,
+			normalize: !irConfig.normalize,
 		};
 		setIrConfig(newConfig);
 		sendToPlugin({
@@ -36,7 +36,7 @@ export function NormalizeControls(props: {
 				<button
 					className='w-[50%] rounded-l-sm py-1 bg-zinc-900'
 					style={{
-						opacity: irConfig?.normalizeIrs ? '0.25' : '1',
+						opacity: irConfig?.normalize ? '0.25' : '1',
 					}}
 					onClick={handleSwitchClick}
 				>
@@ -45,7 +45,7 @@ export function NormalizeControls(props: {
 				<button
 					className='w-[50%] rounded-r-sm py-1 bg-zinc-900'
 					style={{
-						opacity: irConfig?.normalizeIrs ? '1' : '0.25',
+						opacity: irConfig?.normalize ? '1' : '0.25',
 					}}
 					onClick={handleSwitchClick}
 				>

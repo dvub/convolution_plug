@@ -1,12 +1,12 @@
-import { IRConfig } from '@/bindings/IRConfig';
+import { IrConfig } from '@/bindings/IrConfig';
 import { Message } from '@/bindings/Message';
 import { useMessageSubscriber } from '@/hooks/useMessageSubscriber';
 import { sendToPlugin } from '@/lib';
 import { Dispatch, SetStateAction } from 'react';
 
 export function ResampleControls(props: {
-	irConfig: IRConfig;
-	setIrConfig: Dispatch<SetStateAction<IRConfig | undefined>>;
+	irConfig: IrConfig;
+	setIrConfig: Dispatch<SetStateAction<IrConfig | undefined>>;
 }) {
 	const { irConfig, setIrConfig } = props;
 
@@ -17,7 +17,7 @@ export function ResampleControls(props: {
 	});
 
 	const handleSwitchClick = () => {
-		const newConfig: IRConfig = {
+		const newConfig: IrConfig = {
 			...irConfig!,
 			resample: !irConfig.resample,
 		};

@@ -2,14 +2,14 @@ use fundsp::hacker::AudioUnit;
 use rubato::Resampler;
 
 use crate::{
-    config::{IRConfig, DEFAULT_NORMALIZATION_LEVEL},
+    config::{IrConfig, DEFAULT_NORMALIZATION_LEVEL},
     dsp::{convolve::convolver, resample::init_resampler},
     editor::ipc::IrData,
     util::{decode_samples, rms_normalize},
 };
 
 // TODO: maybe use a more generic return type?
-fn init_ir(ir_data: &IrData, sample_rate: f32, config: &IRConfig) -> anyhow::Result<Vec<Vec<f32>>> {
+fn init_ir(ir_data: &IrData, sample_rate: f32, config: &IrConfig) -> anyhow::Result<Vec<Vec<f32>>> {
     let (decoded_channels, ir_sample_rate) = decode_samples(&ir_data.raw_bytes)?;
 
     let mut output = if config.resample && sample_rate > ir_sample_rate {
@@ -26,7 +26,7 @@ fn init_ir(ir_data: &IrData, sample_rate: f32, config: &IRConfig) -> anyhow::Res
         decoded_channels
     };
 
-    if config.normalize_irs {
+    if config.normalize {
         rms_normalize(&mut output, DEFAULT_NORMALIZATION_LEVEL);
     }
 
@@ -37,7 +37,7 @@ fn init_ir(ir_data: &IrData, sample_rate: f32, config: &IRConfig) -> anyhow::Res
 pub fn init_convolvers(
     ir_data: &IrData,
     sample_rate: f32,
-    config: &IRConfig,
+    config: &IrConfig,
 ) -> anyhow::Result<Box<dyn AudioUnit>> {
     let ir_samples = init_ir(ir_data, sample_rate, config)?;
 
