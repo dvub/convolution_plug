@@ -1,15 +1,19 @@
 mod bundled;
-mod event_loop;
+pub mod event_loop;
 pub mod ipc;
 
 use crate::ConvolutionPlug;
 use event_loop::build_event_loop;
 
+use nih_plug::prelude::AsyncExecutor;
 use nih_plug_webview::{HTMLSource, WebViewEditor};
 
 pub const EDITOR_SIZE: (u32, u32) = (600, 600);
 
-pub fn create_editor(plugin: &ConvolutionPlug) -> WebViewEditor {
+pub fn create_editor(
+    plugin: &ConvolutionPlug,
+    async_executor: AsyncExecutor<ConvolutionPlug>,
+) -> WebViewEditor {
     let params = plugin.params.clone();
 
     let dev_src = HTMLSource::URL("http://localhost:3000".to_owned());
@@ -23,5 +27,5 @@ pub fn create_editor(plugin: &ConvolutionPlug) -> WebViewEditor {
     #[cfg(not(debug_assertions))]
     bundled::create_bundled_editor(&mut editor, &params);
 
-    editor.with_event_loop(build_event_loop(plugin))
+    editor.with_event_loop(build_event_loop(plugin, async_executor))
 }

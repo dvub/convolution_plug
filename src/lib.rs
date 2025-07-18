@@ -7,7 +7,15 @@ mod config;
 pub mod editor;
 mod util;
 
-use crate::{dsp::build_graph, editor::create_editor};
+use crate::{
+    config::IRConfig,
+    dsp::{build_graph, ir::init_convolvers},
+    editor::{
+        create_editor,
+        event_loop::{FADE_TIME, FADE_TYPE},
+        ipc::{IrData, Message},
+    },
+};
 
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
@@ -40,6 +48,11 @@ impl Default for ConvolutionPlug {
             buffers: Vec::new(),
         }
     }
+}
+
+pub enum Task {
+    UpdateIrConfig(IRConfig),
+    UpdateIr(IrData),
 }
 
 impl Plugin for ConvolutionPlug {
@@ -75,7 +88,36 @@ impl Plugin for ConvolutionPlug {
     // More advanced plugins can use this to run expensive background tasks. See the field's
     // documentation for more information. `()` means that the plugin does not have any background
     // tasks.
-    type BackgroundTask = ();
+    type BackgroundTask = Task;
+
+    fn task_executor(&mut self) -> TaskExecutor<Self> {
+        let params = self.params.clone();
+        let slot = self.slot.clone();
+        let sample_rate = self.sample_rate;
+
+        // TODO: refactor
+        Box::new(move |task| match task {
+            Task::UpdateIrConfig(new_ir_config) => {
+                println!("Receiving new IR config: {new_ir_config:?}");
+
+                if let Some(current_ir_data) = &*params.ir_data.lock().unwrap() {
+                    // TODO: fix this unwrap
+                    let convolvers =
+                        init_convolvers(current_ir_data, sample_rate, &new_ir_config).unwrap();
+                    slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
+                }
+                *params.ir_config.lock().unwrap() = new_ir_config;
+            }
+            Task::UpdateIr(new_ir_data) => {
+                let config = params.ir_config.lock().unwrap();
+
+                let convolvers = init_convolvers(&new_ir_data, sample_rate, &config).unwrap();
+                slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
+
+                *params.ir_data.lock().unwrap() = Some(new_ir_data);
+            }
+        })
+    }
 
     fn params(&self) -> Arc<dyn Params> {
         self.params.clone()
@@ -114,8 +156,8 @@ impl Plugin for ConvolutionPlug {
         // allocate. You can remove this function if you do not need it.
     }
 
-    fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        Some(Box::new(create_editor(self)))
+    fn editor(&mut self, async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
+        Some(Box::new(create_editor(self, async_executor)))
     }
 
     fn process(
