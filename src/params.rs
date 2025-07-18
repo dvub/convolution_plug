@@ -38,6 +38,9 @@ pub struct PluginParams {
     #[persist = "ir_data"]
     pub ir_data: Mutex<Option<IrData>>,
 
+    // TODO: make the IR samples persistent
+    // that means we don't have to do decoding as often
+
     // --- actual param stuff ---
     #[id = "dry_gain"]
     pub dry_gain: FloatParam,

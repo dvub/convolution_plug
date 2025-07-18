@@ -58,6 +58,8 @@ impl ParameterUpdate {
     }
 }
 
+// TODO: get rid of this and just hold on to the raw bytes for metadata?
+
 #[derive(Serialize, Deserialize, TS, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "../convolution-gui/bindings/")]
