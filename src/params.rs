@@ -38,8 +38,8 @@ pub struct PluginParams {
     #[persist = "ir_data"]
     pub ir_data: Mutex<Option<IrData>>,
 
-    // TODO: make the IR samples persistent
-    // that means we don't have to do decoding as often
+    #[persist = "ir_samples"]
+    pub ir_samples: Mutex<(Vec<Vec<f32>>, f32)>,
 
     // --- actual param stuff ---
     #[id = "dry_gain"]
@@ -237,6 +237,7 @@ impl Default for PluginParams {
             // persistent
             ir_data: Mutex::new(None),
             ir_config: Mutex::new(IrConfig::default()),
+            ir_samples: Mutex::new((Vec::new(), 0.0)),
         }
     }
 }

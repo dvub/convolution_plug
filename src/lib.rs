@@ -9,16 +9,20 @@ mod util;
 
 use crate::{
     config::IrConfig,
-    dsp::{build_graph, ir::init_convolvers},
+    dsp::{
+        build_graph,
+        ir::{init_convolvers, init_ir, process_ir},
+    },
     editor::{
         create_editor,
         event_loop::{FADE_TIME, FADE_TYPE},
         ipc::{IrData, Message},
     },
+    util::decode_samples,
 };
 
 use fundsp::hacker32::*;
-use nih_plug::prelude::*;
+use nih_plug::{context::process, prelude::*};
 
 use params::PluginParams;
 use std::sync::{Arc, Mutex};
@@ -96,25 +100,39 @@ impl Plugin for ConvolutionPlug {
         let sample_rate = self.sample_rate;
 
         // TODO: refactor
+        // TODO: fix an ungodly amount of unwrawps
         Box::new(move |task| match task {
             Task::UpdateIrConfig(new_ir_config) => {
                 println!("Receiving new IR config: {new_ir_config:?}");
 
-                if let Some(current_ir_data) = &*params.ir_data.lock().unwrap() {
-                    // TODO: fix this unwrap
-                    let convolvers =
-                        init_convolvers(current_ir_data, sample_rate, &new_ir_config).unwrap();
+                // if IR is already loaded
+                let ir_samples = params.ir_samples.lock().unwrap();
+
+                if !ir_samples.is_empty() {
+                    process_ir(
+                        ir_samples,
+                        ir_sample_rate,
+                        sample_rate,
+                        params.ir_config.lock().unwrap(),
+                    );
+                    let convolvers = init_convolvers(&*ir_samples).unwrap();
                     slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
                 }
+
                 *params.ir_config.lock().unwrap() = new_ir_config;
             }
-            Task::UpdateIr(new_ir_data) => {
+            Task::UpdateIr(ir_data) => {
                 let config = params.ir_config.lock().unwrap();
 
-                let convolvers = init_convolvers(&new_ir_data, sample_rate, &config).unwrap();
-                slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
+                let (ir_samples, ir_sample_rate) = decode_samples(&ir_data.raw_bytes).unwrap();
+                // IMMPORTANT THAT IT GOES HERE
+                *params.ir_samples.lock().unwrap() = (ir_samples, ir_sample_rate);
 
-                *params.ir_data.lock().unwrap() = Some(new_ir_data);
+                process_ir(&mut ir_samples, ir_sample_rate, sample_rate, &config);
+                let convolvers = init_convolvers(&ir_samples).unwrap();
+
+                slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
+                *params.ir_data.lock().unwrap() = Some(ir_data);
             }
         })
     }
