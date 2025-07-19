@@ -30,7 +30,7 @@ pub fn build_graph(
 
     let slot_element: Box<dyn AudioUnit> = if !ir_samples.is_empty() {
         let processed_ir = process_ir(ir_samples, *ir_sample_rate, sample_rate, config)?;
-        init_convolvers(&processed_ir)?
+        init_convolvers(&processed_ir)
     } else {
         Box::new(multipass::<U2>() * 0.0)
     };

@@ -34,11 +34,11 @@ pub fn process_ir(
     Ok(out)
 }
 
-pub fn init_convolvers(ir_samples: &[Vec<f32>]) -> anyhow::Result<Box<dyn AudioUnit>> {
+pub fn init_convolvers(ir_samples: &[Vec<f32>]) -> Box<dyn AudioUnit> {
     // TODO: is there a better way?
-    Ok(match ir_samples {
+    match ir_samples {
         [mono] => Box::new(convolver(mono) | convolver(mono)),
         [left, right] => Box::new(convolver(left) | convolver(right)),
         _ => todo!(),
-    })
+    }
 }

@@ -43,17 +43,16 @@ pub fn decode_samples(bytes: &[u8]) -> anyhow::Result<(Vec<Vec<f32>>, f32)> {
     Ok((samples, sample_rate))
 }
 
-// TODO: switch to something else (LUFS, maybe)
+// TODO: provide option for other normalization, e.g. LUFS
+
 // https://hackaudio.com/tutorial-courses/learn-audio-programming-table-of-contents/digital-signal-processing/amplitude/rms-normalization/
 
-// TODO: input_signal should maybe have a better/more generic type
 pub fn rms_normalize(input_signal: &mut [Vec<f32>], desired_level_db: f32) {
+    let desired_level_gain = db_to_gain(desired_level_db);
     input_signal.iter_mut().for_each(|channel| {
         let channel_len = channel.len() as f32;
-        let desired_level_gain = db_to_gain(desired_level_db);
 
         let squared_sum = channel.iter().map(|x| x * x).sum::<f32>();
-
         let amplitude = ((channel_len * desired_level_gain.powi(2)) / squared_sum).sqrt();
         println!("Normalizing by factor: {amplitude}");
 

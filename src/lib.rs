@@ -111,7 +111,7 @@ impl Plugin for ConvolutionPlug {
                         process_ir(ir_samples, *ir_sample_rate, sample_rate, &new_ir_config)
                             .unwrap();
 
-                    let convolvers = init_convolvers(&processed_ir).unwrap();
+                    let convolvers = init_convolvers(&processed_ir);
 
                     slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
                 }
@@ -128,7 +128,7 @@ impl Plugin for ConvolutionPlug {
 
                 let processed_ir =
                     process_ir(&ir_samples, ir_sample_rate, sample_rate, &config).unwrap();
-                let convolvers = init_convolvers(&processed_ir).unwrap();
+                let convolvers = init_convolvers(&processed_ir);
 
                 slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
                 *params.ir_data.lock().unwrap() = Some(ir_data);
