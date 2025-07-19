@@ -14,23 +14,29 @@ use param_nodes::*;
 
 use crate::{
     config::IrConfig,
-    dsp::{ir::init_convolvers, switched::switched_node},
+    dsp::{
+        ir::{init_convolvers, process_ir},
+        switched::switched_node,
+    },
     params::PluginParams,
 };
 
 pub fn build_graph(
     params: &Arc<PluginParams>,
-    config: &IrConfig,
     sample_rate: f32,
+    config: &IrConfig,
 ) -> anyhow::Result<(Box<dyn AudioUnit>, Slot)> {
-    // 1. determine if and from where we should load an IR
-    let mut ir_data = params.ir_data.lock().unwrap();
-    let slot_element: Box<dyn AudioUnit> = match &mut *ir_data {
-        // if an IR was previously loaded, we detect that here and use it again
-        Some(ir_data) => init_convolvers(ir_data, sample_rate, config)?,
-        None => Box::new(multipass::<U2>() * 0.0),
+    let (ir_samples, ir_sample_rate) = &*params.ir_samples.lock().unwrap();
+
+    let slot_element: Box<dyn AudioUnit> = if !ir_samples.is_empty() {
+        let processed_ir = process_ir(ir_samples, *ir_sample_rate, sample_rate, config)?;
+        init_convolvers(&processed_ir)?
+    } else {
+        Box::new(multipass::<U2>() * 0.0)
     };
     // we want to update the IR/convolver dynamically, so we put it in a Slot
+    // ACTUAL GRAPH
+
     let convolver_slot = Slot::new(slot_element);
     let slot_frontend = convolver_slot.0;
     let slot_backend = convolver_slot.1;

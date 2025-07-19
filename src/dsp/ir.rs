@@ -8,12 +8,12 @@ use crate::{
 };
 
 pub fn process_ir(
-    ir_samples: &mut Vec<Vec<f32>>,
+    ir_samples: &[Vec<f32>],
     ir_sample_rate: f32,
     sample_rate: f32,
     config: &IrConfig,
-) -> anyhow::Result<()> {
-    if config.resample && sample_rate > ir_sample_rate {
+) -> anyhow::Result<Vec<Vec<f32>>> {
+    let mut out = if config.resample && sample_rate > ir_sample_rate {
         let mut resampler = init_resampler(
             // TODO: problem?
             ir_samples.len(),
@@ -21,20 +21,22 @@ pub fn process_ir(
             ir_sample_rate as f64,
             sample_rate as f64,
         )?;
-        *ir_samples = resampler.process(&ir_samples, None)?
+        resampler.process(ir_samples, None)?
+    } else {
+        // TODO: to_vec
+        ir_samples.to_vec()
     };
 
     if config.normalize {
-        rms_normalize(ir_samples, DEFAULT_NORMALIZATION_LEVEL);
+        rms_normalize(&mut out, DEFAULT_NORMALIZATION_LEVEL);
     }
 
-    Ok(())
+    Ok(out)
 }
 
-// TODO: this might not be the best place for this function
-pub fn init_convolvers(ir_samples: &Vec<Vec<f32>>) -> anyhow::Result<Box<dyn AudioUnit>> {
-    // TODO: probably refactor this
-    Ok(match ir_samples.as_slice() {
+pub fn init_convolvers(ir_samples: &[Vec<f32>]) -> anyhow::Result<Box<dyn AudioUnit>> {
+    // TODO: is there a better way?
+    Ok(match ir_samples {
         [mono] => Box::new(convolver(mono) | convolver(mono)),
         [left, right] => Box::new(convolver(left) | convolver(right)),
         _ => todo!(),
