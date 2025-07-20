@@ -3,8 +3,6 @@ use ts_rs::TS;
 
 use crate::config::IrConfig;
 
-// TODO: create new() for these structs
-
 // NOTE: im not exactly sure why, but if we use
 // #[ts(export, rename_all = ...)]
 // instead of serde, things do not work
@@ -34,27 +32,11 @@ pub struct InitResponse {
 #[derive(Serialize, Deserialize, TS, Debug)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
-pub enum KnobGesture {
-    StartDrag,
-    StopDrag,
-}
-
-#[derive(Serialize, Deserialize, TS, Debug)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
 pub struct ParameterUpdate {
     pub parameter_index: usize,
     pub value: f32,
 }
 
-impl ParameterUpdate {
-    pub fn new(parameter_index: usize, value: f32) -> Self {
-        Self {
-            parameter_index,
-            value,
-        }
-    }
-}
 #[derive(Serialize, Deserialize, TS, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]

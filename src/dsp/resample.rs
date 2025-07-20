@@ -6,7 +6,7 @@ pub fn init_resampler(
     ir_sample_rate: f64,
     desired_sample_rate: f64,
 ) -> anyhow::Result<SincFixedIn<f32>> {
-    // TODO: maybe make more of these parameters consts?
+    // maybe make more of these parameters consts?
     // might make code more readable, not sure
     let resampling_params = SincInterpolationParameters {
         sinc_len: 384,

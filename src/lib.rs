@@ -1,5 +1,6 @@
-// #![warn(clippy::unwrap_used)]
-// #![warn(clippy::expect_used)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::complexity)]
+#![warn(clippy::style)]
 pub mod dsp;
 pub mod params;
 

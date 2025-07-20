@@ -29,29 +29,32 @@ pub fn build_event_loop(
             let message = serde_json::from_value::<Message>(json_message)
                 .expect("Error reading message from GUI");
             match message {
-                // TODO: do we need to handle init/parameter updates with task executor?
+                // right now i don't think these should be handled by the task executor
                 Message::Init => handle_init(ctx, &params),
                 Message::ParameterUpdate(update) => unsafe {
                     handle_parameter_update(&update, &setter, &param_map);
                 },
 
+                // these are more expensive, so we want to use the executor
                 Message::IrUpdate(ir_data) => async_executor.execute_gui(Task::UpdateIr(ir_data)),
-
                 Message::IrConfigUpdate(ir_config) => {
                     async_executor.execute_gui(Task::UpdateIrConfig(ir_config));
                 }
 
                 // we (the backend) should always be sending an init response, never receiving
-                Message::InitResponse(..) => todo!(),
+                Message::InitResponse(..) => println!(
+                    "WARNING: received an InitResponse on the GUI thread. This will be discarded. "
+                ),
             }
         }
+
         // BACKEND -> GUI
         for param_index in param_update_rx.try_iter().unique() {
             unsafe {
-                let message = Message::ParameterUpdate(ParameterUpdate::new(
-                    param_index,
-                    param_map[param_index].1.unmodulated_normalized_value(),
-                ));
+                let message = Message::ParameterUpdate(ParameterUpdate {
+                    parameter_index: param_index,
+                    value: param_map[param_index].1.unmodulated_normalized_value(),
+                });
                 ctx.send_json(json!(message));
             }
         }
@@ -61,9 +64,8 @@ pub fn build_event_loop(
 fn handle_init(ctx: &WindowHandler, params: &Arc<PluginParams>) {
     let param_map = params.param_map();
 
-    let minimized_map: Vec<_> = param_map.iter().map(|(id, _, _)| id.clone()).collect();
+    let map_copy: Vec<_> = param_map.iter().map(|(id, _, _)| id.clone()).collect();
 
-    // TODO: is there something to be done about clone()?
     let config = params.ir_config.lock().unwrap().clone();
 
     let ir_data_lock = params.ir_data.lock().unwrap();
@@ -73,11 +75,14 @@ fn handle_init(ctx: &WindowHandler, params: &Arc<PluginParams>) {
         let init_params: Vec<_> = param_map
             .iter()
             .enumerate()
-            .map(|(i, (_, ptr, _))| ParameterUpdate::new(i, ptr.modulated_normalized_value()))
+            .map(|(i, (_, ptr, _))| ParameterUpdate {
+                parameter_index: i,
+                value: ptr.modulated_normalized_value(),
+            })
             .collect();
 
         let message = Message::InitResponse(InitResponse {
-            param_map: minimized_map,
+            param_map: map_copy,
             init_params,
             ir_data: ir_data_lock.clone(),
             config,
