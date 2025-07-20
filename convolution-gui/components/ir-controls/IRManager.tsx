@@ -9,51 +9,86 @@ import { useRef, useState } from 'react';
 import { NormalizeControls } from './NormalizeControls';
 import { ResampleControls } from './ResampleControls';
 import { IrConfig } from '@/bindings/IrConfig';
+import { parseBuffer } from 'music-metadata';
+import { sendToPlugin } from '@/lib';
+import { IrInfoDisplay } from './IrInfoDisplay';
+
 export function IRManager() {
 	const containerRef = useRef(null);
 	const waveSurferRef = useWaveform(containerRef);
 
 	const [irData, setIrData] = useState<IrData | undefined>();
 	const [irConfig, setIrConfig] = useState<IrConfig | undefined>();
+
 	useMessageSubscriber((message: Message) => {
 		if (message.type !== 'initResponse') {
 			return;
 		}
+
 		if (message.data.irData) {
 			setIrData(message.data.irData);
 		}
 	});
 
-	// TODO: probably want to refactor this
-	const IrInfoDisplay = (
-		<>
-			<h1 className='text-sm'>
-				{/* https://stackoverflow.com/questions/1199352/smart-way-to-truncate-long-strings*/}
-				{irData?.name.replace(/(.{20})..+/, '$1…')}
-			</h1>
-			<p className='text-xs'>
-				Length: {irData?.lengthSeconds.toFixed(3)}s
-				<br />
-				{irData?.numChannels} Channels
-				<br />
-				{irData?.sampleRate} Hz
-				<br />
-			</p>
-		</>
-	);
-	const defaultIrDisplay = <h1>No IR Loaded.</h1>;
+	function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+		e.preventDefault();
+	}
+	function handleFileDrop(event: React.DragEvent<HTMLDivElement>) {
+		event.preventDefault();
+		if (!event.dataTransfer || event.dataTransfer.files.length === 0) {
+			return;
+		}
+		setIrFromFile(event.dataTransfer.files[0]);
+	}
+
+	// refactoring to this function lets us share behavior
+	// between the button and the element which handles drag/drop
+
+	// TODO: might want to work on nesting issues here
+	function setIrFromFile(file: File) {
+		const fileName = file.name;
+
+		const reader = new FileReader();
+		reader.onload = () => {
+			const arrayBuffer = reader.result as ArrayBuffer;
+			const bytes = new Uint8Array(arrayBuffer);
+			parseBuffer(bytes).then((metadata) => {
+				const formatInfo = metadata.format;
+
+				const irData: IrData = {
+					name: fileName,
+					rawBytes: [...bytes],
+					// TODO: handle if these are undefined...?!
+					lengthSeconds: formatInfo.duration!,
+					numChannels: formatInfo.numberOfChannels!,
+					sampleRate: formatInfo.sampleRate!,
+				};
+				setIrData(irData);
+				sendToPlugin({
+					type: 'irUpdate',
+					data: irData,
+				});
+			});
+		};
+		reader.readAsArrayBuffer(file);
+		// finally, visualization
+		waveSurferRef.current?.loadBlob(file);
+	}
 
 	return (
-		<div className='w-full h-[35vh] flex gap-1'>
+		<div
+			className='w-full h-[35vh] flex gap-1'
+			onDrop={handleFileDrop}
+			onDragOver={handleDragOver}
+		>
 			<div
 				ref={containerRef}
 				className='w-[50%] h-full rounded-sm secondary'
 			/>
 
 			<div className='w-[50%] flex flex-col gap-1'>
-				<div className='secondary rounded-sm p-1'>
-					{irData ? IrInfoDisplay : defaultIrDisplay}
-				</div>
+				<IrInfoDisplay irData={irData} />
+
 				<div className='h-full secondary rounded-sm p-1 text-xs flex flex-col justify-between text-center'>
 					<div className='flex flex-col gap-1'>
 						<NormalizeControls
@@ -65,10 +100,7 @@ export function IRManager() {
 							setIrConfig={setIrConfig}
 						/>
 					</div>
-					<IRInput
-						waveSurferRef={waveSurferRef}
-						setFileInfo={setIrData}
-					/>
+					<IRInput setIrFromFile={setIrFromFile} />
 				</div>
 			</div>
 		</div>
