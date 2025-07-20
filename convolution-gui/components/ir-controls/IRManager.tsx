@@ -9,7 +9,6 @@ import { useRef, useState } from 'react';
 import { NormalizeControls } from './NormalizeControls';
 import { ResampleControls } from './ResampleControls';
 import { IrConfig } from '@/bindings/IrConfig';
-import { parseBuffer } from 'music-metadata';
 import { sendToPlugin } from '@/lib';
 import { IrInfoDisplay } from './IrInfoDisplay';
 
@@ -52,22 +51,15 @@ export function IRManager() {
 		reader.onload = () => {
 			const arrayBuffer = reader.result as ArrayBuffer;
 			const bytes = new Uint8Array(arrayBuffer);
-			parseBuffer(bytes).then((metadata) => {
-				const formatInfo = metadata.format;
 
-				const irData: IrData = {
-					name: fileName,
-					rawBytes: [...bytes],
-					// TODO: handle if these are undefined...?!
-					lengthSeconds: formatInfo.duration!,
-					numChannels: formatInfo.numberOfChannels!,
-					sampleRate: formatInfo.sampleRate!,
-				};
-				setIrData(irData);
-				sendToPlugin({
-					type: 'irUpdate',
-					data: irData,
-				});
+			const irData: IrData = {
+				name: fileName,
+				rawBytes: [...bytes],
+			};
+			setIrData(irData);
+			sendToPlugin({
+				type: 'irUpdate',
+				data: irData,
 			});
 		};
 		reader.readAsArrayBuffer(file);

@@ -35,7 +35,7 @@ pub fn process_ir(
 }
 
 pub fn init_convolvers(ir_samples: &[Vec<f32>]) -> Box<dyn AudioUnit> {
-    // TODO: is there a better way?
+    // is there a better way?
     match ir_samples {
         [mono] => Box::new(convolver(mono) | convolver(mono)),
         [left, right] => Box::new(convolver(left) | convolver(right)),

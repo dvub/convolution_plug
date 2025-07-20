@@ -3,6 +3,13 @@ use ts_rs::TS;
 
 use crate::config::IrConfig;
 
+// TODO: create new() for these structs
+
+// NOTE: im not exactly sure why, but if we use
+// #[ts(export, rename_all = ...)]
+// instead of serde, things do not work
+
+// unfortunately this prevents a lot of this code from looking cleaner
 #[derive(Serialize, Deserialize, TS, Debug)]
 #[serde(rename_all = "camelCase", tag = "type", content = "data")]
 #[ts(export)]
@@ -48,16 +55,10 @@ impl ParameterUpdate {
         }
     }
 }
-
-// TODO: get rid of this and just hold on to the raw bytes for metadata?
-
 #[derive(Serialize, Deserialize, TS, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct IrData {
     pub name: String,
     pub raw_bytes: Vec<u8>,
-    pub length_seconds: f32,
-    pub num_channels: u16,
-    pub sample_rate: f32,
 }
