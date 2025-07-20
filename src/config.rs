@@ -5,7 +5,8 @@ use ts_rs::TS;
 pub const DEFAULT_NORMALIZATION_LEVEL: f32 = -46.0;
 
 #[derive(Serialize, Deserialize, Clone, TS, Debug)]
-#[ts(export, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct IrConfig {
     pub normalize: bool,
     pub resample: bool,

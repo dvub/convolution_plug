@@ -4,7 +4,8 @@ use ts_rs::TS;
 use crate::config::IrConfig;
 
 #[derive(Serialize, Deserialize, TS, Debug)]
-#[ts(export, rename_all = "camelCase", tag = "type", content = "data")]
+#[serde(rename_all = "camelCase", tag = "type", content = "data")]
+#[ts(export)]
 pub enum Message {
     Init,
     ParameterUpdate(ParameterUpdate),
@@ -14,7 +15,8 @@ pub enum Message {
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]
-#[ts(export, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct InitResponse {
     pub param_map: Vec<String>,
     pub init_params: Vec<ParameterUpdate>,
@@ -23,14 +25,16 @@ pub struct InitResponse {
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]
-#[ts(export, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub enum KnobGesture {
     StartDrag,
     StopDrag,
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]
-#[ts(export, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct ParameterUpdate {
     pub parameter_index: usize,
     pub value: f32,
@@ -48,7 +52,8 @@ impl ParameterUpdate {
 // TODO: get rid of this and just hold on to the raw bytes for metadata?
 
 #[derive(Serialize, Deserialize, TS, Debug, Clone)]
-#[ts(export, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct IrData {
     pub name: String,
     pub raw_bytes: Vec<u8>,
