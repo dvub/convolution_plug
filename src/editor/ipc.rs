@@ -3,15 +3,8 @@ use ts_rs::TS;
 
 use crate::config::IrConfig;
 
-// TODO: should structs have a new() method or not?
-// currently this is not consistent
-
-// TODO: create specific GUI -> backend enum
-
 #[derive(Serialize, Deserialize, TS, Debug)]
-#[serde(rename_all = "camelCase", tag = "type", content = "data")]
-#[ts(export_to = "../convolution-gui/bindings/")]
-#[ts(export)]
+#[ts(export, rename_all = "camelCase", tag = "type", content = "data")]
 pub enum Message {
     Init,
     ParameterUpdate(ParameterUpdate),
@@ -21,9 +14,7 @@ pub enum Message {
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "../convolution-gui/bindings/")]
-#[ts(export)]
+#[ts(export, rename_all = "camelCase")]
 pub struct InitResponse {
     pub param_map: Vec<String>,
     pub init_params: Vec<ParameterUpdate>,
@@ -32,18 +23,14 @@ pub struct InitResponse {
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "../convolution-gui/bindings/")]
-#[ts(export)]
+#[ts(export, rename_all = "camelCase")]
 pub enum KnobGesture {
     StartDrag,
     StopDrag,
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "../convolution-gui/bindings/")]
-#[ts(export)]
+#[ts(export, rename_all = "camelCase")]
 pub struct ParameterUpdate {
     pub parameter_index: usize,
     pub value: f32,
@@ -61,9 +48,7 @@ impl ParameterUpdate {
 // TODO: get rid of this and just hold on to the raw bytes for metadata?
 
 #[derive(Serialize, Deserialize, TS, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "../convolution-gui/bindings/")]
-#[ts(export)]
+#[ts(export, rename_all = "camelCase")]
 pub struct IrData {
     pub name: String,
     pub raw_bytes: Vec<u8>,

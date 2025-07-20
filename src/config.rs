@@ -5,9 +5,7 @@ use ts_rs::TS;
 pub const DEFAULT_NORMALIZATION_LEVEL: f32 = -46.0;
 
 #[derive(Serialize, Deserialize, Clone, TS, Debug)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "../convolution-gui/bindings/")]
-#[ts(export)]
+#[ts(export, rename_all = "camelCase")]
 pub struct IrConfig {
     pub normalize: bool,
     pub resample: bool,
