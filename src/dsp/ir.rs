@@ -18,8 +18,8 @@ pub fn process_ir(
             // TODO: problem?
             ir_samples.len(),
             ir_samples[0].len(),
-            ir_sample_rate as f64,
-            sample_rate as f64,
+            ir_sample_rate.into(),
+            sample_rate.into(),
         )?;
         resampler.process(ir_samples, None)?
     } else {

@@ -102,10 +102,10 @@ mod tests {
 
     #[test]
     fn multi_channel() {
+        type NumChannels = U5;
+
         let control = 0.5;
         let expected = 0.0;
-
-        type NumChannels = U5;
 
         let mut graph = (stacki::<NumChannels, _, _>(|_| dc(1.0)) | dc(control))
             >> switched_node(multipass::<NumChannels>() * expected, |x| x == control);

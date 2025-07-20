@@ -28,11 +28,11 @@ pub fn build_graph(
 ) -> anyhow::Result<(Box<dyn AudioUnit>, Slot)> {
     let (ir_samples, ir_sample_rate) = &*params.ir_samples.lock().unwrap();
 
-    let slot_element: Box<dyn AudioUnit> = if !ir_samples.is_empty() {
+    let slot_element: Box<dyn AudioUnit> = if ir_samples.is_empty() {
+        Box::new(multipass::<U2>() * 0.0)
+    } else {
         let processed_ir = process_ir(ir_samples, *ir_sample_rate, sample_rate, config)?;
         init_convolvers(&processed_ir)
-    } else {
-        Box::new(multipass::<U2>() * 0.0)
     };
     // we want to update the IR/convolver dynamically, so we put it in a Slot
     // ACTUAL GRAPH
