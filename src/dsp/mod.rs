@@ -5,26 +5,21 @@ pub mod switched;
 
 mod param_node;
 
-mod resample;
-
 use fundsp::hacker32::*;
 use std::sync::Arc;
 
 use param_nodes::*;
 
 use crate::{
-    config::IrConfig,
-    dsp::{
-        ir::{init_convolvers, process_ir},
-        switched::switched_node,
-    },
+    dsp::{ir::init_convolvers, switched::switched_node},
     params::PluginParams,
+    processing::{config::IrProcessingConfig, process_ir},
 };
 
 pub fn build_graph(
     params: &Arc<PluginParams>,
     sample_rate: f32,
-    config: &IrConfig,
+    config: &IrProcessingConfig,
 ) -> anyhow::Result<(Box<dyn AudioUnit>, Slot)> {
     let (ir_samples, ir_sample_rate) = &*params.ir_samples.lock().unwrap();
 

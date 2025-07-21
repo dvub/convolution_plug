@@ -19,16 +19,17 @@ pub fn create_editor(
     let dev_src = HTMLSource::URL("http://localhost:3000".to_owned());
 
     #[allow(unused_mut)]
-    let mut editor = WebViewEditor::new(dev_src, EDITOR_SIZE, params.editor_state.clone())
-        .with_developer_mode(true)
-        // FROM HEX: #0d100f
-        .with_background_color((13, 16, 15, 255));
+    let mut editor =
+        WebViewEditor::new(dev_src, EDITOR_SIZE, params.callback_handler.state.clone())
+            .with_developer_mode(true)
+            // FROM HEX: #0d100f
+            .with_background_color((13, 16, 15, 255));
 
     // NOTE!!!!!!!! THIS IS COMMENTED
-    /*
+    
     #[cfg(not(debug_assertions))]
     bundled::create_bundled_editor(&mut editor, &params);
-    */
+    
 
     editor.with_event_loop(build_event_loop(plugin, async_executor))
 }

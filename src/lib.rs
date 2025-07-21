@@ -1,24 +1,21 @@
 // #![warn(clippy::pedantic)]
 // #![allow(clippy::wildcard_imports)]
-pub mod dsp;
-pub mod params;
+mod callbacks;
 
-mod config;
+pub mod dsp;
 pub mod editor;
-mod util;
+pub mod params;
+pub mod processing;
 
 use crate::{
-    config::IrConfig,
-    dsp::{
-        build_graph,
-        ir::{init_convolvers, process_ir},
-    },
+    dsp::{build_graph, ir::init_convolvers},
     editor::{
         create_editor,
         event_loop::{FADE_TIME, FADE_TYPE},
         ipc::IrData,
     },
-    util::decode_samples,
+    processing::config::IrProcessingConfig,
+    processing::{decode::decode_samples, process_ir},
 };
 
 use fundsp::hacker32::*;
@@ -55,7 +52,7 @@ impl Default for ConvolutionPlug {
 }
 
 pub enum Task {
-    UpdateIrConfig(IrConfig),
+    UpdateIrConfig(IrProcessingConfig),
     UpdateIr(IrData),
 }
 
@@ -100,7 +97,6 @@ impl Plugin for ConvolutionPlug {
         let sample_rate = self.sample_rate;
 
         // TODO: refactor
-        // TODO: fix an ungodly amount of unwrawps
         Box::new(move |task| match task {
             Task::UpdateIrConfig(new_ir_config) => {
                 let (ir_samples, ir_sample_rate) = &*params.ir_samples.lock().unwrap();
@@ -109,7 +105,7 @@ impl Plugin for ConvolutionPlug {
                 if !ir_samples.is_empty() {
                     let processed_ir =
                         process_ir(ir_samples, *ir_sample_rate, sample_rate, &new_ir_config)
-                            .unwrap();
+                            .expect("There was an error processing this IR");
 
                     let convolvers = init_convolvers(&processed_ir);
 
@@ -122,12 +118,15 @@ impl Plugin for ConvolutionPlug {
             Task::UpdateIr(ir_data) => {
                 let config = params.ir_config.lock().unwrap();
 
-                let (ir_samples, ir_sample_rate) = decode_samples(&ir_data.raw_bytes).unwrap();
-                // IMMPORTANT THAT IT GOES HERE
-                *params.ir_samples.lock().unwrap() = (ir_samples.clone(), ir_sample_rate);
+                let (plain_ir_samples, ir_sample_rate) = decode_samples(&ir_data.raw_bytes)
+                    .expect("There was an error decoding the file");
+
+                *params.ir_samples.lock().unwrap() = (plain_ir_samples.clone(), ir_sample_rate);
 
                 let processed_ir =
-                    process_ir(&ir_samples, ir_sample_rate, sample_rate, &config).unwrap();
+                    process_ir(&plain_ir_samples, ir_sample_rate, sample_rate, &config)
+                        .expect("There was an error processing this IR");
+
                 let convolvers = init_convolvers(&processed_ir);
 
                 slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);

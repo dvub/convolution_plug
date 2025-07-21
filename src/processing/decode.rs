@@ -1,5 +1,4 @@
 use hound::SampleFormat;
-use nih_plug::util::db_to_gain;
 
 pub fn decode_samples(bytes: &[u8]) -> anyhow::Result<(Vec<Vec<f32>>, f32)> {
     let mut reader = hound::WavReader::new(bytes)?;
@@ -43,23 +42,6 @@ pub fn decode_samples(bytes: &[u8]) -> anyhow::Result<(Vec<Vec<f32>>, f32)> {
     Ok((samples, sample_rate))
 }
 
-// TODO: provide option for other normalization, e.g. LUFS
-
-// https://hackaudio.com/tutorial-courses/learn-audio-programming-table-of-contents/digital-signal-processing/amplitude/rms-normalization/
-
-pub fn rms_normalize(input_signal: &mut [Vec<f32>], desired_level_db: f32) {
-    let desired_level_gain = db_to_gain(desired_level_db);
-    for channel in input_signal.iter_mut() {
-        let channel_len = channel.len() as f32;
-
-        let squared_sum = channel.iter().map(|x| x * x).sum::<f32>();
-        let amplitude = ((channel_len * desired_level_gain.powi(2)) / squared_sum).sqrt();
-        println!("Normalizing by factor: {amplitude}");
-
-        channel.iter_mut().for_each(|x| *x *= amplitude);
-    }
-}
-
 fn max_value_from_bits(bit_depth: u16) -> i64 {
     2_i64.pow(u32::from(bit_depth) - 1)
 }
@@ -71,7 +53,7 @@ mod tests {
     use std::{f32::consts::PI, fs::read, path};
     use tempdir::TempDir;
 
-    use crate::util::{decode_samples, max_value_from_bits};
+    use super::{decode_samples, max_value_from_bits};
 
     #[test]
     fn samples_16_bit() -> anyhow::Result<()> {

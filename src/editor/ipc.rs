@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::config::IrConfig;
+use crate::processing::config::IrProcessingConfig;
 
 // NOTE: im not exactly sure why, but if we use
 // #[ts(export, rename_all = ...)]
@@ -15,7 +15,7 @@ pub enum Message {
     Init,
     ParameterUpdate(ParameterUpdate),
     IrUpdate(IrData),
-    IrConfigUpdate(IrConfig),
+    IrConfigUpdate(IrProcessingConfig),
     InitResponse(InitResponse),
 }
 
@@ -26,7 +26,7 @@ pub struct InitResponse {
     pub param_map: Vec<String>,
     pub init_params: Vec<ParameterUpdate>,
     pub ir_data: Option<IrData>,
-    pub config: IrConfig,
+    pub config: IrProcessingConfig,
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]

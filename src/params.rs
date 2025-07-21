@@ -1,11 +1,10 @@
-use std::sync::{Arc, Mutex};
-
-use crossbeam_channel::{Receiver, Sender};
+use std::sync::Mutex;
 
 use nih_plug::{prelude::*, util::db_to_gain};
-use nih_plug_webview::state::WebviewState;
 
-use crate::{config::IrConfig, editor::ipc::IrData};
+use crate::{
+    callbacks::CallbackHandler, editor::ipc::IrData, processing::config::IrProcessingConfig,
+};
 
 // should we use different default filter frequencies?
 // currently i've got i t so that filters do nothing with their default frequencies even if they're enabled
@@ -29,11 +28,10 @@ pub const DEFAULT_DRY_GAIN: f32 = -10.0;
 #[derive(Params, Debug)]
 pub struct PluginParams {
     // non param stuff
-    pub rx: Receiver<usize>,
-    pub editor_state: Arc<WebviewState>,
+    pub callback_handler: CallbackHandler,
 
     #[persist = "config"]
-    pub ir_config: Mutex<IrConfig>,
+    pub ir_config: Mutex<IrProcessingConfig>,
 
     #[persist = "ir_data"]
     pub ir_data: Mutex<Option<IrData>>,
@@ -230,104 +228,12 @@ impl Default for PluginParams {
             .with_callback(callback_handler.create_callback()), // 7
 
             // EXTRA GOODIES
-            // TODO: should we just have one callback_handler field?
-            rx: callback_handler.rx,
-            editor_state: callback_handler.state,
+            callback_handler,
 
             // persistent
             ir_data: Mutex::new(None),
-            ir_config: Mutex::new(IrConfig::default()),
+            ir_config: Mutex::new(IrProcessingConfig::default()),
             ir_samples: Mutex::new((Vec::new(), 0.0)),
         }
-    }
-}
-
-// TODO: maybe refactor this into a separate module
-
-// TODO: due to the way that callback handler currently works,
-// parameters MUST be assigned (in default()) in the SAME ORDER they are defined
-// this is really shitty, and something i should probably fix
-struct CallbackHandler {
-    counter: usize,
-    state: Arc<WebviewState>,
-    tx: Sender<usize>,
-    rx: Receiver<usize>,
-}
-impl Default for CallbackHandler {
-    fn default() -> Self {
-        // TODO: figure out proper size
-        let (tx, rx) = crossbeam_channel::bounded::<usize>(128);
-        let state = WebviewState::new();
-
-        Self {
-            counter: 0,
-            state,
-            tx,
-            rx,
-        }
-    }
-}
-
-impl CallbackHandler {
-    pub fn create_callback<T>(&mut self) -> Arc<impl Fn(T)> {
-        let state = self.state.clone();
-        let tx = self.tx.clone();
-        let parameter_index = self.counter;
-
-        self.counter += 1;
-
-        Arc::new(move |_| {
-            if !state.is_open() {
-                return;
-            }
-
-            tx.try_send(parameter_index)
-                .expect("the channel should not be full or try sending if disconnected");
-        })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    use std::sync::atomic::Ordering;
-
-    use crate::params::CallbackHandler;
-
-    #[test]
-    fn increment_counter() {
-        let mut handler = CallbackHandler::default();
-
-        handler.create_callback::<bool>();
-        assert_eq!(handler.counter, 1);
-
-        handler.create_callback::<bool>();
-        assert_eq!(handler.counter, 2);
-    }
-
-    #[test]
-    fn skip_when_closed() {
-        let mut handler = CallbackHandler::default();
-
-        let callback = handler.create_callback();
-        callback(0.0);
-
-        assert!(!handler.state.is_open());
-        assert!(handler.rx.is_empty());
-    }
-
-    #[test]
-    fn send_updates() {
-        let mut handler = CallbackHandler::default();
-        handler.state.open.store(true, Ordering::Relaxed);
-
-        let callback = handler.create_callback();
-        let callback1 = handler.create_callback();
-
-        callback(0.0);
-        assert_eq!(handler.rx.recv().unwrap(), 0);
-
-        callback1(0.0);
-        assert_eq!(handler.rx.recv().unwrap(), 1);
     }
 }

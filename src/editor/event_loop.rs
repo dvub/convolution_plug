@@ -21,7 +21,8 @@ pub fn build_event_loop(
 ) -> impl Fn(&WindowHandler, ParamSetter, &mut baseview::Window) + 'static + Send + Sync {
     let params = plugin.params.clone();
     let param_map = params.param_map();
-    let param_update_rx = params.rx.clone();
+
+    let param_update_rx = params.callback_handler.rx.clone();
 
     move |ctx: &WindowHandler, setter, _window| {
         // GUI -> BACKEND
