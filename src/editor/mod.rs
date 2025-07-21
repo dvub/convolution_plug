@@ -26,10 +26,10 @@ pub fn create_editor(
             .with_background_color((13, 16, 15, 255));
 
     // NOTE!!!!!!!! THIS IS COMMENTED
-    
+    /*
     #[cfg(not(debug_assertions))]
     bundled::create_bundled_editor(&mut editor, &params);
-    
+    */
 
     editor.with_event_loop(build_event_loop(plugin, async_executor))
 }
