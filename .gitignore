@@ -1,7 +1,8 @@
 /target
-
 /convolution-gui/assets
 
 profile.json.gz
 perf.data
 perf.data.old
+
+tarpaulin-report.html
