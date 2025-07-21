@@ -1,4 +1,5 @@
-#![warn(clippy::pedantic)]
+// #![warn(clippy::pedantic)]
+// #![allow(clippy::wildcard_imports)]
 pub mod dsp;
 pub mod params;
 
@@ -157,7 +158,8 @@ impl Plugin for ConvolutionPlug {
                 *slot_lock = slot;
 
                 self.graph = BigBlockAdapter::new(graph);
-                self.graph.set_sample_rate(buffer_config.sample_rate as f64);
+                self.graph
+                    .set_sample_rate(f64::from(buffer_config.sample_rate));
                 self.graph.allocate();
 
                 nih_log!("Initialized Convolution.");

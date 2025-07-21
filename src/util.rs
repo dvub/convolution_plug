@@ -49,7 +49,7 @@ pub fn decode_samples(bytes: &[u8]) -> anyhow::Result<(Vec<Vec<f32>>, f32)> {
 
 pub fn rms_normalize(input_signal: &mut [Vec<f32>], desired_level_db: f32) {
     let desired_level_gain = db_to_gain(desired_level_db);
-    input_signal.iter_mut().for_each(|channel| {
+    for channel in input_signal.iter_mut() {
         let channel_len = channel.len() as f32;
 
         let squared_sum = channel.iter().map(|x| x * x).sum::<f32>();
@@ -57,11 +57,11 @@ pub fn rms_normalize(input_signal: &mut [Vec<f32>], desired_level_db: f32) {
         println!("Normalizing by factor: {amplitude}");
 
         channel.iter_mut().for_each(|x| *x *= amplitude);
-    });
+    }
 }
 
 fn max_value_from_bits(bit_depth: u16) -> i64 {
-    2_i64.pow(bit_depth as u32 - 1)
+    2_i64.pow(u32::from(bit_depth) - 1)
 }
 
 #[cfg(test)]
@@ -162,7 +162,7 @@ mod tests {
                 *original_sample,
                 *res_sample,
                 epsilon = (max_value_from_bits(16) as f32).recip()
-            ))
+            ));
         }
         assert_eq!(*zero_samples, vec![0.0f32; result_samples.len()]);
 
@@ -210,7 +210,7 @@ mod tests {
                 *original_sample,
                 *res_sample,
                 epsilon = (max_value_from_bits(bit_depth) as f32).recip()
-            ))
+            ));
         }
 
         temp_dir.close()?;

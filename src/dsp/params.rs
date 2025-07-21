@@ -66,7 +66,7 @@ where
     N: Size<f32>,
 {
     /// Create a new `ParamNode`.
-    /// This can be wrapped by functions to return a given parameter with an opcode, similarly to FunDSP's API.
+    /// This can be wrapped by functions to return a given parameter with an opcode, similarly to `FunDSP`'s API.
     pub fn new(params: &Arc<P>, accessor: F) -> An<Self> {
         An(Self {
             _marker: PhantomData,

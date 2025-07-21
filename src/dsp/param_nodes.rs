@@ -23,14 +23,14 @@ pub fn lp_q<N: Size<f32>>(
 pub fn lp_enabled<N: Size<f32>>(
     p: &Arc<PluginParams>,
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
-    ParamNode::new(p, |p| p.lowpass_enabled.value() as i32 as f32)
+    ParamNode::new(p, |p| f32::from(u8::from(p.lowpass_enabled.value())))
 }
 
 // highpass
 pub fn hp_enabled<N: Size<f32>>(
     p: &Arc<PluginParams>,
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
-    ParamNode::new(p, |p| p.highpass_enabled.value() as i32 as f32)
+    ParamNode::new(p, |p| f32::from(u8::from(p.highpass_enabled.value())))
 }
 
 pub fn hp_freq<N: Size<f32>>(
@@ -48,7 +48,7 @@ pub fn hp_q<N: Size<f32>>(
 pub fn bell_enabled<N: Size<f32>>(
     p: &Arc<PluginParams>,
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
-    ParamNode::new(p, |p| p.bell_enabled.value() as i32 as f32)
+    ParamNode::new(p, |p| f32::from(u8::from(p.bell_enabled.value())))
 }
 
 pub fn bell_freq<N: Size<f32>>(
