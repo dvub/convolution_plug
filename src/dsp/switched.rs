@@ -101,6 +101,18 @@ mod tests {
     }
 
     #[test]
+    fn mono_passthrough() {
+        let control = 0.5;
+        let wrong_control = 0.25;
+        let expected = 1.0;
+
+        let mut graph = (dc(expected) | dc(wrong_control))
+            >> switched_node(pass() * expected, |x| x == control);
+        let output = graph.tick(&NumericArray::default());
+        assert_eq!(output.as_slice(), [expected]);
+    }
+
+    #[test]
     fn multi_channel() {
         type NumChannels = U5;
 

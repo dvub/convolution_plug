@@ -31,9 +31,9 @@ pub fn build_event_loop(
             match message {
                 // right now i don't think these should be handled by the task executor
                 Message::Init => handle_init(ctx, &params),
-                Message::ParameterUpdate(update) => unsafe {
+                Message::ParameterUpdate(update) => {
                     handle_parameter_update(&update, &setter, &param_map);
-                },
+                }
 
                 // these are more expensive, so we want to use the executor
                 Message::IrUpdate(ir_data) => async_executor.execute_gui(Task::UpdateIr(ir_data)),

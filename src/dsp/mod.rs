@@ -3,7 +3,7 @@ pub mod ir;
 pub mod param_nodes;
 pub mod switched;
 
-mod params;
+mod param_node;
 
 mod resample;
 
@@ -63,8 +63,6 @@ fn hp_with_params(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U1, Outpu
 fn bell_with_params(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U1, Outputs = U1>> {
     (pass() | bell_freq::<U1>(p) | param_nodes::bell_q::<U1>(p) | bell_gain::<U1>(p)) >> bell()
 }
-
-// ...
 
 fn switched_bell(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U2, Outputs = U2>> {
     let stereo_bell = bell_with_params(p) | bell_with_params(p);

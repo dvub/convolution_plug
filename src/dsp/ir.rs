@@ -7,6 +7,8 @@ use crate::{
     util::rms_normalize,
 };
 
+// TODO: move somewhere else
+
 pub fn process_ir(
     ir_samples: &[Vec<f32>],
     ir_sample_rate: f32,

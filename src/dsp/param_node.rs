@@ -75,3 +75,35 @@ where
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use fundsp::{hacker32::U1, numeric_array::NumericArray};
+    use nih_plug::util::db_to_gain;
+
+    use crate::{
+        dsp::param_node::ParamNode,
+        params::{PluginParams, DEFAULT_DRY_GAIN},
+    };
+
+    #[test]
+    fn dummy_accessor() {
+        let expected = 0.15;
+
+        let params = Arc::new(PluginParams::default());
+        let mut node = ParamNode::<_, _, U1>::new(&params, |_| expected);
+
+        let x = node.tick(NumericArray::from_slice(&[]));
+        assert_eq!(x[0], expected);
+    }
+    #[test]
+    fn with_default_params() {
+        let params = Arc::new(PluginParams::default());
+        let mut node = ParamNode::<_, _, U1>::new(&params, |p| p.dry_gain.value());
+
+        let x = node.tick(NumericArray::from_slice(&[]));
+        assert_eq!(x[0], db_to_gain(DEFAULT_DRY_GAIN));
+    }
+}

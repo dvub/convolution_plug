@@ -5,7 +5,7 @@ use std::sync::Arc;
 use fundsp::hacker32::*;
 
 use crate::{
-    dsp::params::{Accessor, ParamNode},
+    dsp::param_node::{Accessor, ParamNode},
     params::PluginParams,
 };
 

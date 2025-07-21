@@ -23,8 +23,8 @@ const MAX_Q: f32 = 18.0;
 const SMOOTHER: SmoothingStyle = SmoothingStyle::Linear(50.0);
 const GAIN_SMOOTHER: SmoothingStyle = SmoothingStyle::Logarithmic(50.0);
 
-const DEFAULT_WET_GAIN: f32 = -15.0;
-const DEFAULT_DRY_GAIN: f32 = -10.0;
+pub const DEFAULT_WET_GAIN: f32 = -15.0;
+pub const DEFAULT_DRY_GAIN: f32 = -10.0;
 
 #[derive(Params, Debug)]
 pub struct PluginParams {
