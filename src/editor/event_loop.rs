@@ -69,41 +69,41 @@ fn handle_init(ctx: &WindowHandler, params: &Arc<PluginParams>) {
     let config = params.ir_config.lock().unwrap().clone();
 
     let ir_data_lock = params.ir_data.lock().unwrap();
-    // TODO: is this usage of unsafe correct?
-    // should the whole function be unsafe?
-    unsafe {
-        let init_params: Vec<_> = param_map
-            .iter()
-            .enumerate()
-            .map(|(i, (_, ptr, _))| ParameterUpdate {
+
+    let init_params: Vec<_> = param_map
+        .iter()
+        .enumerate()
+        .map(|(i, (_, ptr, _))| unsafe {
+            ParameterUpdate {
                 parameter_index: i,
                 value: ptr.modulated_normalized_value(),
-            })
-            .collect();
+            }
+        })
+        .collect();
 
-        let message = Message::InitResponse(InitResponse {
-            param_map: map_copy,
-            init_params,
-            ir_data: ir_data_lock.clone(),
-            config,
-        });
-        ctx.send_json(json!(message));
-    }
+    let message = Message::InitResponse(InitResponse {
+        param_map: map_copy,
+        init_params,
+        ir_data: ir_data_lock.clone(),
+        config,
+    });
+    ctx.send_json(json!(message));
 }
 
-unsafe fn handle_parameter_update(
+fn handle_parameter_update(
     param_update: &ParameterUpdate,
     param_setter: &ParamSetter,
     param_map: &ParamMap,
 ) {
     let normalize_new_value = param_update.value;
-
     let idx = param_update.parameter_index;
     let param_ptr = param_map[idx].1;
 
-    param_setter.raw_context.raw_begin_set_parameter(param_ptr);
-    param_setter
-        .raw_context
-        .raw_set_parameter_normalized(param_ptr, normalize_new_value);
-    param_setter.raw_context.raw_end_set_parameter(param_ptr);
+    unsafe {
+        param_setter.raw_context.raw_begin_set_parameter(param_ptr);
+        param_setter
+            .raw_context
+            .raw_set_parameter_normalized(param_ptr, normalize_new_value);
+        param_setter.raw_context.raw_end_set_parameter(param_ptr);
+    }
 }
