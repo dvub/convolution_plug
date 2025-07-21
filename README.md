@@ -19,3 +19,5 @@ Note to self:
 -   add visual EQ controls (spline type thing)
 -   support stereo/quad/whatever IRs as well as multiple formats - somewhat supported, but no parameters
 -   general optimizations
+
+-   add feature to completely mute dry output
