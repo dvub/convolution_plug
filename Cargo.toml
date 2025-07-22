@@ -8,14 +8,13 @@ homepage = "todo"
 description = "todo"
 
 [workspace]
-members = ["xtask", "nih-plug-webview"]
+members = ["xtask"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-nih-plug-webview = { path = "nih-plug-webview" }
-
+nih_plug_webview = { git = "https://github.com/dvub/nih-plug-webview.git" }
 hound = "3.5.1"
 # Remove the `assert_process_allocs` feature to allow allocations on the audio
 # thread in debug builds.

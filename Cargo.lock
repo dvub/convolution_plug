@@ -474,8 +474,8 @@ dependencies = [
  "include_dir",
  "itertools 0.14.0",
  "mime_guess",
- "nih-plug-webview",
  "nih_plug",
+ "nih_plug_webview",
  "rubato",
  "serde",
  "serde_json",
@@ -1867,20 +1867,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
-name = "nih-plug-webview"
-version = "0.0.0"
-dependencies = [
- "baseview",
- "crossbeam",
- "keyboard-types",
- "nih_plug",
- "parking_lot",
- "raw-window-handle",
- "serde_json",
- "wry",
-]
-
-[[package]]
 name = "nih_log"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1933,6 +1919,21 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "nih_plug_webview"
+version = "0.0.0"
+source = "git+https://github.com/dvub/nih-plug-webview.git#b537d2a6ddd3dabf5eb4554a62d7921e5069e186"
+dependencies = [
+ "baseview",
+ "crossbeam",
+ "keyboard-types",
+ "nih_plug",
+ "parking_lot",
+ "raw-window-handle",
+ "serde_json",
+ "wry",
 ]
 
 [[package]]

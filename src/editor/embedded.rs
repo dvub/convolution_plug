@@ -28,8 +28,8 @@ pub fn create_embedded_editor(state: Arc<WebviewState>) -> WebViewEditor {
             } else {
                 &path[1..]
             };
-
-            let dir = include_dir!("$CARGO_MANIFEST_DIR/convolution-gui/assets/");
+            // TODO: should we hardcode this or something?
+            let dir = include_dir!("$CARGO_MANIFEST_DIR/gui/assets/");
 
             let mime_type =
                 mime_guess::from_ext(Path::new(file).extension().unwrap().to_str().unwrap())
