@@ -1,4 +1,5 @@
 use hound::SampleFormat;
+// TODO: fix precision issues across this module
 
 pub fn decode_samples(bytes: &[u8]) -> anyhow::Result<(Vec<Vec<f32>>, f32)> {
     let mut reader = hound::WavReader::new(bytes)?;
