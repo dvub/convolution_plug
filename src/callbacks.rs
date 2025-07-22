@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crossbeam_channel::{Receiver, Sender};
 
-use nih_plug_webview::state::WebviewState;
+use nih_plug_webview::WebviewState;
 
 // TODO: fix this issue
 // due to the way that callback handler currently works,

@@ -14,8 +14,7 @@ use crate::{
         event_loop::{FADE_TIME, FADE_TYPE},
         ipc::IrData,
     },
-    processing::config::IrProcessingConfig,
-    processing::{decode::decode_samples, process_ir},
+    processing::{config::IrProcessingConfig, decode::decode_samples, process_ir},
 };
 
 use fundsp::hacker32::*;
@@ -168,13 +167,8 @@ impl Plugin for ConvolutionPlug {
         }
     }
 
-    fn reset(&mut self) {
-        // Reset buffers and envelopes here. This can be called from the audio thread and may not
-        // allocate. You can remove this function if you do not need it.
-    }
-
     fn editor(&mut self, async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        Some(Box::new(create_editor(self, async_executor)))
+        create_editor(&self.params, async_executor)
     }
 
     fn process(

@@ -11,15 +11,15 @@ use nih_plug::{
     params::Params,
     prelude::{AsyncExecutor, ParamPtr, ParamSetter},
 };
-use nih_plug_webview::WindowHandler;
+use nih_plug_webview::editor::WindowHandler;
 use serde_json::json;
 use std::sync::Arc;
 
 pub fn build_event_loop(
-    plugin: &ConvolutionPlug,
+    params: &Arc<PluginParams>,
     async_executor: AsyncExecutor<ConvolutionPlug>,
 ) -> impl Fn(&WindowHandler, ParamSetter, &mut baseview::Window) + 'static + Send + Sync {
-    let params = plugin.params.clone();
+    let params = params.clone();
     let param_map = params.param_map();
 
     let param_update_rx = params.callback_handler.rx.clone();
