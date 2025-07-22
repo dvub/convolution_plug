@@ -1,6 +1,5 @@
 // #![warn(clippy::pedantic)]
 // #![allow(clippy::wildcard_imports)]
-mod callbacks;
 
 pub mod dsp;
 pub mod editor;
@@ -8,12 +7,8 @@ pub mod params;
 pub mod processing;
 
 use crate::{
-    dsp::{build_graph, ir::init_convolvers},
-    editor::{
-        create_editor,
-        event_loop::{FADE_TIME, FADE_TYPE},
-        ipc::IrData,
-    },
+    dsp::{build_graph, convolve::init_convolvers, FADE_TIME, FADE_TYPE},
+    editor::{create_editor, ipc::IrData},
     processing::{config::IrProcessingConfig, decode::decode_samples, process_ir},
 };
 
@@ -32,7 +27,6 @@ pub struct ConvolutionPlug {
     params: Arc<PluginParams>,
     graph: BigBlockAdapter,
     sample_rate: f32,
-    // this is used for updating the convolver
     slot: Arc<Mutex<Slot>>,
     buffers: Vec<Vec<f32>>,
 }

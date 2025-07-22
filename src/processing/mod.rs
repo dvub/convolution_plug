@@ -1,13 +1,16 @@
 pub mod config;
 pub mod decode;
-pub mod normalize;
-pub mod resample;
+
+mod normalize;
+mod resample;
 
 use config::{IrProcessingConfig, DEFAULT_NORMALIZATION_LEVEL};
-use normalize::rms_normalize;
+
 use resample::init_resampler;
 
 use rubato::Resampler;
+
+use crate::processing::normalize::rms_normalize;
 
 pub fn process_ir(
     ir_samples: &[Vec<f32>],

@@ -2,10 +2,7 @@ use super::ipc::{Message, ParameterUpdate};
 use crate::{editor::ipc::InitResponse, params::PluginParams, ConvolutionPlug, Task};
 
 type ParamMap = Vec<(String, ParamPtr, String)>;
-pub const FADE_TIME: f64 = 1.0;
-pub const FADE_TYPE: Fade = Fade::Smooth;
 
-use fundsp::hacker32::*;
 use itertools::Itertools;
 use nih_plug::{
     params::Params,

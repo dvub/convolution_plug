@@ -1,10 +1,12 @@
+mod callbacks;
+
 use std::sync::Mutex;
 
 use nih_plug::{prelude::*, util::db_to_gain};
 
-use crate::{
-    callbacks::CallbackHandler, editor::ipc::IrData, processing::config::IrProcessingConfig,
-};
+use crate::{editor::ipc::IrData, processing::config::IrProcessingConfig};
+
+use callbacks::CallbackHandler;
 
 // should we use different default filter frequencies?
 // currently i've got i t so that filters do nothing with their default frequencies even if they're enabled

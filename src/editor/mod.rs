@@ -1,6 +1,7 @@
 pub mod embedded;
-pub mod event_loop;
 pub mod ipc;
+
+mod event_loop;
 
 #[cfg(not(debug_assertions))]
 use crate::editor::embedded::create_embedded_editor;

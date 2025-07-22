@@ -1,9 +1,8 @@
 pub mod convolve;
-pub mod ir;
-pub mod nodes;
-pub mod switched;
 
+mod nodes;
 mod param_node;
+mod switched;
 
 use fundsp::hacker32::*;
 use std::sync::Arc;
@@ -11,10 +10,13 @@ use std::sync::Arc;
 use nodes::*;
 
 use crate::{
-    dsp::{ir::init_convolvers, switched::switched_node},
+    dsp::{convolve::init_convolvers, switched::switched_node},
     params::PluginParams,
     processing::{config::IrProcessingConfig, process_ir},
 };
+
+pub const FADE_TIME: f64 = 1.0;
+pub const FADE_TYPE: Fade = Fade::Smooth;
 
 pub fn build_graph(
     params: &Arc<PluginParams>,

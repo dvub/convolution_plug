@@ -34,11 +34,20 @@ impl AudioNode for Convolver {
 const BLOCK_SIZE: usize = 1024;
 
 // opcode
-#[must_use]
+
 pub fn convolver(samples: &[f32]) -> An<Convolver> {
     let convolver = FFTConvolver::init(samples, BLOCK_SIZE, samples.len());
 
     An(Convolver { convolver })
+}
+
+pub fn init_convolvers(ir_samples: &[Vec<f32>]) -> Box<dyn AudioUnit> {
+    // is there a better way?
+    match ir_samples {
+        [mono] => Box::new(convolver(mono) | convolver(mono)),
+        [left, right] => Box::new(convolver(left) | convolver(right)),
+        _ => todo!(),
+    }
 }
 
 #[cfg(test)]
