@@ -4,7 +4,7 @@ use std::sync::Mutex;
 
 use nih_plug::{prelude::*, util::db_to_gain};
 
-use crate::{editor::ipc::IrData, processing::config::IrProcessingConfig};
+use crate::processing::config::IrProcessingConfig;
 
 use callbacks::CallbackHandler;
 
@@ -34,9 +34,6 @@ pub struct PluginParams {
 
     #[persist = "config"]
     pub ir_config: Mutex<IrProcessingConfig>,
-
-    #[persist = "ir_data"]
-    pub ir_data: Mutex<Option<IrData>>,
 
     #[persist = "ir_samples"]
     pub ir_samples: Mutex<(Vec<Vec<f32>>, f32)>,
@@ -233,7 +230,6 @@ impl Default for PluginParams {
             callback_handler,
 
             // persistent
-            ir_data: Mutex::new(None),
             ir_config: Mutex::new(IrProcessingConfig::default()),
             ir_samples: Mutex::new((Vec::new(), 0.0)),
         }

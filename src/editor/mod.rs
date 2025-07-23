@@ -1,41 +1,43 @@
-pub mod embedded;
-pub mod ipc;
+use std::{path::PathBuf, sync::Arc};
 
-mod event_loop;
+use nih_plug::editor::Editor;
+use nih_plug_webview::{
+    Context, EditorHandler, Message, WebViewConfig, WebViewEditor, WebViewSource, WebViewState,
+};
 
-#[cfg(not(debug_assertions))]
-use crate::editor::embedded::create_embedded_editor;
+pub struct PluginGui {}
 
-use crate::{params::PluginParams, ConvolutionPlug};
+impl PluginGui {
+    #[allow(clippy::new_ret_no_self)]
+    pub fn new(state: &Arc<WebViewState>) -> Option<Box<dyn Editor>> {
+        let config = WebViewConfig {
+            title: String::from("My Plugin"),
+            source: WebViewSource::URL(String::from("http://localhost:3000")),
+            workdir: PathBuf::from(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/target/webview-workdir"
+            )),
+        };
+        let editor = WebViewEditor::new(PluginGui {}, state, config);
 
-use event_loop::build_event_loop;
-
-use nih_plug::{editor::Editor, prelude::AsyncExecutor};
-use nih_plug_webview::{editor::WebViewEditor, HTMLSource};
-use std::sync::Arc;
-
-pub const EDITOR_SIZE: (u32, u32) = (600, 600);
-
-pub fn create_editor(
-    params: &Arc<PluginParams>,
-    async_executor: AsyncExecutor<ConvolutionPlug>,
-) -> Option<Box<dyn Editor>> {
-    #[cfg(debug_assertions)]
-    let mut editor = create_dev_editor(params);
-
-    #[cfg(not(debug_assertions))]
-    let mut editor = create_embedded_editor(params.callback_handler.state.clone());
-
-    editor = editor
-        // FROM HEX: #0d100f
-        .with_background_color((13, 16, 15, 255))
-        .with_event_loop(build_event_loop(params, async_executor));
-
-    Some(Box::new(editor))
+        Some(Box::new(editor))
+    }
 }
 
-fn create_dev_editor(params: &Arc<PluginParams>) -> WebViewEditor {
-    let dev_src = HTMLSource::URL("http://localhost:3000".to_owned());
-    WebViewEditor::new(dev_src, EDITOR_SIZE, params.callback_handler.state.clone())
-        .with_developer_mode(true)
+impl EditorHandler for PluginGui {
+    fn init(&mut self, cx: &mut Context) {
+        cx.send_message(Message::Text(String::from("This is an init message")));
+    }
+
+    fn on_frame(&mut self, cx: &mut Context) {
+              cx.send_message(Message::Text(String::from("This is a frame message")));
+    }
+
+    fn on_message(
+        &mut self,
+        _: &dyn Fn(nih_plug_webview::Message),
+        message: nih_plug_webview::Message,
+    ) {
+        todo!()
+    }
 }

@@ -8,13 +8,14 @@ pub mod processing;
 
 use crate::{
     dsp::{build_graph, convolve::init_convolvers, FADE_TIME, FADE_TYPE},
-    editor::{create_editor, ipc::IrData},
+    editor::PluginGui,
     processing::{config::IrProcessingConfig, decode::decode_samples, process_ir},
 };
 
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
 
+use nih_plug_webview::WebViewState;
 use params::PluginParams;
 use std::sync::{Arc, Mutex};
 
@@ -44,10 +45,12 @@ impl Default for ConvolutionPlug {
     }
 }
 
+/*
 pub enum Task {
     UpdateIrConfig(IrProcessingConfig),
     UpdateIr(IrData),
 }
+    */
 
 impl Plugin for ConvolutionPlug {
     const NAME: &'static str = "Convolution";
@@ -82,8 +85,9 @@ impl Plugin for ConvolutionPlug {
     // More advanced plugins can use this to run expensive background tasks. See the field's
     // documentation for more information. `()` means that the plugin does not have any background
     // tasks.
-    type BackgroundTask = Task;
+    type BackgroundTask = ();
 
+    /*
     fn task_executor(&mut self) -> TaskExecutor<Self> {
         let params = self.params.clone();
         let slot = self.slot.clone();
@@ -128,6 +132,7 @@ impl Plugin for ConvolutionPlug {
         })
     }
 
+     */
     fn params(&self) -> Arc<dyn Params> {
         self.params.clone()
     }
@@ -162,7 +167,7 @@ impl Plugin for ConvolutionPlug {
     }
 
     fn editor(&mut self, async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        create_editor(&self.params, async_executor)
+        PluginGui::new(&Arc::new(WebViewState::new(600.0, 600.0)))
     }
 
     fn process(

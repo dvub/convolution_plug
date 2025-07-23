@@ -14,13 +14,12 @@ members = ["xtask"]
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-nih_plug_webview = { git = "https://github.com/dvub/nih-plug-webview.git" }
+nih_plug_webview = { git = "https://github.com/toiglak/nih-plug-webview" }
 hound = "3.5.1"
-# Remove the `assert_process_allocs` feature to allow allocations on the audio
-# thread in debug builds.
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = [
     "assert_process_allocs",
-] }
+], rev = "17ba595e748927290eb72974bc528f11d1d20e89" } # Remove the `assert_process_allocs` feature to allow allocations on the audio
+# thread in debug builds.
 convolution = { git = "https://github.com/holoplot/fft-convolution.git" }
 baseview = { git = "https://github.com/RustAudio/baseview" }
 mime_guess = "2.0.5"
