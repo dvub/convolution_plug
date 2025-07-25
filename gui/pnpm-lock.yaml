@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@dsp-ts/math':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@radix-ui/react-icons':
         specifier: ^1.3.2
         version: 1.3.2(react@19.1.0)
@@ -20,9 +23,6 @@ importers:
       next:
         specifier: 15.3.3
         version: 15.3.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      nih-plug-webview:
-        specifier: https://github.com/toiglak/nih-plug-webview.git
-        version: https://codeload.github.com/toiglak/nih-plug-webview/tar.gz/94235b9720b74fbe00cdd45c35c88ca4e7c93c78
       react:
         specifier: ^19.1.0
         version: 19.1.0
@@ -1500,10 +1500,6 @@ packages:
         optional: true
       sass:
         optional: true
-
-  nih-plug-webview@https://codeload.github.com/toiglak/nih-plug-webview/tar.gz/94235b9720b74fbe00cdd45c35c88ca4e7c93c78:
-    resolution: {tarball: https://codeload.github.com/toiglak/nih-plug-webview/tar.gz/94235b9720b74fbe00cdd45c35c88ca4e7c93c78}
-    version: 0.1.0
 
   object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
@@ -3444,8 +3440,6 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
-
-  nih-plug-webview@https://codeload.github.com/toiglak/nih-plug-webview/tar.gz/94235b9720b74fbe00cdd45c35c88ca4e7c93c78: {}
 
   object-assign@4.1.1: {}
 

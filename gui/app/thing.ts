@@ -26,15 +26,14 @@ export const IPC = {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-
-const plugin = typeof window !== 'undefined' ? window.__NIH_PLUG_WEBVIEW__ : undefined;
+const plugin =
+	typeof window !== 'undefined' ? window.__NIH_PLUG_WEBVIEW__ : undefined;
 
 if (plugin) {
-plugin.onmessage = (message: string) => {
-	onCallbacks.forEach((callback) => {
-		callback(message);
-	});
-};
-
+	plugin.onmessage = (message: string) => {
+		console.log('FROM IPC:', message);
+		onCallbacks.forEach((callback) => {
+			callback(message);
+		});
+	};
 }
-

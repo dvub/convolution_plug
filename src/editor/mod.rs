@@ -64,9 +64,11 @@ impl EditorHandler for PluginGui {
     }
 
     fn on_message(&mut self, cx: &mut Context, message: String) {
+        println!("Receiving message: {:?}", message);
+
         // TODO: is it correct to expect()
-        let message = serde_json::from_slice::<Message>(message.as_bytes())
-            .expect("Error reading message from GUI");
+        let message =
+            serde_json::from_str::<Message>(&message).expect("Error reading message from GUI");
 
         match message {
             Message::Init => self.handle_init(cx),
