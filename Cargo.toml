@@ -14,7 +14,7 @@ members = ["xtask"]
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-nih_plug_webview = { git = "https://github.com/dvub/nih-plug-webview", branch = "init" }
+nih_plug_webview = { git = "https://github.com/dvub/nih-plug-webview" }
 hound = "3.5.1"
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = [
     "assert_process_allocs",

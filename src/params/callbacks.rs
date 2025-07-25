@@ -6,6 +6,7 @@ use crossbeam_channel::{Receiver, Sender};
 // due to the way that callback handler currently works,
 // parameters MUST be assigned (in default()) in the SAME ORDER they are defined
 
+// TODO: need to track if window is open in state
 #[derive(Debug)]
 pub struct CallbackHandler {
     counter: usize,
@@ -38,7 +39,6 @@ impl CallbackHandler {
 #[cfg(test)]
 mod tests {
     use super::CallbackHandler;
-    use std::sync::atomic::Ordering;
 
     #[test]
     fn increment_counter() {

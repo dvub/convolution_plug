@@ -8,7 +8,7 @@ pub mod processing;
 
 use crate::{
     dsp::{build_graph, convolve::init_convolvers, FADE_TIME, FADE_TYPE},
-    editor::PluginGui,
+    editor::{ipc::IrData, PluginGui},
     processing::{config::IrProcessingConfig, decode::decode_samples, process_ir},
 };
 
@@ -45,12 +45,10 @@ impl Default for ConvolutionPlug {
     }
 }
 
-/*
 pub enum Task {
     UpdateIrConfig(IrProcessingConfig),
     UpdateIr(IrData),
 }
-    */
 
 impl Plugin for ConvolutionPlug {
     const NAME: &'static str = "Convolution";
@@ -82,12 +80,12 @@ impl Plugin for ConvolutionPlug {
     // messages here. The type implements the `SysExMessage` trait, which allows conversion to and
     // from plain byte buffers.
     type SysExMessage = ();
+
     // More advanced plugins can use this to run expensive background tasks. See the field's
     // documentation for more information. `()` means that the plugin does not have any background
     // tasks.
-    type BackgroundTask = ();
+    type BackgroundTask = Task;
 
-    /*
     fn task_executor(&mut self) -> TaskExecutor<Self> {
         let params = self.params.clone();
         let slot = self.slot.clone();
@@ -132,7 +130,6 @@ impl Plugin for ConvolutionPlug {
         })
     }
 
-     */
     fn params(&self) -> Arc<dyn Params> {
         self.params.clone()
     }
@@ -167,7 +164,11 @@ impl Plugin for ConvolutionPlug {
     }
 
     fn editor(&mut self, async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        PluginGui::new(&Arc::new(WebViewState::new(600.0, 600.0)))
+        PluginGui::new(
+            &Arc::new(WebViewState::new(600.0, 600.0)),
+            &self.params,
+            async_executor,
+        )
     }
 
     fn process(

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 /*
 export default function Home() {
@@ -43,15 +43,18 @@ export default function Home() {
 }
 */
 
-import { IPC } from "./thing";
+import { IPC } from './thing';
+import { Message } from '../bindings/Message';
+
 export default function Home() {
-  useEffect(() => {
-    IPC.send("init");
+	useEffect(() => {
+		let init: Message = { type: 'init' };
+		IPC.send(JSON.stringify(init));
 
-    IPC.on((message) => {
-      console.log("Receiving message:", message);
-    });
-  }, []);
+		IPC.on((message) => {
+			console.log('Receiving message:', message);
+		});
+	}, []);
 
-  return <h1>hi</h1>;
+	return <h1>hi</h1>;
 }
