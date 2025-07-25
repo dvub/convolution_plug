@@ -1,8 +1,4 @@
-export type Message =
-	| { type: 'binary'; data: Uint8Array }
-	| { type: 'text'; data: string };
-
-const onCallbacks: ((message: Message) => void)[] = [];
+const onCallbacks: ((message: string) => void)[] = [];
 
 /**
  * IPC (Inter-Process Communication) object used to send and receive messages from the
@@ -14,7 +10,7 @@ export const IPC = {
 	 * Appends an event listener for the specified event.
 	 * - `message` event is emitted when a message is received from the plugin.
 	 */
-	on: (event: 'message', callback: (message: Message) => void) => {
+	on: (callback: (message: string) => void) => {
 		onCallbacks.push(callback);
 	},
 
@@ -23,34 +19,22 @@ export const IPC = {
 	 *
 	 * @throws Will throw an error if the message type is not a string or Uint8Array.
 	 */
-	send: (message: string | Uint8Array) => {
-		if (message instanceof Uint8Array) {
-			plugin.postMessage('binary,' + arrayToBase64(message));
-			return;
-		} else if (typeof message === 'string') {
-			plugin.postMessage('text,' + message);
-			return;
-		} else {
-			throw new Error(
-				'Invalid message type. Expected `string` or `ArrayBuffer`.'
-			);
-		}
+	send: (message: string) => {
+		plugin.postMessage(message);
 	},
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 
-const plugin =
-	typeof window !== 'undefined' ? window.__NIH_PLUG_WEBVIEW__ : undefined;
+
+const plugin = typeof window !== 'undefined' ? window.__NIH_PLUG_WEBVIEW__ : undefined;
 
 if (plugin) {
-	plugin.onmessage = (type: any, data: any) => {
-		onCallbacks.forEach((callback) => {
-			const message = Object.freeze({
-				type,
-				data,
-			});
-			callback(message);
-		});
-	};
+plugin.onmessage = (message: string) => {
+	onCallbacks.forEach((callback) => {
+		callback(message);
+	});
+};
+
 }
+

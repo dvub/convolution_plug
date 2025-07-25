@@ -1,18 +1,6 @@
-'use client';
+"use client";
 
-import { MessageBus, MessageBusContext } from '@/contexts/MessageBusContext';
-import { useMessageDispatcher } from '@/hooks/useMessageDispatcher';
-import { useEffect, useState } from 'react';
-
-import { sendToPlugin } from '@/lib';
-import { IRManager } from '@/components/ir-controls/IRManager';
-import LowpassControls from '@/components/filter-controls/LowpassControls';
-import BellControls from '@/components/filter-controls/BellControls';
-import HighpassControls from '@/components/filter-controls/HighpassControls';
-import TopBar from '@/components/TopBar';
-import GainControls from '@/components/GainControls';
-// import { Message } from "@/bindings/Message";
-import { useMessageSubscriber } from '@/hooks/useMessageSubscriber';
+import { useEffect } from "react";
 
 /*
 export default function Home() {
@@ -55,14 +43,15 @@ export default function Home() {
 }
 */
 
-import { IPC } from './thing';
+import { IPC } from "./thing";
 export default function Home() {
-	useEffect(() => {
-		console.log('hello!');
-		IPC.on('message', (m) => {
-			console.log(m);
-		});
-	}, []);
+  useEffect(() => {
+    IPC.send("init");
 
-	return <h1>hi</h1>;
+    IPC.on((message) => {
+      console.log("Receiving message:", message);
+    });
+  }, []);
+
+  return <h1>hi</h1>;
 }
