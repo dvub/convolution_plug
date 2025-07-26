@@ -38,10 +38,13 @@ export default function Home() {
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [mouseDown, setMouseDown] = useState(false);
   const [size, setSize] = useState({ width: 600, height: 600 });
+  const [iSize, setISize] = useState({ width: 0, height: 0 });
 
-  function handleResizeClick(e: React.PointerEvent<HTMLDivElement>) {
+  function handleResizeDown(e: React.PointerEvent<HTMLDivElement>) {
     setMouseDown(true);
     setStartPos({ x: e.clientX, y: e.clientY });
+
+    setISize(size);
   }
   function handleResizeUp() {
     setMouseDown(false);
@@ -50,11 +53,12 @@ export default function Home() {
     if (!mouseDown) {
       return;
     }
+
     const deltaX = e.clientX - startPos.x;
     const deltaY = e.clientY - startPos.y;
 
-    const width = Math.max(100, size.width + deltaX);
-    const height = Math.max(100, size.height + deltaY);
+    const width = Math.max(100, iSize.width + deltaX);
+    const height = Math.max(100, iSize.height + deltaY);
 
     setSize({ width, height });
     sendToPlugin({
@@ -68,7 +72,11 @@ export default function Home() {
 
   return (
     <MessageBusContext.Provider value={messageBus}>
-      <div style={{ opacity: isLoading ? 0 : 1 }} onPointerUp={handleResizeUp}>
+      <div
+        style={{ opacity: isLoading ? 0 : 1 }}
+        onPointerUp={handleResizeUp}
+        onPointerMove={handleResizeMove}
+      >
         <TopBar />
         <IRManager />
         <div className="flex gap-1 py-1 h-[60vh]">
@@ -81,9 +89,7 @@ export default function Home() {
         </div>
         <div
           className="corner-resize absolute bottom-0 right-0 h-10 w-10 bg-red-500"
-          onPointerDown={(e) => handleResizeClick(e)}
-          onPointerMove={handleResizeMove}
-          onPointerUp={handleResizeUp}
+          onPointerDown={(e) => handleResizeDown(e)}
         />
       </div>
     </MessageBusContext.Provider>
