@@ -2,7 +2,7 @@ import { Message } from '@/bindings/Message';
 import { sendToPlugin } from '@/lib';
 import { Parameter } from '@/lib/parameters';
 import { useState, Dispatch, SetStateAction } from 'react';
-import { useMessageSubscriber } from './useMessageSubscriber';
+import { usePluginListener } from './usePluginListener';
 
 // TODO: improve return type
 export function useParameter(
@@ -14,7 +14,7 @@ export function useParameter(
 	const [value, setValue] = useState(0);
 	const [isBlocking, setIsBlocking] = useState(false);
 
-	useMessageSubscriber((message: Message) => {
+	usePluginListener((message: Message) => {
 		if (message.type === 'initResponse') {
 			const matchedParameterUpdate = message.data.initParams.filter(
 				(x) => x.parameterId === parameter

@@ -1,7 +1,7 @@
 import { Message } from '@/bindings/Message';
 import { useRef, useEffect, RefObject } from 'react';
 import WaveSurfer from 'wavesurfer.js';
-import { useMessageSubscriber } from './useMessageSubscriber';
+import { usePluginListener } from './usePluginListener';
 
 export function useWaveform(containerRef: RefObject<HTMLElement | null>) {
 	const waveSurferRef = useRef<WaveSurfer | null>(null);
@@ -21,7 +21,7 @@ export function useWaveform(containerRef: RefObject<HTMLElement | null>) {
 		});
 	}, [containerRef]);
 
-	useMessageSubscriber((event: Message) => {
+	usePluginListener((event: Message) => {
 		if (event.type !== 'initResponse') {
 			return;
 		}

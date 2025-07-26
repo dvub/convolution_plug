@@ -1,5 +1,8 @@
 'use client';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import Plugin from 'nih-plug-webview/webview';
+
 import { Message } from '@/bindings/Message';
 import BellControls from '@/components/filter-controls/BellControls';
 import HighpassControls from '@/components/filter-controls/HighpassControls';
@@ -7,15 +10,12 @@ import LowpassControls from '@/components/filter-controls/LowpassControls';
 import GainControls from '@/components/GainControls';
 import { IRManager } from '@/components/ir-controls/IRManager';
 import TopBar from '@/components/TopBar';
-import { MessageBus, MessageBusContext } from '@/contexts/MessageBusContext';
-import { useMessageDispatcher } from '@/hooks/useMessageDispatcher';
-import { useMessageSubscriber } from '@/hooks/useMessageSubscriber';
-import { initializePlugin, sendToPlugin } from '@/lib';
+
+import { usePluginListener } from '@/hooks/usePluginListener';
+import { sendToPlugin } from '@/lib';
 import { useState, useEffect } from 'react';
 
 export default function Home() {
-	const [messageBus] = useState(new MessageBus());
-
 	// TODO: possibly change/fix loading behavior?
 	// right now this works by simply making the entire page have 0 opacity
 	// if we do something conventional, such as a placeholder loading element
@@ -23,17 +23,17 @@ export default function Home() {
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
-		initializePlugin();
+		console.log('PLUGIN:', window.plugin);
+
 		sendToPlugin({ type: 'init' });
 	}, []);
 
-	useMessageDispatcher(messageBus);
-	useMessageSubscriber((event: Message) => {
+	usePluginListener((event: Message) => {
 		console.log(event);
 		if (event.type === 'initResponse') {
 			setIsLoading(false);
 		}
-	}, messageBus);
+	});
 
 	const [startPos, setStartPos] = useState({ x: 0, y: 0 });
 	const [mouseDown, setMouseDown] = useState(false);
@@ -71,27 +71,25 @@ export default function Home() {
 	}
 
 	return (
-		<MessageBusContext.Provider value={messageBus}>
-			<div
-				style={{ opacity: isLoading ? 0 : 1 }}
-				onPointerUp={handleResizeUp}
-				onPointerMove={handleResizeMove}
-			>
-				<TopBar />
-				<IRManager />
-				<div className='flex gap-1 py-1 h-[60vh]'>
-					<div className='w-[60%] flex secondary rounded-sm p-1 gap-1'>
-						<HighpassControls />
-						<BellControls />
-						<LowpassControls />
-					</div>
-					<GainControls />
+		<div
+			style={{ opacity: isLoading ? 0 : 1 }}
+			onPointerUp={handleResizeUp}
+			onPointerMove={handleResizeMove}
+		>
+			<TopBar />
+			<IRManager />
+			<div className='flex gap-1 py-1 h-[60vh]'>
+				<div className='w-[60%] flex secondary rounded-sm p-1 gap-1'>
+					<HighpassControls />
+					<BellControls />
+					<LowpassControls />
 				</div>
-				<div
-					className='corner-resize absolute bottom-0 right-0 h-10 w-10 bg-red-500'
-					onPointerDown={(e) => handleResizeDown(e)}
-				/>
+				<GainControls />
 			</div>
-		</MessageBusContext.Provider>
+			<div
+				className='corner-resize absolute bottom-0 right-0 h-10 w-10 bg-red-500'
+				onPointerDown={(e) => handleResizeDown(e)}
+			/>
+		</div>
 	);
 }

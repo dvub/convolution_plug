@@ -1,6 +1,6 @@
 import { IrProcessingConfig } from '@/bindings/IrProcessingConfig';
 import { Message } from '@/bindings/Message';
-import { useMessageSubscriber } from '@/hooks/useMessageSubscriber';
+import { usePluginListener } from '@/hooks/usePluginListener';
 import { sendToPlugin } from '@/lib';
 import { Dispatch, SetStateAction } from 'react';
 
@@ -10,7 +10,7 @@ export function ResampleControls(props: {
 }) {
 	const { irConfig, setIrConfig } = props;
 
-	useMessageSubscriber((message: Message) => {
+	usePluginListener((message: Message) => {
 		if (message.type === 'initResponse') {
 			setIrConfig(message.data.config);
 		}

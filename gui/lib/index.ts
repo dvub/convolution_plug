@@ -5,9 +5,5 @@ export function sendToPlugin(msg: Message) {
 		console.log('Window not available.');
 		return;
 	}
-	window.plugin.postMessage(JSON.stringify(msg));
-}
-
-export function initializePlugin() {
-	window.plugin = window.__NIH_PLUG_WEBVIEW__;
+	window.plugin.send(JSON.stringify(msg));
 }
