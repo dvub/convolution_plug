@@ -1,3 +1,4 @@
+mod embedded;
 pub mod ipc;
 
 use std::{path::PathBuf, sync::Arc};
@@ -8,6 +9,8 @@ use nih_plug_webview::{
 };
 use serde_json::json;
 
+#[cfg(not(debug_assertions))]
+use crate::editor::embedded::embedded_editor;
 use crate::{
     editor::ipc::{InitResponse, Message, ParameterUpdate},
     params::PluginParams,
@@ -26,25 +29,38 @@ impl PluginGui {
         params: &Arc<PluginParams>,
         exec: AsyncExecutor<ConvolutionPlug>,
     ) -> Option<Box<dyn Editor>> {
-        let config = WebViewConfig {
-            title: String::from("My Plugin"),
-            source: WebViewSource::URL(String::from("http://localhost:3000")),
-            workdir: PathBuf::from(concat!(
-                env!("CARGO_MANIFEST_DIR"),
-                "/target/webview-workdir"
-            )),
-        };
-        let editor = WebViewEditor::new(
-            PluginGui {
-                params: params.clone(),
-                executor: exec,
-            },
-            state,
-            config,
-        );
+        #[cfg(debug_assertions)]
+        let editor = dev_editor(state, params, exec);
+
+        #[cfg(not(debug_assertions))]
+        let editor = embedded_editor(state, params, exec);
 
         Some(Box::new(editor))
     }
+}
+
+fn dev_editor(
+    state: &Arc<WebViewState>,
+    params: &Arc<PluginParams>,
+    exec: AsyncExecutor<ConvolutionPlug>,
+) -> WebViewEditor {
+    let config = WebViewConfig {
+        title: "Convolution".to_string(),
+        source: WebViewSource::URL(String::from("http://localhost:3000")),
+        workdir: PathBuf::from(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/target/webview-workdir"
+        )),
+    };
+
+    WebViewEditor::new(
+        PluginGui {
+            params: params.clone(),
+            executor: exec,
+        },
+        state,
+        config,
+    )
 }
 
 impl EditorHandler for PluginGui {
