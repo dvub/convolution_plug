@@ -1,6 +1,13 @@
-import { IPC } from '@/app/thing';
 import { Message } from '@/bindings/Message';
 
 export function sendToPlugin(msg: Message) {
-	IPC.send(JSON.stringify(msg));
+	if (!window) {
+		console.log('Window not available.');
+		return;
+	}
+	window.plugin.postMessage(JSON.stringify(msg));
+}
+
+export function initializePlugin() {
+	window.plugin = window.__NIH_PLUG_WEBVIEW__;
 }

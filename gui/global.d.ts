@@ -1,9 +1,13 @@
-import { Message } from "./bindings/Message";
+interface Plugin {
+	onmessage: (message: string) => void;
+	postMessage: (message: string) => void;
+}
 
 declare global {
 	interface Window {
-		ipc: { postMessage: (message: string) => void };
-
-		onPluginMessage: ((message: Message) => void) | null;
+		__NIH_PLUG_WEBVIEW__: Plugin;
+		plugin: Plugin;
 	}
 }
+
+export {};

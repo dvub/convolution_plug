@@ -84,6 +84,9 @@ impl EditorHandler for PluginGui {
             Message::InitResponse(..) => println!(
                 "WARNING: received an InitResponse on the GUI thread. This will be discarded. "
             ),
+            Message::Resize { width, height } => {
+                cx.resize_window(width, height);
+            }
         }
     }
 }

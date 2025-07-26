@@ -17,6 +17,7 @@ pub enum Message {
     IrUpdate(IrData),
     IrConfigUpdate(IrProcessingConfig),
     InitResponse(InitResponse),
+    Resize { width: f64, height: f64 },
 }
 
 #[derive(Serialize, Deserialize, TS, Debug)]

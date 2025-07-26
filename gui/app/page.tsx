@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Message } from "@/bindings/Message";
 import BellControls from "@/components/filter-controls/BellControls";
@@ -10,7 +10,7 @@ import TopBar from "@/components/TopBar";
 import { MessageBus, MessageBusContext } from "@/contexts/MessageBusContext";
 import { useMessageDispatcher } from "@/hooks/useMessageDispatcher";
 import { useMessageSubscriber } from "@/hooks/useMessageSubscriber";
-import { sendToPlugin } from "@/lib";
+import { initializePlugin, sendToPlugin } from "@/lib";
 import { useState, useEffect } from "react";
 
 export default function Home() {
@@ -23,21 +23,52 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    initializePlugin();
     sendToPlugin({ type: "init" });
   }, []);
 
   useMessageDispatcher(messageBus);
   useMessageSubscriber((event: Message) => {
-    
     console.log(event);
     if (event.type === "initResponse") {
       setIsLoading(false);
     }
   }, messageBus);
 
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [mouseDown, setMouseDown] = useState(false);
+  const [size, setSize] = useState({ width: 600, height: 600 });
+
+  function handleResizeClick(e: React.PointerEvent<HTMLDivElement>) {
+    setMouseDown(true);
+    setStartPos({ x: e.clientX, y: e.clientY });
+  }
+  function handleResizeUp() {
+    setMouseDown(false);
+  }
+  function handleResizeMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!mouseDown) {
+      return;
+    }
+    const deltaX = e.clientX - startPos.x;
+    const deltaY = e.clientY - startPos.y;
+
+    const width = Math.max(100, size.width + deltaX);
+    const height = Math.max(100, size.height + deltaY);
+
+    setSize({ width, height });
+    sendToPlugin({
+      type: "resize",
+      data: {
+        width,
+        height,
+      },
+    });
+  }
+
   return (
     <MessageBusContext.Provider value={messageBus}>
-      <div style={{ opacity: isLoading ? 0 : 1 }}>
+      <div style={{ opacity: isLoading ? 0 : 1 }} onPointerUp={handleResizeUp}>
         <TopBar />
         <IRManager />
         <div className="flex gap-1 py-1 h-[60vh]">
@@ -48,6 +79,12 @@ export default function Home() {
           </div>
           <GainControls />
         </div>
+        <div
+          className="corner-resize absolute bottom-0 right-0 h-10 w-10 bg-red-500"
+          onPointerDown={(e) => handleResizeClick(e)}
+          onPointerMove={handleResizeMove}
+          onPointerUp={handleResizeUp}
+        />
       </div>
     </MessageBusContext.Provider>
   );
