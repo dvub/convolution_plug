@@ -1,12 +1,8 @@
-mod callbacks;
-
 use std::sync::Mutex;
 
 use nih_plug::{prelude::*, util::db_to_gain};
 
 use crate::{editor::ipc::IrData, processing::config::IrProcessingConfig};
-
-use callbacks::CallbackHandler;
 
 // should we use different default filter frequencies?
 // currently i've got i t so that filters do nothing with their default frequencies even if they're enabled
@@ -29,9 +25,6 @@ pub const DEFAULT_DRY_GAIN: f32 = -10.0;
 
 #[derive(Params, Debug)]
 pub struct PluginParams {
-    // non param stuff
-    pub callback_handler: CallbackHandler,
-
     #[persist = "config"]
     pub ir_config: Mutex<IrProcessingConfig>,
 
@@ -84,8 +77,6 @@ pub struct PluginParams {
 
 impl Default for PluginParams {
     fn default() -> Self {
-        let mut callback_handler = CallbackHandler::default();
-
         Self {
             // This gain is stored as linear gain. NIH-plug comes with useful conversion functions
             // to treat these kinds of parameters as if we were dealing with decibels. Storing this
@@ -110,8 +101,7 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
-            .with_smoother(GAIN_SMOOTHER)
-            .with_callback(callback_handler.create_callback()), //0
+            .with_smoother(GAIN_SMOOTHER),
 
             wet_gain: FloatParam::new(
                 "Wet Gain",
@@ -125,12 +115,9 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
-            .with_smoother(GAIN_SMOOTHER)
-            .with_callback(callback_handler.create_callback()), // 1
+            .with_smoother(GAIN_SMOOTHER),
 
-            lowpass_enabled: BoolParam::new("Lowpass Enabled", false)
-                .with_callback(callback_handler.create_callback()), //  2
-
+            lowpass_enabled: BoolParam::new("Lowpass Enabled", false),
             lowpass_freq: FloatParam::new(
                 "Lowpass Frequency",
                 MAX_FREQ,
@@ -142,9 +129,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
-            .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()), // 3
-
+            .with_smoother(SMOOTHER),
             lowpass_q: FloatParam::new(
                 "Lowpass Q",
                 DEFAULT_Q,
@@ -155,12 +140,8 @@ impl Default for PluginParams {
                 },
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
-            .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()), // 4
-
-            bell_enabled: BoolParam::new("Bell Enabled", false) // 8
-                .with_callback(callback_handler.create_callback()),
-
+            .with_smoother(SMOOTHER),
+            bell_enabled: BoolParam::new("Bell Enabled", false),
             bell_freq: FloatParam::new(
                 "Bell Frequency",
                 MIN_FREQ,
@@ -172,8 +153,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
-            .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()),
+            .with_smoother(SMOOTHER),
             bell_q: FloatParam::new(
                 "Bell Q",
                 DEFAULT_Q,
@@ -184,8 +164,7 @@ impl Default for PluginParams {
                 },
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
-            .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()),
+            .with_smoother(SMOOTHER),
             bell_gain: FloatParam::new(
                 "Bell Gain",
                 db_to_gain(0.0),
@@ -198,11 +177,8 @@ impl Default for PluginParams {
             .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
             .with_string_to_value(formatters::s2v_f32_gain_to_db())
             .with_unit(" dB")
-            .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()),
-
-            highpass_enabled: BoolParam::new("Highpass Enabled", false)
-                .with_callback(callback_handler.create_callback()), // 5
+            .with_smoother(SMOOTHER),
+            highpass_enabled: BoolParam::new("Highpass Enabled", false),
             highpass_freq: FloatParam::new(
                 "Highpass Frequency",
                 MIN_FREQ,
@@ -214,8 +190,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_hz_then_khz(2))
             .with_string_to_value(formatters::s2v_f32_hz_then_khz())
-            .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()), // 6
+            .with_smoother(SMOOTHER),
             highpass_q: FloatParam::new(
                 "Highpass Q",
                 DEFAULT_Q,
@@ -226,11 +201,7 @@ impl Default for PluginParams {
                 },
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
-            .with_smoother(SMOOTHER)
-            .with_callback(callback_handler.create_callback()), // 7
-
-            // EXTRA GOODIES
-            callback_handler,
+            .with_smoother(SMOOTHER),
 
             // persistent
             ir_data: Mutex::new(None),

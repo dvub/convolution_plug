@@ -13,40 +13,41 @@ export function useParameter(
 ] {
 	const [value, setValue] = useState(0);
 	const [isBlocking, setIsBlocking] = useState(false);
-	const [index, setIndex] = useState(0);
 
 	useMessageSubscriber((message: Message) => {
 		if (message.type === 'initResponse') {
-			const map = message.data.paramMap;
-			const newIndex = map.indexOf(parameter);
-			if (newIndex === -1) {
-				throw new Error('INVALID PARAMETER');
-			}
-			const newValue = message.data.initParams[newIndex].value;
-
-			setIndex(newIndex);
-			setValue(newValue);
+			const matchedParameterUpdate = message.data.initParams.filter(
+				(x) => x.parameterId === parameter
+			)[0];
+			setValue(matchedParameterUpdate.value);
 		}
 		if (message.type === 'parameterUpdate') {
 			if (isBlocking) {
 				return;
 			}
-			if (index !== message.data.parameterIndex) {
-				return;
+			for (const parameterUpdate of message.data) {
+				if (parameter !== parameterUpdate.parameterId) {
+					continue;
+				}
+				setValue(parameterUpdate.value);
 			}
-			setValue(message.data.value);
 		}
 	});
 
 	// TODO: use better naming
+
+	// TODO: instead of having these be arrays with single elements,
+	// what if we somehow aggregated updates from multiple parameters?
 	function setValueFunction(valueRaw: number) {
 		setValue(valueRaw);
 		sendToPlugin({
 			type: 'parameterUpdate',
-			data: {
-				parameterIndex: index,
-				value: valueRaw,
-			},
+			data: [
+				{
+					parameterId: parameter,
+					value: valueRaw,
+				},
+			],
 		});
 	}
 

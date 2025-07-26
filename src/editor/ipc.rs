@@ -13,10 +13,12 @@ use crate::processing::config::IrProcessingConfig;
 #[ts(export)]
 pub enum Message {
     Init,
-    ParameterUpdate(ParameterUpdate),
+    InitResponse(InitResponse),
+
+    ParameterUpdate(Vec<ParameterUpdate>),
+
     IrUpdate(IrData),
     IrConfigUpdate(IrProcessingConfig),
-    InitResponse(InitResponse),
     Resize { width: f64, height: f64 },
 }
 
@@ -24,7 +26,6 @@ pub enum Message {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct InitResponse {
-    pub param_map: Vec<String>,
     pub init_params: Vec<ParameterUpdate>,
     pub ir_data: Option<IrData>,
     pub config: IrProcessingConfig,
@@ -34,7 +35,7 @@ pub struct InitResponse {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ParameterUpdate {
-    pub parameter_index: usize,
+    pub parameter_id: String,
     pub value: f32,
 }
 

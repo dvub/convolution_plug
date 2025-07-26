@@ -4,4 +4,4 @@ import type { IrData } from "./IrData";
 import type { IrProcessingConfig } from "./IrProcessingConfig";
 import type { ParameterUpdate } from "./ParameterUpdate";
 
-export type Message = { "type": "init" } | { "type": "parameterUpdate", "data": ParameterUpdate } | { "type": "irUpdate", "data": IrData } | { "type": "irConfigUpdate", "data": IrProcessingConfig } | { "type": "initResponse", "data": InitResponse } | { "type": "resize", "data": { width: number, height: number, } };
+export type Message = { "type": "init" } | { "type": "initResponse", "data": InitResponse } | { "type": "parameterUpdate", "data": Array<ParameterUpdate> } | { "type": "irUpdate", "data": IrData } | { "type": "irConfigUpdate", "data": IrProcessingConfig } | { "type": "resize", "data": { width: number, height: number, } };

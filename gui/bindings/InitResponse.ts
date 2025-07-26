@@ -3,4 +3,4 @@ import type { IrData } from "./IrData";
 import type { IrProcessingConfig } from "./IrProcessingConfig";
 import type { ParameterUpdate } from "./ParameterUpdate";
 
-export type InitResponse = { paramMap: Array<string>, initParams: Array<ParameterUpdate>, irData: IrData | null, config: IrProcessingConfig, };
+export type InitResponse = { initParams: Array<ParameterUpdate>, irData: IrData | null, config: IrProcessingConfig, };
