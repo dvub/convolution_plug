@@ -1,8 +1,5 @@
 'use client';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import Plugin from 'nih-plug-webview/webview';
-
 import { Message } from '@/bindings/Message';
 import BellControls from '@/components/filter-controls/BellControls';
 import HighpassControls from '@/components/filter-controls/HighpassControls';
@@ -10,7 +7,6 @@ import LowpassControls from '@/components/filter-controls/LowpassControls';
 import GainControls from '@/components/GainControls';
 import { IRManager } from '@/components/ir-controls/IRManager';
 import TopBar from '@/components/TopBar';
-
 import { usePluginListener } from '@/hooks/usePluginListener';
 import { sendToPlugin } from '@/lib';
 import { useState, useEffect } from 'react';

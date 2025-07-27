@@ -14,7 +14,11 @@ use nih_plug_webview::{
     WebViewConfig, WebViewEditor, WebViewSource, WebViewState,
 };
 
-use crate::{editor::PluginGui, params::PluginParams, ConvolutionPlug};
+use crate::{
+    editor::{PluginGui, BACKGROUND_COLOR},
+    params::PluginParams,
+    ConvolutionPlug,
+};
 
 #[allow(dead_code)]
 pub fn embedded_editor(
@@ -46,7 +50,8 @@ pub fn embedded_editor(
         rel_config,
         move |builder| {
             builder
-                .with_devtools(true)
+                .with_devtools(false)
+                .with_background_color(BACKGROUND_COLOR)
                 .with_custom_protocol(protocol_name.clone(), build_protocol())
         },
     )
