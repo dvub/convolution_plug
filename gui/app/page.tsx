@@ -14,6 +14,11 @@ import { useState, useEffect } from 'react';
 // TODO: make mouse icons consistent
 // for example, hovering over buttons
 
+// TODO: really need to improve resizing
+// - double click should reset to original size
+// - initresponse should include window size, maybe?
+// - maybe add resizing to the sides of the window instead of just the corner?
+
 export default function Home() {
 	// TODO: possibly change/fix loading behavior?
 	// right now this works by simply making the entire page have 0 opacity
