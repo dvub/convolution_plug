@@ -1,7 +1,7 @@
 import { IrData } from '@/bindings/IrData';
 import { Message } from '@/bindings/Message';
 
-import { useMessageSubscriber } from '@/hooks/useMessageSubscriber';
+import { usePluginListener } from '@/hooks/usePluginListener';
 
 import { useWaveform } from '@/hooks/useWaveform';
 import { IRInput } from './IRInput';
@@ -19,7 +19,7 @@ export function IRManager() {
 	const [irData, setIrData] = useState<IrData | undefined>();
 	const [irConfig, setIrConfig] = useState<IrProcessingConfig | undefined>();
 
-	useMessageSubscriber((message: Message) => {
+	usePluginListener((message: Message) => {
 		if (message.type !== 'initResponse') {
 			return;
 		}

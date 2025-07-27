@@ -14,35 +14,36 @@ members = ["xtask"]
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-nih_plug_webview = { git = "https://github.com/dvub/nih-plug-webview.git" }
-hound = "3.5.1"
-# Remove the `assert_process_allocs` feature to allow allocations on the audio
-# thread in debug builds.
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = [
     "assert_process_allocs",
-] }
+], rev = "17ba595e748927290eb72974bc528f11d1d20e89" }
+
+# DSP 
+fundsp = { git = "https://github.com/dvub/fundsp.git" }
 convolution = { git = "https://github.com/holoplot/fft-convolution.git" }
-baseview = { git = "https://github.com/RustAudio/baseview" }
+# other IR processing
+hound = "3.5.1"
+rubato = "0.16.2"
+
+# GUI
+nih_plug_webview = { git = "https://github.com/toiglak/nih-plug-webview" }
 mime_guess = "2.0.5"
 include_dir = "0.7.4"
 serde = "1.0.219"
 serde_json = "1.0.140"
 ts-rs = "11.0.1"
-crossbeam-channel = "0.5.15"
-itertools = "0.14.0"
-directories = "6.0.0"
-fundsp = { git = "https://github.com/dvub/fundsp.git" }
+# error handling
 anyhow = "1.0.98"
-rubato = "0.16.2"
-float-cmp = "0.10.0"
-tempdir = "0.3.7"
+
 
 # Uncomment the below line to disable the on-by-default VST3 feature to remove
 # the GPL compatibility requirement
 # nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", default-features = false, features = ["assert_process_allocs"] }
 
+[dev-dependencies]
+tempdir = "0.3.7"
+float-cmp = "0.10.0"
 
-# [dev-dependencies]
 # criterion = { version = "0.5", features = ["html_reports"] }
 
 # [[bench]]

@@ -21,4 +21,3 @@ Note to self:
 - general optimizations
 
 - add feature to completely mute dry output
-- see what can be implemented from https://github.com/toiglak/nih-plug-webview/tree/main
