@@ -49,3 +49,7 @@ body {
 .accent {
 	background-color: var(--accent);
 }
+
+button {
+	cursor: pointer;
+}

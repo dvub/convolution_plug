@@ -11,6 +11,9 @@ import { usePluginListener } from '@/hooks/usePluginListener';
 import { sendToPlugin } from '@/lib';
 import { useState, useEffect } from 'react';
 
+// TODO: make mouse icons consistent
+// for example, hovering over buttons
+
 export default function Home() {
 	// TODO: possibly change/fix loading behavior?
 	// right now this works by simply making the entire page have 0 opacity

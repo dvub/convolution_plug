@@ -43,7 +43,7 @@ pub fn build_graph(
         convolver >> switched_lowpass(params) >> switched_bell(params) >> switched_highpass(params);
 
     let wet = eq_wet * wet_gain(params);
-    let dry = multipass::<U2>() * dry_gain(params);
+    let dry = multipass::<U2>() * dry_gain(params) * dry_enabled(params);
     let graph = wet & dry;
 
     Ok((Box::new(graph), slot_frontend))

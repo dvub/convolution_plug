@@ -73,6 +73,9 @@ pub struct PluginParams {
 
     #[id = "highpass_q"]
     pub highpass_q: FloatParam,
+
+    #[id = "dry_enabled"]
+    pub dry_enabled: BoolParam,
 }
 
 impl Default for PluginParams {
@@ -202,6 +205,7 @@ impl Default for PluginParams {
             )
             .with_value_to_string(formatters::v2s_f32_rounded(2))
             .with_smoother(SMOOTHER),
+            dry_enabled: BoolParam::new("Dry Output Enabled", true),
 
             // persistent
             ir_data: Mutex::new(None),

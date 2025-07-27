@@ -79,3 +79,9 @@ pub fn dry_gain<N: Size<f32>>(
 ) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
     ParamNode::new(p, |p| p.dry_gain.smoothed.next())
 }
+
+pub fn dry_enabled<N: Size<f32>>(
+    p: &Arc<PluginParams>,
+) -> An<ParamNode<PluginParams, impl Accessor<PluginParams>, N>> {
+    ParamNode::new(p, |p| f32::from(u8::from(p.dry_enabled.value())))
+}
