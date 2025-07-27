@@ -36,11 +36,11 @@ impl PluginGui {
         params: &Arc<PluginParams>,
         exec: AsyncExecutor<ConvolutionPlug>,
     ) -> Option<Box<dyn Editor>> {
-        // #[cfg(debug_assertions)]
+        #[cfg(debug_assertions)]
         let editor = dev_editor(state, params, exec);
 
-        //#[cfg(not(debug_assertions))]
-        //let editor = embedded_editor(state, params, exec);
+        #[cfg(not(debug_assertions))]
+        let editor = embedded_editor(state, params, exec);
 
         Some(Box::new(editor))
     }
