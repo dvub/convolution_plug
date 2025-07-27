@@ -7,9 +7,11 @@ pub mod params;
 pub mod processing;
 
 use crate::{
-    dsp::{build_graph, convolve::init_convolvers, FADE_TIME, FADE_TYPE},
-    editor::{ipc::IrData, PluginGui},
-    processing::{config::IrProcessingConfig, decode::decode_samples, process_ir},
+    dsp::build_graph,
+    editor::{
+        tasks::{handle_task, Task},
+        PluginGui,
+    },
 };
 
 use fundsp::hacker32::*;
@@ -45,11 +47,6 @@ impl Default for ConvolutionPlug {
     }
 }
 
-pub enum Task {
-    UpdateIrConfig(IrProcessingConfig),
-    UpdateIr(IrData),
-}
-
 impl Plugin for ConvolutionPlug {
     const NAME: &'static str = "Convolution";
     const VENDOR: &'static str = "dvub";
@@ -73,50 +70,10 @@ impl Plugin for ConvolutionPlug {
 
     type SysExMessage = ();
 
+    // handle expensive tasks
     type BackgroundTask = Task;
-
     fn task_executor(&mut self) -> TaskExecutor<Self> {
-        let params = self.params.clone();
-        let slot = self.slot.clone();
-        let sample_rate = self.sample_rate;
-
-        // TODO: refactor
-        Box::new(move |task| match task {
-            Task::UpdateIrConfig(new_ir_config) => {
-                let (ir_samples, ir_sample_rate) = &*params.ir_samples.lock().unwrap();
-
-                // if IR is already loaded
-                if !ir_samples.is_empty() {
-                    let processed_ir =
-                        process_ir(ir_samples, *ir_sample_rate, sample_rate, &new_ir_config)
-                            .expect("There was an error processing this IR");
-
-                    let convolvers = init_convolvers(&processed_ir);
-
-                    slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
-                }
-
-                // regardless of if IR is loaded, make sure the new config is persistent
-                *params.ir_config.lock().unwrap() = new_ir_config;
-            }
-            Task::UpdateIr(ir_data) => {
-                let config = params.ir_config.lock().unwrap();
-
-                let (plain_ir_samples, ir_sample_rate) = decode_samples(&ir_data.raw_bytes)
-                    .expect("There was an error decoding the file");
-
-                *params.ir_samples.lock().unwrap() = (plain_ir_samples.clone(), ir_sample_rate);
-
-                let processed_ir =
-                    process_ir(&plain_ir_samples, ir_sample_rate, sample_rate, &config)
-                        .expect("There was an error processing this IR");
-
-                let convolvers = init_convolvers(&processed_ir);
-
-                slot.lock().unwrap().set(FADE_TYPE, FADE_TIME, convolvers);
-                *params.ir_data.lock().unwrap() = Some(ir_data);
-            }
-        })
+        handle_task(self)
     }
 
     fn params(&self) -> Arc<dyn Params> {

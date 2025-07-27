@@ -1,5 +1,6 @@
 mod embedded;
 pub mod ipc;
+pub mod tasks;
 
 use std::{path::PathBuf, sync::Arc};
 
@@ -11,10 +12,14 @@ use serde_json::json;
 
 #[cfg(not(debug_assertions))]
 use crate::editor::embedded::embedded_editor;
+
 use crate::{
-    editor::ipc::{InitResponse, Message, ParameterUpdate},
+    editor::{
+        ipc::{InitResponse, Message, ParameterUpdate},
+        tasks::Task,
+    },
     params::PluginParams,
-    ConvolutionPlug, Task,
+    ConvolutionPlug,
 };
 
 pub struct PluginGui {
