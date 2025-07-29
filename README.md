@@ -1,9 +1,13 @@
 # Convolution
+
 ## Downloads
+
 Head over to the Actions tab and go to the latest build and find the artifacts section.
 
 ## Building
+
 Please note that only macOS and windows are supported at this time.
+
 ```shell
 # gui needs to be built
 cd gui
@@ -12,9 +16,6 @@ npm run build # or pnpm, bun, etc.
 cd ..
 cargo xtask bundle convolution_plug --release
 ```
-
-(Note to self:)
-`Get-Content  "C:\Users\<user>\AppData\Local\Bitwig Studio\engine.log" -wait`
 
 ### Plans for next iteration
 

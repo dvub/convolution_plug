@@ -26,6 +26,9 @@ use std::sync::{Arc, Mutex};
 
 // TODO: improve documentation for functions and modules across the board
 
+/* (Note to self:)
+`Get-Content  "C:\Users\<user>\AppData\Local\Bitwig Studio\engine.log" -wait`
+ */
 pub struct ConvolutionPlug {
     params: Arc<PluginParams>,
     graph: BigBlockAdapter,
