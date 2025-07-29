@@ -6,7 +6,6 @@
  */
 
 // TODO: make text input work
-// TODO: create a separate component for settings knobs
 
 import { useId } from 'react';
 import {

@@ -3,7 +3,6 @@ import { IrProcessingConfig } from '@/bindings/IrProcessingConfig';
 import { sendToPlugin } from '@/lib';
 import { Dispatch, SetStateAction } from 'react';
 
-// TODO: refactor into specific numeric input component
 export function NormalizeControls(props: {
 	irConfig: IrProcessingConfig;
 	setIrConfig: Dispatch<SetStateAction<IrProcessingConfig | undefined>>;
