@@ -40,7 +40,7 @@ export function useParameter(
 
 	// TODO: use better naming
 
-	// TODO: instead of having these be arrays with single elements,
+	// instead of having these be arrays with single elements,
 	// what if we somehow aggregated updates from multiple parameters?
 	function setValueFunction(valueRaw: number) {
 		setValue(valueRaw);

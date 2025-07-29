@@ -6,8 +6,7 @@ const CURSOR_CLASSES = {
 	corner: 'cursor-se-resize',
 };
 
-// TODO: add resizing along bottom and side of window
-
+// maybe? add resizing along bottom/side of window
 export function Resize() {
 	const resizeData = useRef({
 		startPos: { x: 0, y: 0 },

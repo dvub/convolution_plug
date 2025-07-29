@@ -46,7 +46,6 @@ export function IRManager() {
 	// refactoring to this function lets us share behavior
 	// between the button and the element which handles drag/drop
 
-	// TODO: might want to work on nesting issues here
 	function setIrFromFile(file: File) {
 		const fileName = file.name;
 

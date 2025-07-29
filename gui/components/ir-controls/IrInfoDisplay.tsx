@@ -19,7 +19,6 @@ export function IrInfoDisplay(props: { irData: IrData | undefined }) {
 			return;
 		}
 		parseBuffer(new Uint8Array(irData.rawBytes)).then((x) => {
-			// TODO: handle when metadata is undefined
 			const metadata = x.format;
 
 			setMeta({
