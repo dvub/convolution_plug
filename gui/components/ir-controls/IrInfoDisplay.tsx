@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 
 type IrMetadata = {
 	name: string;
-	length: number;
-	numChannels: number;
-	sampleRate: number;
+	length?: number;
+	numChannels?: number;
+	sampleRate?: number;
 };
 
 export function IrInfoDisplay(props: { irData: IrData | undefined }) {
@@ -22,12 +22,11 @@ export function IrInfoDisplay(props: { irData: IrData | undefined }) {
 			// TODO: handle when metadata is undefined
 			const metadata = x.format;
 
-			const shortName = irData.name.replace(/(.{20})..+/, '$1…');
 			setMeta({
-				name: shortName,
-				length: metadata.duration!,
-				numChannels: metadata.numberOfChannels!,
-				sampleRate: metadata.sampleRate!,
+				name: irData.name,
+				length: metadata.duration,
+				numChannels: metadata.numberOfChannels,
+				sampleRate: metadata.sampleRate,
 			});
 		});
 
@@ -38,18 +37,30 @@ export function IrInfoDisplay(props: { irData: IrData | undefined }) {
 		return <h1 className='secondary rounded-sm p-1'>No IR Loaded.</h1>;
 	}
 
+	/* https://stackoverflow.com/questions/1199352/smart-way-to-truncate-long-strings*/
+	const shortName = meta.name.replace(/(.{20})..+/, '$1…');
+
+	const duration = meta.length
+		? `Length: ${meta.length.toFixed(3)}`
+		: 'No length found';
+
+	const channels = meta.numChannels
+		? `${meta.numChannels} Channels`
+		: 'No channel info found';
+
+	const sampleRate = meta.sampleRate
+		? `${meta.sampleRate} Hz`
+		: 'No SR found';
+
 	return (
 		<div className='secondary rounded-sm p-1'>
-			<h1 className='text-sm'>
-				{/* https://stackoverflow.com/questions/1199352/smart-way-to-truncate-long-strings*/}
-				{meta.name}
-			</h1>
+			<h1 className='text-sm'>{shortName}</h1>
 			<p className='text-xs'>
-				Length: {meta.length.toFixed(3)}s
+				{duration}
 				<br />
-				{meta.numChannels} Channels
+				{channels}
 				<br />
-				{meta.sampleRate} Hz
+				{sampleRate}
 				<br />
 			</p>
 		</div>
