@@ -15,6 +15,8 @@ import { useState, useEffect, useCallback } from 'react';
 // TODO: make mouse icons consistent
 // for example, hovering over buttons
 
+// TODO: accessibility
+
 export default function Home() {
 	// TODO: should improve loading behavior
 	// right now this works by simply making the entire page have 0 opacity

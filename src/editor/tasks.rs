@@ -36,13 +36,17 @@ fn update_ir(
     slot: &Arc<Mutex<Slot>>,
     sample_rate: f32,
 ) {
+
     let config = params.ir_config.lock().unwrap();
 
+    // TODO: if an issue occurs with file decoding here, we don't want to panic
+    // we should probably send a message to the GUI to indicate that it failed
     let (plain_ir_samples, ir_sample_rate) =
         decode_samples(&ir_data.raw_bytes).expect("There was an error decoding the file");
 
     *params.ir_samples.lock().unwrap() = (plain_ir_samples.clone(), ir_sample_rate);
 
+    // TODO: can we expect() this?
     let processed_ir = process_ir(&plain_ir_samples, ir_sample_rate, sample_rate, &config)
         .expect("There was an error processing this IR");
 
