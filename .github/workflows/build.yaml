@@ -3,7 +3,7 @@ name: Automated Builds
 on:
   push:
     branches:
-      - "TODO" # **
+      - main
     tags:
       - "*"
   pull_request:
@@ -107,7 +107,7 @@ jobs:
           mv target/bundled/* "$ARCHIVE_NAME/$ARCHIVE_NAME"
       # - name: Add an OS-specific readme file with installation instructions
       #   run: cp ".github/workflows/readme-${{ runner.os }}.txt" "$ARCHIVE_NAME/$ARCHIVE_NAME/README.txt"
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARCHIVE_NAME }}
           path: ${{ env.ARCHIVE_NAME }}
