@@ -1,7 +1,9 @@
 # Convolution
+## Downloads
+Head over to the Actions tab and go to the latest build and find the artifacts section.
 
 ## Building
-
+Please note that only macOS and windows are supported at this time.
 ```shell
 # gui needs to be built
 cd gui
