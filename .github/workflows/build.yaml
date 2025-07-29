@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - { name: ubuntu, os: ubuntu-latest, cross-target: "" }
+          # - { name: ubuntu, os: ubuntu-latest, cross-target: "" }
           - {
               name: macos-universal,
               os: macos-latest,
@@ -87,19 +87,19 @@ jobs:
           runner_name=${{ matrix.name }}
           if [[ $runner_name = 'macos-universal' ]]; then
             export MACOSX_DEPLOYMENT_TARGET=10.13
-            cargo xtask bundle-universal losst --release
+            cargo xtask bundle convolution_plug --release
           else
             cross_target=${{ matrix.cross-target }}
             if [[ -n $cross_target ]]; then
               package_args+=("--target" "$cross_target")
             fi
-            cargo xtask bundle losst --release
+            cargo xtask bundle convolution_plug --release
           fi
 
       - name: Determine build archive name
         run: |
           # Windows (usually) doesn't like colons in file names
-          echo "ARCHIVE_NAME=losst-$(date -u +"%Y-%m-%d-%H%m%S")-${{ matrix.name }}" >> "$GITHUB_ENV"
+          echo "ARCHIVE_NAME=convolventr-$(date -u +"%Y-%m-%d-%H%m%S")-${{ matrix.name }}" >> "$GITHUB_ENV"
       - name: Move all packaged plugin into a directory
         run: |
           # GitHub Action strips the top level directory, great, have another one
