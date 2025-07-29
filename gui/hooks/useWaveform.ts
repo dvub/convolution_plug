@@ -1,5 +1,5 @@
 import { Message } from '@/bindings/Message';
-import { useRef, useEffect, RefObject } from 'react';
+import { useRef, useEffect, RefObject, useCallback } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { usePluginListener } from './usePluginListener';
 
@@ -21,7 +21,7 @@ export function useWaveform(containerRef: RefObject<HTMLElement | null>) {
 		});
 	}, [containerRef]);
 
-	usePluginListener((event: Message) => {
+	const handle = useCallback((event: Message) => {
 		if (event.type !== 'initResponse') {
 			return;
 		}
@@ -35,7 +35,9 @@ export function useWaveform(containerRef: RefObject<HTMLElement | null>) {
 			type: 'wav',
 		});
 		waveSurferRef.current!.loadBlob(blob);
-	});
+	}, []);
+
+	usePluginListener(handle);
 
 	return waveSurferRef;
 }

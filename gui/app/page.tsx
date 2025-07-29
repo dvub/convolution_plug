@@ -10,7 +10,7 @@ import { Resize } from '@/components/Resize';
 import TopBar from '@/components/TopBar';
 import { usePluginListener } from '@/hooks/usePluginListener';
 import { sendToPlugin } from '@/lib';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 // TODO: make mouse icons consistent
 // for example, hovering over buttons
@@ -26,12 +26,13 @@ export default function Home() {
 		sendToPlugin({ type: 'init' });
 	}, []);
 
-	usePluginListener((event: Message) => {
+	const handleInit = useCallback((event: Message) => {
 		if (event.type === 'initResponse') {
 			setIsLoading(false);
 		}
-	});
+	}, []);
 
+	usePluginListener(handleInit);
 	return (
 		<div style={{ opacity: isLoading ? 0 : 1 }}>
 			<TopBar />

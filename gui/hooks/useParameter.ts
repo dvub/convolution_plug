@@ -1,7 +1,7 @@
 import { Message } from '@/bindings/Message';
 import { sendToPlugin } from '@/lib';
 import { Parameter } from '@/lib/parameters';
-import { useState, Dispatch, SetStateAction } from 'react';
+import { useState, Dispatch, SetStateAction, useCallback } from 'react';
 import { usePluginListener } from './usePluginListener';
 
 // TODO: improve return type
@@ -14,25 +14,29 @@ export function useParameter(
 	const [value, setValue] = useState(0);
 	const [isBlocking, setIsBlocking] = useState(false);
 
-	usePluginListener((message: Message) => {
-		if (message.type === 'initResponse') {
-			const matchedParameterUpdate = message.data.initParams.filter(
-				(x) => x.parameterId === parameter
-			)[0];
-			setValue(matchedParameterUpdate.value);
-		}
-		if (message.type === 'parameterUpdate') {
-			if (isBlocking) {
-				return;
+	const handleMessage = useCallback(
+		(message: Message) => {
+			if (message.type === 'initResponse') {
+				const matchedParameterUpdate = message.data.initParams.filter(
+					(x) => x.parameterId === parameter
+				)[0];
+				setValue(matchedParameterUpdate.value);
 			}
-			for (const parameterUpdate of message.data) {
-				if (parameter !== parameterUpdate.parameterId) {
-					continue;
+			if (message.type === 'parameterUpdate') {
+				if (isBlocking) {
+					return;
 				}
-				setValue(parameterUpdate.value);
+				for (const parameterUpdate of message.data) {
+					if (parameter !== parameterUpdate.parameterId) {
+						continue;
+					}
+					setValue(parameterUpdate.value);
+				}
 			}
-		}
-	});
+		},
+		[isBlocking, parameter]
+	);
+	usePluginListener(handleMessage);
 
 	// TODO: use better naming
 

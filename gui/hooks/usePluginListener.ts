@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 
 export function usePluginListener(callback: (message: Message) => void) {
 	useEffect(() => {
-		const unsubscribe = window.plugin.listen((m) =>
-			callback(JSON.parse(m))
+		const unsubscribe = window.plugin.listen((message) =>
+			callback(JSON.parse(message))
 		);
 		return () => {
 			unsubscribe();

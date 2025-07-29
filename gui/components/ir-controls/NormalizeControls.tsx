@@ -1,6 +1,5 @@
 import { IrProcessingConfig } from '@/bindings/IrProcessingConfig';
-import { Message } from '@/bindings/Message';
-import { usePluginListener } from '@/hooks/usePluginListener';
+
 import { sendToPlugin } from '@/lib';
 import { Dispatch, SetStateAction } from 'react';
 
@@ -10,12 +9,6 @@ export function NormalizeControls(props: {
 	setIrConfig: Dispatch<SetStateAction<IrProcessingConfig | undefined>>;
 }) {
 	const { irConfig, setIrConfig } = props;
-
-	usePluginListener((message: Message) => {
-		if (message.type === 'initResponse') {
-			setIrConfig(message.data.config);
-		}
-	});
 
 	const handleSwitchClick = () => {
 		const newConfig: IrProcessingConfig = {

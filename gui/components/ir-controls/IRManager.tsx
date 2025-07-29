@@ -5,7 +5,7 @@ import { usePluginListener } from '@/hooks/usePluginListener';
 
 import { useWaveform } from '@/hooks/useWaveform';
 import { IRInput } from './IRInput';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { NormalizeControls } from './NormalizeControls';
 import { ResampleControls } from './ResampleControls';
 import { IrProcessingConfig } from '@/bindings/IrProcessingConfig';
@@ -19,7 +19,7 @@ export function IRManager() {
 	const [irData, setIrData] = useState<IrData | undefined>();
 	const [irConfig, setIrConfig] = useState<IrProcessingConfig | undefined>();
 
-	usePluginListener((message: Message) => {
+	const handleMessage = useCallback((message: Message) => {
 		if (message.type !== 'initResponse') {
 			return;
 		}
@@ -27,7 +27,10 @@ export function IRManager() {
 		if (message.data.irData) {
 			setIrData(message.data.irData);
 		}
-	});
+		setIrConfig(message.data.config);
+	}, []);
+
+	usePluginListener(handleMessage);
 
 	function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
 		e.preventDefault();
