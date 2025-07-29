@@ -5,6 +5,7 @@
 ```shell
 # gui needs to be built
 cd gui
+npm install
 npm run build # or pnpm, bun, etc.
 cd ..
 cargo xtask bundle convolution_plug --release
