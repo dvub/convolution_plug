@@ -6,6 +6,8 @@ import { useParameter } from '@/hooks/useParameter';
 import { SpeakerLoudIcon, SpeakerOffIcon } from '@radix-ui/react-icons';
 
 const GAIN_KNOB_SIZE = 7;
+const DEFAULT_DRY_GAIN = dbToGain(-10);
+const DEFAULT_WET_GAIN = dbToGain(-15);
 
 export default function GainControls() {
 	return (
@@ -16,7 +18,7 @@ export default function GainControls() {
 					parameter='wet_gain'
 					label='Wet Gain'
 					size={GAIN_KNOB_SIZE}
-					defaultValue={dbToGain(0)}
+					defaultValue={DEFAULT_WET_GAIN}
 					range={
 						new NumericRange(
 							dbToGain(-40),
@@ -34,7 +36,10 @@ export default function GainControls() {
 		</div>
 	);
 }
-// TODO: refactor into separate files?
+
+// we override the default label and instead provide a label which
+// ALSO includes a button
+//
 function DryKnob() {
 	const [[value, setValue]] = useParameter('dry_enabled');
 
@@ -51,7 +56,7 @@ function DryKnob() {
 			<Knob
 				parameter='dry_gain'
 				size={GAIN_KNOB_SIZE}
-				defaultValue={dbToGain(0)}
+				defaultValue={DEFAULT_DRY_GAIN}
 				range={
 					new NumericRange(
 						dbToGain(-30),

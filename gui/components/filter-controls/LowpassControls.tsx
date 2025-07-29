@@ -2,6 +2,7 @@ import { hzThenKhz } from '@/lib/format';
 import { Knob } from '../knobs/Knob';
 import {
 	DEFAULT_FREQ_RANGE,
+	DEFAULT_Q,
 	DEFAULT_Q_RANGE,
 	FILTER_KNOB_SIZE,
 	KNOB_DIGITS,
@@ -10,6 +11,8 @@ import FilterColumn from './FilterColumn';
 import ParameterToggle from './Toggle';
 
 import { useParameter } from '@/hooks/useParameter';
+
+const DEFAULT_LOWPASS_FREQ = 22050;
 
 export default function LowpassControls() {
 	const [[isLowpassEnabled, setIsLowpassEnabled]] =
@@ -27,7 +30,7 @@ export default function LowpassControls() {
 				parameter='lowpass_freq'
 				label='Freq'
 				size={FILTER_KNOB_SIZE}
-				defaultValue={10}
+				defaultValue={DEFAULT_LOWPASS_FREQ}
 				range={DEFAULT_FREQ_RANGE}
 				valueRawDisplayFn={(x) => hzThenKhz(x, KNOB_DIGITS)}
 				enabled={Boolean(isLowpassEnabled)}
@@ -36,7 +39,7 @@ export default function LowpassControls() {
 				parameter='lowpass_q'
 				label='Q'
 				size={FILTER_KNOB_SIZE}
-				defaultValue={0.1}
+				defaultValue={DEFAULT_Q}
 				range={DEFAULT_Q_RANGE}
 				valueRawDisplayFn={(x) => x.toFixed(KNOB_DIGITS)}
 				enabled={Boolean(isLowpassEnabled)}

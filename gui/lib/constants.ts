@@ -6,6 +6,7 @@ export const DEFAULT_FREQ_RANGE = new NumericRange(
 	skewFactor(-2.5),
 	RangeType.Skewed
 );
+export const DEFAULT_Q = 0.1;
 export const DEFAULT_Q_RANGE = new NumericRange(
 	0.1,
 	18,

@@ -1,5 +1,6 @@
 import {
 	DEFAULT_FREQ_RANGE,
+	DEFAULT_Q,
 	DEFAULT_Q_RANGE,
 	FILTER_KNOB_SIZE,
 	KNOB_DIGITS,
@@ -11,6 +12,8 @@ import { Knob } from '../knobs/Knob';
 import FilterColumn from './FilterColumn';
 import ParameterToggle from './Toggle';
 import { useParameter } from '@/hooks/useParameter';
+
+const DEFAULT_BELL_FREQ = 10;
 
 export default function BellControls() {
 	const [[isBellEnabled, setIsBellEnabled]] = useParameter('bell_enabled');
@@ -27,7 +30,7 @@ export default function BellControls() {
 				parameter='bell_freq'
 				label='Freq'
 				size={FILTER_KNOB_SIZE}
-				defaultValue={10}
+				defaultValue={DEFAULT_BELL_FREQ}
 				range={DEFAULT_FREQ_RANGE}
 				valueRawDisplayFn={(x) => hzThenKhz(x, KNOB_DIGITS)}
 				enabled={Boolean(isBellEnabled)}
@@ -36,7 +39,7 @@ export default function BellControls() {
 				parameter='bell_q'
 				label='Q'
 				size={FILTER_KNOB_SIZE}
-				defaultValue={0.1}
+				defaultValue={DEFAULT_Q}
 				range={DEFAULT_Q_RANGE}
 				valueRawDisplayFn={(x) => x.toFixed(KNOB_DIGITS)}
 				enabled={Boolean(isBellEnabled)}

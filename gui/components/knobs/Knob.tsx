@@ -65,7 +65,6 @@ export function Knob({
 	const [[value, setValue], [isDragging, setIsDragging]] =
 		useParameter(parameter);
 
-	const internalDefaultValue = range.normalize(defaultValue);
 	const mapTo01 = (x: number) => NORMALIZED_RANGE.normalize(x);
 	const mapFrom01 = (x: number) => NORMALIZED_RANGE.unnormalize(x);
 
@@ -88,8 +87,7 @@ export function Knob({
 	});
 
 	function resetValue() {
-		// TODO: reset to cosmetic initial value
-		setValue(internalDefaultValue);
+		setValue(range.normalize(defaultValue));
 	}
 
 	const thumbProps = {
