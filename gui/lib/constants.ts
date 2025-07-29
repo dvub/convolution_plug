@@ -12,7 +12,7 @@ export const DEFAULT_Q_RANGE = new NumericRange(
 	skewFactor(-2),
 	RangeType.Skewed
 );
-export const FILTER_KNOB_SIZE = 8;
+export const FILTER_KNOB_SIZE = 4;
 export const KNOB_DIGITS = 2;
 
 export const DISABLED_OPACITY = 0.25;

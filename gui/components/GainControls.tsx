@@ -5,30 +5,32 @@ import { DISABLED_OPACITY, KNOB_DIGITS } from '@/lib/constants';
 import { useParameter } from '@/hooks/useParameter';
 import { SpeakerLoudIcon, SpeakerOffIcon } from '@radix-ui/react-icons';
 
-const GAIN_KNOB_SIZE = 15;
+const GAIN_KNOB_SIZE = 7;
 
 export default function GainControls() {
 	return (
-		<div className='w-[40%] h-full secondary rounded-sm py-5 flex flex-col justify-between'>
-			<DryKnob />
-			<Knob
-				parameter='wet_gain'
-				label='Wet Gain'
-				size={GAIN_KNOB_SIZE}
-				defaultValue={dbToGain(0)}
-				range={
-					new NumericRange(
-						dbToGain(-40),
-						dbToGain(40),
-						gainSkewFactor(-40, 40),
-						RangeType.Skewed
-					)
-				}
-				valueRawDisplayFn={(x) => {
-					const g = gainToDb(x).toFixed(KNOB_DIGITS);
-					return `${g} dB`;
-				}}
-			/>
+		<div className='w-[40%] h-full secondary rounded-sm py-5 flex flex-col justify-center items-center'>
+			<div>
+				<DryKnob />
+				<Knob
+					parameter='wet_gain'
+					label='Wet Gain'
+					size={GAIN_KNOB_SIZE}
+					defaultValue={dbToGain(0)}
+					range={
+						new NumericRange(
+							dbToGain(-40),
+							dbToGain(40),
+							gainSkewFactor(-40, 40),
+							RangeType.Skewed
+						)
+					}
+					valueRawDisplayFn={(x) => {
+						const g = gainToDb(x).toFixed(KNOB_DIGITS);
+						return `${g} dB`;
+					}}
+				/>{' '}
+			</div>
 		</div>
 	);
 }

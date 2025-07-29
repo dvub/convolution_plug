@@ -8,7 +8,7 @@
 // TODO: make text input work
 // TODO: create a separate component for settings knobs
 
-import { useEffect, useId, useState } from 'react';
+import { useId } from 'react';
 import {
 	KnobHeadless,
 	KnobHeadlessLabel,
@@ -103,14 +103,6 @@ export function Knob({
 			enabled === true || enabled === undefined ? 1 : DISABLED_OPACITY,
 	};
 
-	// broken lol
-	const [unit, setUnit] = useState('vh');
-	useEffect(() => {
-		const newUnit = window.innerHeight > window.innerWidth ? 'vw' : 'vh';
-		console.log(newUnit);
-		setUnit(newUnit);
-	}, []);
-
 	return (
 		<div className='flex flex-col items-center' style={style}>
 			<KnobHeadlessLabel id={labelId} className='text-sm'>
@@ -121,7 +113,7 @@ export function Knob({
 				id={knobId}
 				aria-labelledby={labelId}
 				className={`relative outline-none`}
-				style={{ width: `${size}${unit}`, height: `${size}${unit}` }}
+				style={{ width: `${size}rem`, height: `${size}rem` }}
 				dragSensitivity={SENSITIVITY}
 				mapTo01={mapTo01}
 				mapFrom01={mapFrom01}
