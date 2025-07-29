@@ -17,7 +17,6 @@ use crate::{
 use fundsp::hacker32::*;
 use nih_plug::prelude::*;
 
-use nih_plug_webview::WebViewState;
 use params::PluginParams;
 use std::sync::{Arc, Mutex};
 
@@ -113,11 +112,7 @@ impl Plugin for ConvolutionPlug {
     }
 
     fn editor(&mut self, async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        PluginGui::new(
-            &Arc::new(WebViewState::new(600.0, 600.0)),
-            &self.params,
-            async_executor,
-        )
+        PluginGui::new(&self.params.state, &self.params, async_executor)
     }
 
     fn process(

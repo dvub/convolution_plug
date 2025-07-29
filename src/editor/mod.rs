@@ -76,14 +76,7 @@ fn dev_editor(
 }
 
 impl EditorHandler for PluginGui {
-    fn on_frame(&mut self, cx: &mut Context) {
-        if cx.params_changed() {
-            let updates = build_param_update_array(&self.params);
-            let message = Message::ParameterUpdate(updates);
-
-            cx.send_message(json!(message).to_string());
-        }
-    }
+    fn on_frame(&mut self, _: &mut Context) {}
 
     fn on_message(&mut self, cx: &mut Context, message: String) {
         // TODO: is it correct to expect()
@@ -109,6 +102,18 @@ impl EditorHandler for PluginGui {
             }
         }
     }
+
+    fn on_param_value_changed(&mut self, cx: &mut Context, id: &str, normalized_value: f32) {
+        let wrapped_update = ParameterUpdate {
+            parameter_id: id.to_string(),
+            value: normalized_value,
+        };
+        // TODO: is there something better to do than vec![]?
+        let message = Message::ParameterUpdate(vec![wrapped_update]);
+        cx.send_message(json!(message).to_string());
+    }
+
+    fn on_params_changed(&mut self, _: &mut Context) {}
 }
 impl PluginGui {
     fn handle_init(&self, cx: &mut Context) {
@@ -128,7 +133,7 @@ impl PluginGui {
 
     fn handle_parameter_update(&self, cx: &mut Context, param_updates: &Vec<ParameterUpdate>) {
         let param_map = self.params.param_map();
-        let param_setter = cx.get_setter();
+        let param_setter = cx.get_param_setter();
 
         for param_update in param_updates {
             let normalize_new_value = param_update.value;

@@ -1,6 +1,7 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use nih_plug::{prelude::*, util::db_to_gain};
+use nih_plug_webview::WebViewState;
 
 use crate::{editor::ipc::IrData, processing::config::IrProcessingConfig};
 
@@ -25,6 +26,9 @@ pub const DEFAULT_DRY_GAIN: f32 = -10.0;
 
 #[derive(Params, Debug)]
 pub struct PluginParams {
+    #[persist = "webview_state"]
+    pub state: Arc<WebViewState>,
+
     #[persist = "config"]
     pub ir_config: Mutex<IrProcessingConfig>,
 
@@ -211,6 +215,8 @@ impl Default for PluginParams {
             ir_data: Mutex::new(None),
             ir_config: Mutex::new(IrProcessingConfig::default()),
             ir_samples: Mutex::new((Vec::new(), 0.0)),
+
+            state: Arc::new(WebViewState::new(600.0, 600.0)),
         }
     }
 }
