@@ -1,9 +1,11 @@
 # Convolution
-## Installation
 ### Supported Platforms
 Currently, only Windows and MacOS are officially supported. 
+
 **Linux:** Although I've not personally tested this, it's probably possible to use [yabridge](https://github.com/robbert-vdh/yabridge) to get this plugin working on Linux.
 (IF you try this method, please let me know if it works or not, so that I can update these docs).
+
+## Installation
 ### Downloads
 Go to the ["Actions" tab](https://github.com/dvub/convolution_plug/actions) of this repository, click on a build (you probably want the most recent passing build), and scroll down to the "Artifacts" section. From here, download the zip file for your platform and extract the contents.
 ### Building/Compiling
