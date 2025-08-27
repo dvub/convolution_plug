@@ -1483,7 +1483,7 @@ dependencies = [
 [[package]]
 name = "nih_plug"
 version = "0.0.0"
-source = "git+https://github.com/robbert-vdh/nih-plug.git?rev=17ba595e748927290eb72974bc528f11d1d20e89#17ba595e748927290eb72974bc528f11d1d20e89"
+source = "git+https://github.com/robbert-vdh/nih-plug.git#ecfd6322c776d9f0373d31758976c2353c162737"
 dependencies = [
  "anyhow",
  "anymap3",
@@ -1514,7 +1514,7 @@ dependencies = [
 [[package]]
 name = "nih_plug_derive"
 version = "0.1.0"
-source = "git+https://github.com/robbert-vdh/nih-plug.git?rev=17ba595e748927290eb72974bc528f11d1d20e89#17ba595e748927290eb72974bc528f11d1d20e89"
+source = "git+https://github.com/robbert-vdh/nih-plug.git#ecfd6322c776d9f0373d31758976c2353c162737"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1524,7 +1524,7 @@ dependencies = [
 [[package]]
 name = "nih_plug_webview"
 version = "0.2.0"
-source = "git+https://github.com/toiglak/nih-plug-webview#b20d1692b7200257161b85b31f3e41322a3e7321"
+source = "git+https://github.com/dvub/nih-plug-webview?branch=no-reparent#74e6aaa080b8ff34d42d913e328885c21a0b5129"
 dependencies = [
  "crossbeam",
  "nih_plug",
