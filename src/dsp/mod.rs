@@ -4,6 +4,7 @@ mod nodes;
 mod param_node;
 mod switched;
 
+use crossbeam_channel::Sender;
 use fundsp::hacker32::*;
 use std::sync::Arc;
 
@@ -22,15 +23,32 @@ pub fn build_graph(
     params: &Arc<PluginParams>,
     sample_rate: f32,
     config: &IrProcessingConfig,
+    dry_tx: Sender<f32>,
+    wet_tx: Sender<f32>,
 ) -> anyhow::Result<(Box<dyn AudioUnit>, Slot)> {
     let (ir_samples, ir_sample_rate) = &*params.ir_samples.lock().unwrap();
-
     let slot_element: Box<dyn AudioUnit> = if ir_samples.is_empty() {
         Box::new(multipass::<U2>() * 0.0)
     } else {
         let processed_ir = process_ir(ir_samples, *ir_sample_rate, sample_rate, config)?;
         init_convolvers(&processed_ir)
     };
+
+    let dry_watcher = join::<U2>()
+    // TODO: use fundsp::snoop
+        >> map(move |i| {
+            let _ = dry_tx.try_send(i[0]);
+            i[0]
+        })
+        >> sink();
+
+    let wet_watcher = join::<U2>()
+        >> map(move |i| {
+            let _ = wet_tx.try_send(i[0]);
+            i[0]
+        })
+        >> sink();
+
     // we want to update the IR/convolver dynamically, so we put it in a Slot
     // ACTUAL GRAPH
 
@@ -39,14 +57,18 @@ pub fn build_graph(
     let slot_backend = convolver_slot.1;
 
     let convolver = unit::<U2, U2>(Box::new(slot_backend));
-    let eq_wet =
-        convolver >> switched_lowpass(params) >> switched_bell(params) >> switched_highpass(params);
+
+    let eq_wet = convolver >> build_eq(params);
 
     let wet = eq_wet * wet_gain(params);
     let dry = multipass::<U2>() * dry_gain(params) * dry_enabled(params);
     let graph = wet & dry;
 
     Ok((Box::new(graph), slot_frontend))
+}
+
+pub fn build_eq(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U2, Outputs = U2>> {
+    switched_lowpass(p) >> switched_bell(p) >> switched_highpass(p)
 }
 
 fn lp_with_params(p: &Arc<PluginParams>) -> An<impl AudioNode<Inputs = U1, Outputs = U1>> {

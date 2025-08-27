@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{atomic::Ordering, Arc, Mutex};
 
 use fundsp::slot::Slot;
 use nih_plug::plugin::TaskExecutor;
@@ -20,7 +20,8 @@ pub enum Task {
 pub fn handle_task(plugin: &mut ConvolutionPlug) -> TaskExecutor<ConvolutionPlug> {
     let params = plugin.params.clone();
     let slot = plugin.slot.clone();
-    let sample_rate = plugin.sample_rate;
+    // TODO: is this expensive? also, correct Ordering
+    let sample_rate = plugin.sample_rate.load(Ordering::Relaxed);
 
     Box::new(move |task| match task {
         Task::UpdateIrConfig(new_ir_config) => {
@@ -36,7 +37,6 @@ fn update_ir(
     slot: &Arc<Mutex<Slot>>,
     sample_rate: f32,
 ) {
-
     let config = params.ir_config.lock().unwrap();
 
     // TODO: if an issue occurs with file decoding here, we don't want to panic

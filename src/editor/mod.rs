@@ -1,8 +1,11 @@
+mod component;
 mod embedded;
+pub mod eq;
 pub mod ipc;
 pub mod tasks;
+mod util;
 
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 use nih_plug::{editor::Editor, params::Params, prelude::AsyncExecutor};
 use nih_plug_webview::{
@@ -10,7 +13,7 @@ use nih_plug_webview::{
 };
 use serde_json::json;
 
-#[cfg(not(debug_assertions))]
+#[cfg(feature = "embedded-gui")]
 use crate::editor::embedded::embedded_editor;
 
 use crate::{
@@ -30,49 +33,54 @@ pub struct PluginGui {
 }
 
 impl PluginGui {
-    #[allow(clippy::new_ret_no_self)]
-    pub fn new(
+    pub fn new_editor(
         state: &Arc<WebViewState>,
         params: &Arc<PluginParams>,
         exec: AsyncExecutor<ConvolutionPlug>,
     ) -> Option<Box<dyn Editor>> {
-        #[cfg(debug_assertions)]
-        let editor = dev_editor(state, params, exec);
+        // SOURCE
+        let protocol_name = "assets".to_string();
+        let source = if cfg!(feature = "embedded-gui") {
+            // this protocol will bundle the GUI in the plugin
+            WebViewSource::CustomProtocol {
+                protocol: protocol_name.clone(),
+                url: String::new(),
+            }
+        } else {
+            WebViewSource::URL(String::from("http://localhost:3000"))
+        };
 
-        #[cfg(not(debug_assertions))]
-        let editor = embedded_editor(state, params, exec);
-
-        Some(Box::new(editor))
-    }
-}
-
-fn dev_editor(
-    state: &Arc<WebViewState>,
-    params: &Arc<PluginParams>,
-    exec: AsyncExecutor<ConvolutionPlug>,
-) -> WebViewEditor {
-    let config = WebViewConfig {
-        title: "Convolution".to_string(),
-        source: WebViewSource::URL(String::from("http://localhost:3000")),
-        workdir: PathBuf::from(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/target/webview-workdir"
-        )),
-    };
-
-    WebViewEditor::new_with_webview(
-        PluginGui {
-            params: params.clone(),
+        let project_dir = directories::ProjectDirs::from("com", "dvub", "convolventr").unwrap();
+        let workdir = project_dir.data_dir();
+        // CONFIG
+        let config = WebViewConfig {
+            title: "Spectrum Analyzer".to_string(),
+            source,
+            // QUESTION: should we change this?
+            workdir: workdir.to_path_buf(),
+        };
+        // EDITOR
+        let editor_base = PluginGui {
             executor: exec,
-        },
-        state,
-        config,
-        |builder| {
-            builder
-                .with_devtools(true)
-                .with_background_color(BACKGROUND_COLOR)
-        },
-    )
+            params: params.clone(),
+        };
+
+        Some(Box::new(WebViewEditor::new_with_webview(
+            editor_base,
+            &params.state,
+            config,
+            move |mut builder| {
+                #[cfg(feature = "embedded-gui")]
+                {
+                    builder = builder.with_custom_protocol(protocol_name.clone(), build_protocol());
+                }
+                builder = builder
+                    .with_devtools(!cfg!(feature = "embedded-gui"))
+                    .with_background_color((0, 0, 0, 1));
+                builder
+            },
+        )))
+    }
 }
 
 impl EditorHandler for PluginGui {

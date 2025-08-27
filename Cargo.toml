@@ -27,18 +27,25 @@ rubato = "0.16.2"
 
 # GUI
 nih_plug_webview = { git = "https://github.com/dvub/nih-plug-webview", branch = "no-reparent" }
-mime_guess = "2.0.5"
-include_dir = "0.7.4"
+mime_guess = { version = "2.0.5", optional = true }
+include_dir = { version = "0.7.4", optional = true }
 serde = "1.0.219"
 serde_json = "1.0.140"
 ts-rs = "11.0.1"
 # error handling
 anyhow = "1.0.98"
+directories = "6.0.0"
+crossbeam-channel = "0.5.15"
+rayon = "1.11.0"
 
 
 # Uncomment the below line to disable the on-by-default VST3 feature to remove
 # the GPL compatibility requirement
 # nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", default-features = false, features = ["assert_process_allocs"] }
+
+[features]
+embedded-gui = ["dep:mime_guess", "dep:include_dir"]
+
 
 [dev-dependencies]
 tempdir = "0.3.7"

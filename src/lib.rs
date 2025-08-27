@@ -9,6 +9,7 @@ pub mod processing;
 use crate::{
     dsp::build_graph,
     editor::{
+        eq::Equalizer,
         tasks::{handle_task, Task},
         PluginGui,
     },
@@ -18,7 +19,7 @@ use fundsp::hacker32::*;
 use nih_plug::prelude::*;
 
 use params::PluginParams;
-use std::sync::{Arc, Mutex};
+use std::sync::{atomic::Ordering, Arc, Mutex};
 
 // TODO: make logging consistent and improve it in general
 // TODO: make sure to log to a file
@@ -30,21 +31,31 @@ use std::sync::{Arc, Mutex};
  */
 pub struct ConvolutionPlug {
     params: Arc<PluginParams>,
+
     graph: BigBlockAdapter,
-    sample_rate: f32,
+
     slot: Arc<Mutex<Slot>>,
     buffers: Vec<Vec<f32>>,
+
+    equalizer: Equalizer,
+    sample_rate: Arc<AtomicF32>,
 }
 
 const DEFAULT_SAMPLE_RATE: f32 = 44_100.0;
 impl Default for ConvolutionPlug {
     fn default() -> Self {
+        let sample_rate = Arc::new(AtomicF32::new(0.0));
+        let params = Arc::new(PluginParams::default());
+        let eq = Equalizer::new(sample_rate.clone(), params.clone());
+
         Self {
-            params: Arc::new(PluginParams::default()),
+            params,
+            sample_rate,
             graph: BigBlockAdapter::new(Box::new(sink())),
             slot: Arc::new(Mutex::new(Slot::new(Box::new(sink())).0)),
-            sample_rate: DEFAULT_SAMPLE_RATE,
+
             buffers: Vec::new(),
+            equalizer: eq,
         }
     }
 }
@@ -91,10 +102,17 @@ impl Plugin for ConvolutionPlug {
         nih_log!("Building DSP graph..");
 
         let config = self.params.ir_config.lock().unwrap();
-        self.sample_rate = buffer_config.sample_rate;
+        self.sample_rate
+            .store(buffer_config.sample_rate, Ordering::Relaxed);
         self.buffers = vec![vec![0.0; buffer_config.max_buffer_size as usize]; 2];
 
-        match build_graph(&self.params, self.sample_rate, &config) {
+        match build_graph(
+            &self.params,
+            buffer_config.sample_rate,
+            &config,
+            self.equalizer.dry_tx.clone(),
+            self.equalizer.wet_tx.clone(),
+        ) {
             Ok((graph, slot)) => {
                 let mut slot_lock = self.slot.lock().unwrap();
                 *slot_lock = slot;
@@ -112,7 +130,7 @@ impl Plugin for ConvolutionPlug {
     }
 
     fn editor(&mut self, async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        PluginGui::new(&self.params.state, &self.params, async_executor)
+        PluginGui::new_editor(&self.params.state, &self.params, async_executor)
     }
 
     fn process(
